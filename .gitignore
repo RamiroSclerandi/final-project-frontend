@@ -1,0 +1,39 @@
+# Secrets. Never commit these — the remote is public and history is forever.
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+dist-ssr/
+*.local
+
+# Vite / test caches
+.vite/
+coverage/
+
+# Generated Supabase types are committed on purpose; the local CLI state is not.
+supabase/.temp/
+
+# Sparse-checkout of the backend repo's supabase/, pinned via supabase-backend.lock.json
+.supabase-backend/
+
+# Editor and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Agent tooling cache
+.atl/

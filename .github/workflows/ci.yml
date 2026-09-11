@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm test
+
+  lint:
+    name: Lint, format and types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Type check
+        run: pnpm exec tsc -b --noEmit
+
+  integration:
+    name: Integration tests (real Supabase)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Bootstrap and verify the backend contract
+        run: node scripts/bootstrap-supabase.mjs
+
+      - name: Start local Supabase
+        working-directory: .supabase-backend
+        run: supabase start
+
+      - name: Integration tests
+        run: pnpm test:integration
+
+  types-drift:
+    name: Types drift
+    runs-on: ubuntu-latest
+    # Skips cleanly until SUPABASE_ACCESS_TOKEN/SUPABASE_PROJECT_ID are configured
+    # as repo secrets (D-4) — they are deployment credentials, not part of the code.
+    if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Regenerate types into a temp file
+        run: |
+          supabase gen types typescript --project-id "$SUPABASE_PROJECT_ID" --schema public > /tmp/database.types.ts
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+      - name: Fail on drift
+        run: |
+          diff -u src/lib/database.types.ts /tmp/database.types.ts || \
+            (echo "deployed schema differs from committed database.types.ts — run pnpm gen:types" && exit 1)
