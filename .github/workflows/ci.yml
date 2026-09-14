@@ -70,6 +70,9 @@ jobs:
 
       - name: Bootstrap and verify the backend contract
         run: node scripts/bootstrap-supabase.mjs
+        env:
+          # Fine-grained PAT, Contents: read-only, scoped to proyecto-final-backend.
+          BACKEND_READ_TOKEN: ${{ secrets.BACKEND_READ_TOKEN }}
 
       - name: Start local Supabase
         working-directory: .supabase-backend
