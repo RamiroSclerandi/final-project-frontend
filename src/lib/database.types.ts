@@ -8,11 +8,28 @@
  * has a `Database` type to compile against. Run `pnpm gen:types` against
  * the deployed project and commit the result before relying on real
  * column types.
+ *
+ * `v_latest_readings` was added by hand for the telemetry-live feature,
+ * declaring only the columns that feature selects — replace with the real
+ * generated file, which will carry every column, once `gen:types` can run.
  */
 export type Database = {
   public: {
     Tables: Record<string, never>
-    Views: Record<string, never>
+    Views: {
+      v_latest_readings: {
+        Row: {
+          sensor_id: string
+          value: number
+          timestamp: string
+          quality: string
+          channel: string
+          unit: string
+          sensor_label: string | null
+          device_name: string
+        }
+      }
+    }
     Functions: Record<string, never>
     Enums: Record<string, never>
   }
