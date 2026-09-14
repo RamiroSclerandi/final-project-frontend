@@ -53,10 +53,13 @@ export default tseslint.config(
   },
   {
     // The one place allowed to hold the Supabase client, plus each feature's
-    // infrastructure layer (matched by directory name, features don't exist yet).
+    // infrastructure layer (matched by directory name, features don't exist yet),
+    // plus integration tests (D-6), which build their own throwaway
+    // service-role/anon clients against the real local stack.
     files: [
       'src/shared/api/**/*.{ts,tsx}',
       'src/features/*/infrastructure/**/*.{ts,tsx}',
+      'tests/integration/**/*.{ts,tsx}',
     ],
     rules: {
       'no-restricted-imports': 'off',

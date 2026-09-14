@@ -7,8 +7,8 @@
 // missing the thing it claims to prove (threat matrix: git repository selection).
 
 import { execFileSync } from 'node:child_process'
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -24,7 +24,7 @@ const SCHEMA_SENTINELS = [
   'CREATE TABLE measurements',
   'GRANT UPDATE (name, location_ref',
   'mv_measurements_hourly',
-  'security_invoker = true',
+  'security_invoker = on',
 ]
 
 /**
@@ -77,6 +77,19 @@ export function validateBackendSentinels(backendRoot) {
   assertSubstrings(configPath, CONFIG_PATH, CONFIG_SENTINELS)
 }
 
+/**
+ * Creates directories the sparse checkout can never recreate on its own,
+ * because git does not track empty directories. `supabase start`
+ * bind-mounts `supabase/snippets` regardless and fails outright if it is
+ * missing.
+ */
+export function ensureRequiredEmptyDirectories(backendRoot) {
+  const snippetsDir = join(backendRoot, 'supabase', 'snippets')
+  if (!existsSync(snippetsDir)) {
+    mkdirSync(snippetsDir, { recursive: true })
+  }
+}
+
 function readLockFile() {
   if (!existsSync(LOCK_FILE)) {
     throw new Error(
@@ -108,14 +121,17 @@ function sparseCheckoutBackend({ remote, commit, sparsePath }) {
 function main() {
   const lock = readLockFile()
   sparseCheckoutBackend(lock)
+  ensureRequiredEmptyDirectories(CHECKOUT_DIR)
   validateBackendSentinels(CHECKOUT_DIR)
   console.log('bootstrap-supabase: backend contract verified.')
 }
 
 // Only run the network/git side effects when invoked directly, so importing
 // `validateBackendSentinels` for tests never touches git or the filesystem
-// outside the caller's own fixture.
-if (import.meta.url === `file://${process.argv[1]}`) {
+// outside the caller's own fixture. Compared via `pathToFileURL` (not a
+// naive `file://` string concat) so this also matches on Windows, where a
+// path uses backslashes and a bare drive letter instead of a POSIX path.
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     main()
   } catch (error) {

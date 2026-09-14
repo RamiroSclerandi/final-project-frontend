@@ -1,17 +1,26 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { validateBackendSentinels } from './bootstrap-supabase.mjs'
+import {
+  ensureRequiredEmptyDirectories,
+  validateBackendSentinels,
+} from './bootstrap-supabase.mjs'
 
 const VALID_CONFIG_TOML = 'enable_signup = false\n'
 const VALID_SCHEMA_SQL = [
   'CREATE TABLE measurements (id bigint);',
   'GRANT UPDATE (name, location_ref, transport, provisioned) ON devices TO authenticated;',
   'CREATE MATERIALIZED VIEW mv_measurements_hourly AS SELECT 1;',
-  'ALTER VIEW v_latest_readings SET (security_invoker = true);',
+  'ALTER VIEW v_latest_readings SET (security_invoker = on);',
 ].join('\n')
 
 let backendRoot
@@ -85,7 +94,7 @@ describe('validateBackendSentinels', () => {
     })
 
     expect(() => validateBackendSentinels(backendRoot)).toThrow(
-      'security_invoker = true',
+      'security_invoker = on',
     )
   })
 
@@ -94,5 +103,26 @@ describe('validateBackendSentinels', () => {
     writeFixture()
 
     expect(() => validateBackendSentinels(backendRoot)).not.toThrow()
+  })
+})
+
+describe('ensureRequiredEmptyDirectories', () => {
+  // Git does not track empty directories, so a sparse checkout never
+  // recreates `supabase/snippets`. `supabase start` bind-mounts it
+  // regardless and fails outright when it is missing.
+  it('creates supabase/snippets when the sparse checkout omitted it', () => {
+    backendRoot = mkdtempSync(join(tmpdir(), 'bootstrap-supabase-'))
+    mkdirSync(join(backendRoot, 'supabase'), { recursive: true })
+
+    ensureRequiredEmptyDirectories(backendRoot)
+
+    expect(existsSync(join(backendRoot, 'supabase', 'snippets'))).toBe(true)
+  })
+
+  it('does not throw when supabase/snippets already exists', () => {
+    backendRoot = mkdtempSync(join(tmpdir(), 'bootstrap-supabase-'))
+    mkdirSync(join(backendRoot, 'supabase', 'snippets'), { recursive: true })
+
+    expect(() => ensureRequiredEmptyDirectories(backendRoot)).not.toThrow()
   })
 })
