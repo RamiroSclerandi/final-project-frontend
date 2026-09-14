@@ -114,8 +114,19 @@ function sparseCheckoutBackend({ remote, commit, sparsePath }) {
     )
   }
   git(['sparse-checkout', 'set', sparsePath])
-  git(['fetch', '--depth', '1', 'origin', commit])
+  git([...authConfig(), 'fetch', '--depth', '1', 'origin', commit])
   git(['checkout', 'FETCH_HEAD'])
+}
+
+// The backend repo is private. In CI a read-only token arrives via
+// BACKEND_READ_TOKEN and is sent as a header for this one fetch, so it never
+// lands in a URL, in .git/config, or in the process list. Locally the
+// developer's own git credentials apply and this returns nothing.
+function authConfig() {
+  const token = process.env.BACKEND_READ_TOKEN
+  if (!token) return []
+  const basic = Buffer.from(`x-access-token:${token}`).toString('base64')
+  return ['-c', `http.extraheader=AUTHORIZATION: basic ${basic}`]
 }
 
 function main() {
