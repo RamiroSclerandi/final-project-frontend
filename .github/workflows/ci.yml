@@ -81,41 +81,34 @@ jobs:
   types-drift:
     name: Types drift
     runs-on: ubuntu-latest
-    # Skips cleanly until SUPABASE_ACCESS_TOKEN/SUPABASE_PROJECT_ID are configured
-    # as repo secrets (D-4) — they are deployment credentials, not part of the code.
-    # The secrets context is not allowed in a job-level if, so the secret is mapped
-    # to env here and every step is gated on it instead.
-    env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+    # Off until the repo variable TYPES_DRIFT_ENABLED is set to 'true' alongside the
+    # SUPABASE_ACCESS_TOKEN / SUPABASE_PROJECT_ID secrets (D-4). A variable is used
+    # for the gate because the secrets context is not allowed in a job-level if.
+    if: ${{ vars.TYPES_DRIFT_ENABLED == 'true' }}
     steps:
       - uses: actions/checkout@v4
-        if: ${{ env.SUPABASE_ACCESS_TOKEN != '' }}
 
       - uses: pnpm/action-setup@v4
-        if: ${{ env.SUPABASE_ACCESS_TOKEN != '' }}
 
       - uses: actions/setup-node@v4
-        if: ${{ env.SUPABASE_ACCESS_TOKEN != '' }}
         with:
           node-version: 24
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-        if: ${{ env.SUPABASE_ACCESS_TOKEN != '' }}
 
       - uses: supabase/setup-cli@v1
-        if: ${{ env.SUPABASE_ACCESS_TOKEN != '' }}
         with:
           version: latest
 
       - name: Regenerate types into a temp file
-        if: ${{ env.SUPABASE_ACCESS_TOKEN != '' }}
         run: |
           supabase gen types typescript --project-id "$SUPABASE_PROJECT_ID" --schema public > /tmp/database.types.ts
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
 
       - name: Fail on drift
-        if: ${{ env.SUPABASE_ACCESS_TOKEN != '' }}
         run: |
           diff -u src/lib/database.types.ts /tmp/database.types.ts || \
             (echo "deployed schema differs from committed database.types.ts — run pnpm gen:types" && exit 1)
