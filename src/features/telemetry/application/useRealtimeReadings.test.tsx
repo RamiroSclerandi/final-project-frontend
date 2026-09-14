@@ -169,4 +169,54 @@ describe('useRealtimeReadings', () => {
       queryKey: LATEST_READINGS_QUERY_KEY,
     })
   })
+
+  it('invalidates latest-readings once for an insert from an unrecognised sensor (REQ-RT-3)', () => {
+    const queryClient = new QueryClient()
+    queryClient.setQueryData(LATEST_READINGS_QUERY_KEY, {})
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+    renderHook(() => useRealtimeReadings(), {
+      wrapper: createWrapper(queryClient),
+    })
+
+    act(() =>
+      onInsert({
+        sensor_id: 'sensor-unknown',
+        value: 5,
+        timestamp: 't1',
+        quality: 'ok',
+      }),
+    )
+
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: LATEST_READINGS_QUERY_KEY,
+    })
+  })
+
+  it('does not re-invalidate for a second packet from the same still-unresolved sensor (REQ-RT-3 guard)', () => {
+    const queryClient = new QueryClient()
+    queryClient.setQueryData(LATEST_READINGS_QUERY_KEY, {})
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+    renderHook(() => useRealtimeReadings(), {
+      wrapper: createWrapper(queryClient),
+    })
+
+    act(() =>
+      onInsert({
+        sensor_id: 'sensor-unknown',
+        value: 5,
+        timestamp: 't1',
+        quality: 'ok',
+      }),
+    )
+    act(() =>
+      onInsert({
+        sensor_id: 'sensor-unknown',
+        value: 6,
+        timestamp: 't2',
+        quality: 'ok',
+      }),
+    )
+
+    expect(invalidateSpy).toHaveBeenCalledTimes(1)
+  })
 })

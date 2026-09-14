@@ -17,6 +17,9 @@ interface SubscribeOptions {
 /**
  * Opens the single unfiltered measurements INSERT channel (D-2): no
  * server-side sensor_id filter, routing happens client-side in the caller.
+ * Do not add one -- a server-side filter list can never name a sensor_id the
+ * client has not learned about yet, which silently breaks unknown-sensor
+ * detection (CA-5, REQ-RT-3).
  */
 export function subscribeToMeasurementInserts({
   onInsert,

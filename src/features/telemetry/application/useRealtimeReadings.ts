@@ -14,6 +14,10 @@ import {
 import type { LatestReading } from '../domain/reading'
 import { routeMeasurement } from '../domain/routeMeasurement'
 import {
+  resolvePendingSensors,
+  trackUnknownSensor,
+} from '../domain/unknownSensorTracking'
+import {
   subscribeToMeasurementInserts,
   unsubscribeFromMeasurements,
 } from '../infrastructure/realtimeMeasurementsClient'
@@ -27,11 +31,42 @@ export function useRealtimeReadings(): { status: RealtimeStatus } {
   const queryClient = useQueryClient()
   const [status, setStatus] = useState<RealtimeStatus>('connecting')
   const everLiveRef = useRef(false)
+  const pendingUnknownRef = useRef<ReadonlySet<string>>(new Set())
 
   useEffect(() => {
     const channel = subscribeToMeasurementInserts({
       onInsert: (row) => {
         const update = routeMeasurement(row)
+        const known = new Set(
+          Object.keys(
+            queryClient.getQueryData<Record<string, LatestReading>>(
+              LATEST_READINGS_QUERY_KEY,
+            ) ?? {},
+          ),
+        )
+        const tracked = trackUnknownSensor(
+          known,
+          pendingUnknownRef.current,
+          update.sensorId,
+        )
+        pendingUnknownRef.current = tracked.pending
+        if (tracked.shouldInvalidate) {
+          void queryClient
+            .invalidateQueries({ queryKey: LATEST_READINGS_QUERY_KEY })
+            .then(() => {
+              const refreshedKnown = new Set(
+                Object.keys(
+                  queryClient.getQueryData<Record<string, LatestReading>>(
+                    LATEST_READINGS_QUERY_KEY,
+                  ) ?? {},
+                ),
+              )
+              pendingUnknownRef.current = resolvePendingSensors(
+                pendingUnknownRef.current,
+                refreshedKnown,
+              )
+            })
+        }
         queryClient.setQueryData<Record<string, LatestReading>>(
           LATEST_READINGS_QUERY_KEY,
           (previous) => mergeLatestReading(previous ?? {}, update),
