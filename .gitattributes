@@ -1,0 +1,3 @@
+# Check out every text file with LF regardless of the machine's core.autocrlf, so
+# prettier --check and git status agree on Windows and Linux alike.
+* text=auto eol=lf
