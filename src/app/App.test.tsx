@@ -12,6 +12,9 @@ vi.mock('../features/auth/application/AuthProvider', () => ({
 vi.mock('../features/auth/application/useAuth', () => ({
   useAuth: useAuthMock,
 }))
+vi.mock('../features/telemetry', () => ({
+  LiveDashboardContainer: () => <p>Live dashboard</p>,
+}))
 
 function renderAppAt(path: string) {
   window.history.pushState({}, '', path)
@@ -32,12 +35,14 @@ describe('App', () => {
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
   })
 
-  it('renders the dashboard placeholder with a logout action for an authenticated visitor', () => {
+  it('renders the dashboard with a logout action for an authenticated visitor', () => {
     useAuthMock.mockReturnValue({ status: 'authenticated', signOut: vi.fn() })
 
     renderAppAt('/')
 
-    expect(screen.getByText(/dashboard/i)).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /dashboard/i }),
+    ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /log out/i })).toBeInTheDocument()
   })
 
