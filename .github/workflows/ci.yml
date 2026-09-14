@@ -66,10 +66,13 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.117.0
 
       - name: Bootstrap and verify the backend contract
         run: node scripts/bootstrap-supabase.mjs
+        env:
+          # Fine-grained PAT, Contents: read-only, scoped to proyecto-final-backend.
+          BACKEND_READ_TOKEN: ${{ secrets.BACKEND_READ_TOKEN }}
 
       - name: Start local Supabase
         working-directory: .supabase-backend
@@ -81,9 +84,10 @@ jobs:
   types-drift:
     name: Types drift
     runs-on: ubuntu-latest
-    # Skips cleanly until SUPABASE_ACCESS_TOKEN/SUPABASE_PROJECT_ID are configured
-    # as repo secrets (D-4) — they are deployment credentials, not part of the code.
-    if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
+    # Off until the repo variable TYPES_DRIFT_ENABLED is set to 'true' alongside the
+    # SUPABASE_ACCESS_TOKEN / SUPABASE_PROJECT_ID secrets (D-4). A variable is used
+    # for the gate because the secrets context is not allowed in a job-level if.
+    if: ${{ vars.TYPES_DRIFT_ENABLED == 'true' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -98,7 +102,7 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.117.0
 
       - name: Regenerate types into a temp file
         run: |
