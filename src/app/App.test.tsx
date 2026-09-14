@@ -15,6 +15,9 @@ vi.mock('../features/auth/application/useAuth', () => ({
 vi.mock('../features/telemetry', () => ({
   LiveDashboardContainer: () => <p>Live dashboard</p>,
 }))
+vi.mock('../features/node-health', () => ({
+  NodeHealthContainer: () => <p>Node health</p>,
+}))
 
 function renderAppAt(path: string) {
   window.history.pushState({}, '', path)

@@ -5,12 +5,13 @@ import { fileURLToPath } from 'node:url'
 import { createClient } from '@supabase/supabase-js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-// RLS on `measurements` and `v_latest_readings` (REQ-AUTH-4, REQ-HS-5/6,
-// D-9c): authenticated can read both, anonymous cannot read either, and an
-// authenticated client's INSERT into `measurements` is rejected -- there is
-// deliberately no insert policy (§7.1); only the worker's service_role
-// writes. That third assertion is the client-side proof of that removal.
-// Runs against the real local Supabase stack (D-6); nothing here is mocked.
+// RLS on `measurements`, `v_latest_readings` and `sensors` (REQ-AUTH-4,
+// REQ-HS-5/6, D-9c): authenticated can read all three, anonymous cannot read
+// any, and an authenticated client's INSERT into `measurements` is rejected
+// -- there is deliberately no insert policy (§7.1); only the worker's
+// service_role writes. That last assertion is the client-side proof of that
+// removal. Runs against the real local Supabase stack (D-6); nothing here is
+// mocked.
 
 const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url))
 const BACKEND_DIR = join(REPO_ROOT, '.supabase-backend')
@@ -178,6 +179,29 @@ describe('realtime-telemetry: measurements RLS (REQ-AUTH-4, REQ-HS-5/6, REQ-RT-4
       .from('v_latest_readings')
       .select('sensor_id')
       .eq('sensor_id', createdSensorId as string)
+
+    if (error) {
+      expect(error).not.toBeNull()
+    } else {
+      expect(data).toEqual([])
+    }
+  })
+
+  it('lets an authenticated session read the seeded sensor with no RLS error (REQ-AUTH-4)', async () => {
+    const { data, error } = await authenticatedClient
+      .from('sensors')
+      .select('id')
+      .eq('id', createdSensorId as string)
+
+    expect(error).toBeNull()
+    expect(data).toEqual([{ id: createdSensorId }])
+  })
+
+  it('does not let an anonymous session read the same sensor (REQ-AUTH-4)', async () => {
+    const { data, error } = await anonClient
+      .from('sensors')
+      .select('id')
+      .eq('id', createdSensorId as string)
 
     if (error) {
       expect(error).not.toBeNull()

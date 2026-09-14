@@ -1,9 +1,11 @@
 import { LogoutButtonContainer } from '../features/auth'
+import { NodeHealthContainer } from '../features/node-health'
 import { LiveDashboardContainer } from '../features/telemetry'
 
 /**
- * Dashboard route: live per-sensor values over the realtime channel (D-2).
- * Historical views and device management are built in later phases.
+ * Dashboard route: live per-sensor values over the realtime channel (D-2),
+ * plus per-node online/offline (CA-6). Historical views and device
+ * management are built in later phases.
  */
 export function DashboardPage() {
   return (
@@ -12,6 +14,7 @@ export function DashboardPage() {
         <h1 className="text-xl font-semibold">Dashboard</h1>
         <LogoutButtonContainer />
       </div>
+      <NodeHealthContainer />
       <LiveDashboardContainer />
     </main>
   )

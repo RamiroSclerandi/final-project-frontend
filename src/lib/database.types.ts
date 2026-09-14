@@ -12,10 +12,20 @@
  * `v_latest_readings` was added by hand for the telemetry-live feature,
  * declaring only the columns that feature selects — replace with the real
  * generated file, which will carry every column, once `gen:types` can run.
+ * `devices` was added by hand the same way, for the node-health feature.
  */
 export type Database = {
   public: {
-    Tables: Record<string, never>
+    Tables: {
+      devices: {
+        Row: {
+          id: string
+          name: string
+          status: boolean
+          last_seen: string | null
+        }
+      }
+    }
     Views: {
       v_latest_readings: {
         Row: {
