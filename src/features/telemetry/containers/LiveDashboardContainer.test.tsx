@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 import { LiveDashboardContainer } from './LiveDashboardContainer'
@@ -41,7 +42,11 @@ describe('LiveDashboardContainer', () => {
     })
     useRealtimeReadingsMock.mockReturnValue({ status: 'live' })
 
-    render(<LiveDashboardContainer />)
+    render(
+      <MemoryRouter>
+        <LiveDashboardContainer />
+      </MemoryRouter>,
+    )
 
     expect(screen.getByText('Node A')).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent(/live/i)

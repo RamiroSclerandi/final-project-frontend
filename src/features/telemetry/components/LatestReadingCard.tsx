@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 import type { LatestReading } from '../domain/reading'
 
 const QUALITY_LABELS: Record<'out_of_range' | 'suspect', string> = {
@@ -26,6 +28,12 @@ export function LatestReadingCard({ reading }: LatestReadingCardProps) {
           {QUALITY_LABELS[reading.quality]}
         </p>
       )}
+      <Link
+        to={`/history/${reading.sensorId}`}
+        className="text-xs text-emerald-400"
+      >
+        View history
+      </Link>
     </article>
   )
 }

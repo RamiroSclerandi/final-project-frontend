@@ -12,6 +12,10 @@ export interface HistoricalPoint {
   max?: number
   sampleCount?: number
   quality?: ReadingQuality
+  /** D-7: set only when the row's clock was unsynced -- lower timestamp trust. */
+  tsSource?: 'server'
+  /** D-3: the newest bucket, recomputed from raw or a latest-reading marker. */
+  partial?: boolean
 }
 
 /** Structural shape of a selected raw `measurements` row. */
@@ -19,6 +23,7 @@ export interface RawMeasurementRow {
   timestamp: string
   value: number
   quality: string
+  ts_source: string
 }
 
 /** Structural shape of a selected `mv_measurements_hourly`/`_daily` row. */
@@ -35,6 +40,7 @@ export function toRawPoint(row: RawMeasurementRow): HistoricalPoint {
     t: row.timestamp,
     value: row.value,
     quality: normalizeQuality(row.quality),
+    ...(row.ts_source === 'server' ? { tsSource: 'server' as const } : {}),
   }
 }
 

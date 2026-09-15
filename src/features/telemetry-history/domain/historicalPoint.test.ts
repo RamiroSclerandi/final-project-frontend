@@ -9,6 +9,7 @@ describe('toRawPoint', () => {
         timestamp: '2026-09-01T00:00:00Z',
         value: 21.5,
         quality: 'ok',
+        ts_source: 'device',
       }),
     ).toEqual({ t: '2026-09-01T00:00:00Z', value: 21.5, quality: 'ok' })
   })
@@ -19,8 +20,25 @@ describe('toRawPoint', () => {
         timestamp: '2026-09-01T00:00:00Z',
         value: 21.5,
         quality: 'garbage',
+        ts_source: 'device',
       }),
     ).toEqual({ t: '2026-09-01T00:00:00Z', value: 21.5, quality: 'ok' })
+  })
+
+  it('marks a point whose clock was unsynced (ts_source = server), D-7', () => {
+    expect(
+      toRawPoint({
+        timestamp: '2026-09-01T00:00:00Z',
+        value: 21.5,
+        quality: 'ok',
+        ts_source: 'server',
+      }),
+    ).toEqual({
+      t: '2026-09-01T00:00:00Z',
+      value: 21.5,
+      quality: 'ok',
+      tsSource: 'server',
+    })
   })
 })
 

@@ -5,6 +5,12 @@ import { fileURLToPath } from 'node:url'
 import { createClient } from '@supabase/supabase-js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
+import {
+  toAggregatePoint,
+  toRawPoint,
+} from '../../src/features/telemetry-history/domain/historicalPoint'
+import { mergeHourlyTail } from '../../src/features/telemetry-history/domain/mergeTail'
+
 // Matview access (REQ-HS-5/6) and aggregate query latency (CA-2, REQ-HS-2),
 // against the real local Supabase stack (D-6); nothing here is mocked. A
 // matview cannot carry RLS, so GRANT/REVOKE -- applied by the backend's
@@ -256,6 +262,59 @@ describe('historical-series: matview access and aggregate latency (REQ-HS-2, REQ
       `historical-series CA-2: ${BUCKET_COUNT} hourly buckets fetched in ${elapsedMs.toFixed(1)}ms`,
     )
     expect(elapsedMs).toBeLessThan(1000)
+  })
+
+  it('merges the raw tail into the hourly aggregate within the CA-2 budget (REQ-HS-2, REQ-HS-3, D-3)', async () => {
+    // Simulates the still-forming newest bucket REQ-HS-3 must repair: a
+    // fresh reading landing after the seeded range, before any refresh runs.
+    const freshTimestamp = new Date(
+      rangeEnd.getTime() + 5 * MINUTE_MS,
+    ).toISOString()
+    const { error: freshInsertError } = await serviceRoleClient
+      .from('measurements')
+      .insert({
+        sensor_id: createdSensorId,
+        value: 99,
+        timestamp: freshTimestamp,
+        quality: 'ok',
+      })
+    expect(freshInsertError).toBeNull()
+
+    const t0 = performance.now()
+    const { data: aggregateRows, error: aggregateError } =
+      await authenticatedClient
+        .from('mv_measurements_hourly')
+        .select('*')
+        .eq('sensor_id', createdSensorId as string)
+        .gte('bucket', rangeStart.toISOString())
+        .lte('bucket', rangeEnd.toISOString())
+        .order('bucket', { ascending: true })
+    expect(aggregateError).toBeNull()
+    const aggregatePoints = (aggregateRows ?? []).map(toAggregatePoint)
+    const lastBucket = aggregatePoints.at(-1)?.t ?? rangeStart.toISOString()
+
+    const { data: rawRows, error: rawError } = await authenticatedClient
+      .from('measurements')
+      .select('*')
+      .eq('sensor_id', createdSensorId as string)
+      .gte('timestamp', lastBucket)
+      .lte('timestamp', freshTimestamp)
+      .order('timestamp', { ascending: true })
+    expect(rawError).toBeNull()
+    const rawTailPoints = (rawRows ?? []).map(toRawPoint)
+
+    const merged = mergeHourlyTail(aggregatePoints, rawTailPoints)
+    const elapsedMs = performance.now() - t0
+
+    // CA-2 must be reported honestly (D-8), tail merge included this time.
+    console.info(
+      `historical-series CA-2 (with tail merge): resolved in ${elapsedMs.toFixed(1)}ms`,
+    )
+    expect(elapsedMs).toBeLessThan(1000)
+
+    const newestPoint = merged.at(-1)
+    expect(newestPoint?.partial).toBe(true)
+    expect(newestPoint?.value).toBe(99)
   })
 
   it('pages past PostgREST default row cap without dropping rows (raw tail, D-3)', async () => {

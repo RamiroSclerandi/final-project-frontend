@@ -18,6 +18,11 @@ vi.mock('../features/telemetry', () => ({
 vi.mock('../features/node-health', () => ({
   NodeHealthContainer: () => <p>Node health</p>,
 }))
+vi.mock('../features/telemetry-history', () => ({
+  HistoryContainer: ({ sensorId }: { sensorId: string }) => (
+    <p>History for {sensorId}</p>
+  ),
+}))
 
 function renderAppAt(path: string) {
   window.history.pushState({}, '', path)
@@ -55,5 +60,21 @@ describe('App', () => {
     renderAppAt('/login')
 
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
+  })
+
+  it('redirects an unauthenticated visitor away from the history route', () => {
+    useAuthMock.mockReturnValue({ status: 'unauthenticated', signIn: vi.fn() })
+
+    renderAppAt('/history/sensor-1')
+
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
+  })
+
+  it('renders the history page for an authenticated visitor', () => {
+    useAuthMock.mockReturnValue({ status: 'authenticated', signOut: vi.fn() })
+
+    renderAppAt('/history/sensor-1')
+
+    expect(screen.getByText('History for sensor-1')).toBeInTheDocument()
   })
 })

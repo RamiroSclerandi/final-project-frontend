@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
 import type { LatestReading } from '../domain/reading'
@@ -47,11 +48,13 @@ describe('LatestReadingsGrid', () => {
 
   it('renders one card per reading and the connection status', () => {
     render(
-      <LatestReadingsGrid
-        readings={[readingA, readingB]}
-        connectionStatus="live"
-        isLoading={false}
-      />,
+      <MemoryRouter>
+        <LatestReadingsGrid
+          readings={[readingA, readingB]}
+          connectionStatus="live"
+          isLoading={false}
+        />
+      </MemoryRouter>,
     )
 
     expect(screen.getByText('Node A')).toBeInTheDocument()
