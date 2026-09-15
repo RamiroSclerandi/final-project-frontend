@@ -33,6 +33,7 @@ export type Database = {
           value: number
           timestamp: string
           quality: string
+          ts_source: string
         }
       }
     }

@@ -73,3 +73,22 @@ export function fetchDailyAggregate(
 ): Promise<HistoricalPoint[]> {
   return fetchAggregate('mv_measurements_daily', sensorId, fromIso, toIso)
 }
+
+/**
+ * The single newest raw reading for a sensor -- the daily tail-merge marker
+ * (D-3), instead of a full day of raw rows for one point.
+ */
+export async function fetchLatestMeasurement(
+  sensorId: string,
+): Promise<HistoricalPoint | null> {
+  const { data, error } = await supabase
+    .from('measurements')
+    .select('*')
+    .eq('sensor_id', sensorId)
+    .order('timestamp', { ascending: false })
+    .limit(1)
+  if (error) {
+    throw error
+  }
+  return data[0] ? toRawPoint(data[0]) : null
+}

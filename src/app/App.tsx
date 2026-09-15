@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
 import { AuthProvider } from '../features/auth'
 import { DashboardPage } from '../pages/DashboardPage'
+import { HistoryPage } from '../pages/HistoryPage'
 import { LoginPage } from '../pages/LoginPage'
 import { RequireSession } from './RequireSession'
 
@@ -24,6 +25,14 @@ export function App() {
               element={
                 <RequireSession>
                   <DashboardPage />
+                </RequireSession>
+              }
+            />
+            <Route
+              path="/history/:sensorId"
+              element={
+                <RequireSession>
+                  <HistoryPage />
                 </RequireSession>
               }
             />

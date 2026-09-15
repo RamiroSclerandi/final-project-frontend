@@ -9,6 +9,7 @@ const repositoryMocks = vi.hoisted(() => ({
   fetchRawMeasurements: vi.fn(),
   fetchHourlyAggregate: vi.fn(),
   fetchDailyAggregate: vi.fn(),
+  fetchLatestMeasurement: vi.fn(),
 }))
 
 vi.mock('../infrastructure/historyRepository', () => repositoryMocks)
@@ -32,6 +33,7 @@ beforeEach(() => {
   repositoryMocks.fetchRawMeasurements.mockReset().mockResolvedValue([])
   repositoryMocks.fetchHourlyAggregate.mockReset().mockResolvedValue([])
   repositoryMocks.fetchDailyAggregate.mockReset().mockResolvedValue([])
+  repositoryMocks.fetchLatestMeasurement.mockReset().mockResolvedValue(null)
 })
 
 describe('useHistoricalSeries', () => {
@@ -125,5 +127,88 @@ describe('useHistoricalSeries', () => {
 
     await waitFor(() => expect(result.current.error).not.toBeNull())
     expect(result.current.points).toEqual([])
+  })
+
+  it('merges the raw tail into the hourly aggregate (REQ-HS-3, D-3)', async () => {
+    const to = new Date('2026-09-15T12:00:00Z')
+    const from = new Date(to.getTime() - 7 * DAY_MS)
+    repositoryMocks.fetchHourlyAggregate.mockResolvedValue([
+      { t: '2026-09-15T10:00:00.000Z', value: 20 },
+      { t: '2026-09-15T11:00:00.000Z', value: 21 },
+    ])
+    repositoryMocks.fetchRawMeasurements.mockResolvedValue([
+      { t: '2026-09-15T11:30:00Z', value: 22, quality: 'ok' },
+    ])
+
+    const { result } = renderHook(
+      () => useHistoricalSeries(SENSOR_ID, from, to),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(repositoryMocks.fetchRawMeasurements).toHaveBeenCalledWith(
+      SENSOR_ID,
+      '2026-09-15T11:00:00.000Z',
+      to.toISOString(),
+    )
+    expect(result.current.points).toEqual([
+      { t: '2026-09-15T10:00:00.000Z', value: 20 },
+      {
+        t: '2026-09-15T11:00:00.000Z',
+        value: 22,
+        min: 22,
+        max: 22,
+        sampleCount: 1,
+        partial: true,
+      },
+    ])
+    expect(result.current.aggregationStale).toBe(false)
+  })
+
+  it('merges the latest reading into the daily aggregate as a partial marker (D-3)', async () => {
+    const to = new Date('2026-09-15T12:00:00Z')
+    const from = new Date(to.getTime() - 120 * DAY_MS)
+    repositoryMocks.fetchDailyAggregate.mockResolvedValue([
+      { t: '2026-09-13T00:00:00.000Z', value: 20 },
+      { t: '2026-09-14T00:00:00.000Z', value: 21 },
+    ])
+    repositoryMocks.fetchLatestMeasurement.mockResolvedValue({
+      t: '2026-09-15T09:00:00Z',
+      value: 23,
+      quality: 'ok',
+    })
+
+    const { result } = renderHook(
+      () => useHistoricalSeries(SENSOR_ID, from, to),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(repositoryMocks.fetchLatestMeasurement).toHaveBeenCalledWith(
+      SENSOR_ID,
+    )
+    expect(result.current.points).toEqual([
+      { t: '2026-09-13T00:00:00.000Z', value: 20 },
+      {
+        t: '2026-09-15T09:00:00Z',
+        value: 23,
+        quality: 'ok',
+        partial: true,
+      },
+    ])
+  })
+
+  it('flags the aggregation as stale when the matview returns no buckets (D-7)', async () => {
+    const to = new Date('2026-09-15T12:00:00Z')
+    const from = new Date(to.getTime() - 7 * DAY_MS)
+    repositoryMocks.fetchHourlyAggregate.mockResolvedValue([])
+
+    const { result } = renderHook(
+      () => useHistoricalSeries(SENSOR_ID, from, to),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.aggregationStale).toBe(true)
   })
 })
