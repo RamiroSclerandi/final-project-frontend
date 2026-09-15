@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { ExportButton, useCsvExport } from '../../data-export'
 import { useHistoricalSeries } from '../application/useHistoricalSeries'
 import { DegradedStateBanner } from '../components/DegradedStateBanner'
 import { HistoricalChart } from '../components/HistoricalChart'
@@ -24,11 +25,23 @@ export function HistoryContainer({ sensorId }: HistoryContainerProps) {
     range.from,
     range.to,
   )
+  const { exportRange, isExporting, error: exportError } = useCsvExport()
   const newestPointPartial = points.at(-1)?.partial ?? false
 
   return (
     <section className="flex flex-col gap-4">
       <RangePicker from={range.from} to={range.to} onChange={setRange} />
+      <ExportButton
+        onExport={() =>
+          exportRange(
+            sensorId,
+            range.from.toISOString(),
+            range.to.toISOString(),
+          )
+        }
+        isExporting={isExporting}
+        error={exportError}
+      />
       <DegradedStateBanner
         aggregationStale={aggregationStale}
         newestPointPartial={newestPointPartial}
