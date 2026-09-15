@@ -74,9 +74,28 @@ jobs:
           # Fine-grained PAT, Contents: read-only, scoped to proyecto-final-backend.
           BACKEND_READ_TOKEN: ${{ secrets.BACKEND_READ_TOKEN }}
 
+      # supabase start pulls ~12 images on a cold runner -- measured as the
+      # dominant cost of this job. The image set only changes with the CLI
+      # version or the backend's config.toml (e.g. postgres version), so key
+      # the cache on both.
+      - name: Cache Supabase Docker images
+        id: docker-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/supabase-docker-images.tar
+          key: supabase-images-2.117.0-${{ hashFiles('.supabase-backend/supabase/config.toml') }}
+
+      - name: Load cached Docker images
+        if: steps.docker-cache.outputs.cache-hit == 'true'
+        run: docker load -i ~/supabase-docker-images.tar
+
       - name: Start local Supabase
         working-directory: .supabase-backend
         run: supabase start
+
+      - name: Save Docker images to the cache
+        if: steps.docker-cache.outputs.cache-hit != 'true'
+        run: docker save $(docker images -q) -o ~/supabase-docker-images.tar
 
       - name: Integration tests
         run: pnpm test:integration
