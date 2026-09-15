@@ -1,6 +1,7 @@
 import { supabase } from '../../../shared/api/supabase'
 import { toAggregatePoint, toRawPoint } from '../domain/historicalPoint'
 import type {
+  AggregateBucketRow,
   HistoricalPoint,
   RawMeasurementRow,
 } from '../domain/historicalPoint'
@@ -53,7 +54,31 @@ async function fetchAggregate(
   if (error) {
     throw error
   }
-  return data.map(toAggregatePoint)
+  return data.filter(hasCompleteBucket).map(toAggregatePoint)
+}
+
+/**
+ * `mv_measurements_hourly`/`_daily` group by non-null columns, so every
+ * field is non-null in practice -- Postgres cannot prove that through a
+ * matview, so PostgREST types every column nullable. Drop any row missing a
+ * field the domain requires rather than pass an unproven null through.
+ */
+function hasCompleteBucket<
+  T extends {
+    bucket: string | null
+    avg_value: number | null
+    min_value: number | null
+    max_value: number | null
+    sample_count: number | null
+  },
+>(row: T): row is T & AggregateBucketRow {
+  return (
+    row.bucket !== null &&
+    row.avg_value !== null &&
+    row.min_value !== null &&
+    row.max_value !== null &&
+    row.sample_count !== null
+  )
 }
 
 /** Hourly-bucketed aggregate for a range (REQ-HS-5/6, D-3). */
