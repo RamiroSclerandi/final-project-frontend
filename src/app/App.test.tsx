@@ -23,6 +23,9 @@ vi.mock('../features/telemetry-history', () => ({
     <p>History for {sensorId}</p>
   ),
 }))
+vi.mock('../features/device-management', () => ({
+  DeviceManagementContainer: () => <p>Device management</p>,
+}))
 
 function renderAppAt(path: string) {
   window.history.pushState({}, '', path)
@@ -76,5 +79,31 @@ describe('App', () => {
     renderAppAt('/history/sensor-1')
 
     expect(screen.getByText('History for sensor-1')).toBeInTheDocument()
+  })
+
+  it('redirects an unauthenticated visitor away from the devices route', () => {
+    useAuthMock.mockReturnValue({ status: 'unauthenticated', signIn: vi.fn() })
+
+    renderAppAt('/devices')
+
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
+  })
+
+  it('renders the devices page for an authenticated visitor (CA-3)', () => {
+    useAuthMock.mockReturnValue({ status: 'authenticated', signOut: vi.fn() })
+
+    renderAppAt('/devices')
+
+    expect(screen.getByText('Device management')).toBeInTheDocument()
+  })
+
+  it('links from the dashboard to device management', () => {
+    useAuthMock.mockReturnValue({ status: 'authenticated', signOut: vi.fn() })
+
+    renderAppAt('/')
+
+    expect(
+      screen.getByRole('link', { name: /manage devices/i }),
+    ).toHaveAttribute('href', '/devices')
   })
 })

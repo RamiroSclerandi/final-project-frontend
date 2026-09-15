@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
 import { AuthProvider } from '../features/auth'
 import { DashboardPage } from '../pages/DashboardPage'
+import { DevicesPage } from '../pages/DevicesPage'
 import { HistoryPage } from '../pages/HistoryPage'
 import { LoginPage } from '../pages/LoginPage'
 import { RequireSession } from './RequireSession'
@@ -33,6 +34,14 @@ export function App() {
               element={
                 <RequireSession>
                   <HistoryPage />
+                </RequireSession>
+              }
+            />
+            <Route
+              path="/devices"
+              element={
+                <RequireSession>
+                  <DevicesPage />
                 </RequireSession>
               }
             />

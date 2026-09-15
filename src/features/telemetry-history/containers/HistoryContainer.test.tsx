@@ -5,9 +5,24 @@ import type { HistoricalPoint } from '../domain/historicalPoint'
 import { HistoryContainer } from './HistoryContainer'
 
 const useHistoricalSeriesMock = vi.hoisted(() => vi.fn())
+const useCsvExportMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../application/useHistoricalSeries', () => ({
   useHistoricalSeries: useHistoricalSeriesMock,
+}))
+vi.mock('../../data-export', () => ({
+  useCsvExport: useCsvExportMock,
+  ExportButton: ({
+    onExport,
+    isExporting,
+  }: {
+    onExport: () => void
+    isExporting: boolean
+  }) => (
+    <button type="button" onClick={onExport} disabled={isExporting}>
+      Export CSV
+    </button>
+  ),
 }))
 
 const NOW = new Date('2026-09-15T12:00:00Z')
@@ -28,6 +43,9 @@ beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(NOW)
   useHistoricalSeriesMock.mockReset().mockReturnValue(baseResult())
+  useCsvExportMock
+    .mockReset()
+    .mockReturnValue({ exportRange: vi.fn(), isExporting: false, error: null })
 })
 
 afterEach(() => {
@@ -84,6 +102,24 @@ describe('HistoryContainer', () => {
       SENSOR_ID,
       new Date(NOW.getTime() - 60 * 60 * 1000),
       NOW,
+    )
+  })
+
+  it('exports the currently selected sensor and range (CA-4)', () => {
+    const exportRange = vi.fn()
+    useCsvExportMock.mockReturnValue({
+      exportRange,
+      isExporting: false,
+      error: null,
+    })
+
+    render(<HistoryContainer sensorId={SENSOR_ID} />)
+    fireEvent.click(screen.getByRole('button', { name: /export csv/i }))
+
+    expect(exportRange).toHaveBeenCalledWith(
+      SENSOR_ID,
+      new Date(NOW.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+      NOW.toISOString(),
     )
   })
 })
