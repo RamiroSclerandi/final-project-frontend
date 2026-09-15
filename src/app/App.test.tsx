@@ -27,6 +27,9 @@ vi.mock('../features/telemetry-history', () => ({
 vi.mock('../features/device-management', () => ({
   DeviceManagementContainer: () => <p>Device management</p>,
 }))
+vi.mock('../features/remote-config', () => ({
+  RemoteConfigContainer: () => <p>Remote config</p>,
+}))
 
 function renderAppAt(path: string) {
   window.history.pushState({}, '', path)
