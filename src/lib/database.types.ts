@@ -14,7 +14,20 @@
  * generated file, which will carry every column, once `gen:types` can run.
  * `devices` was added by hand the same way, for the node-health feature.
  * `measurements` and both matviews were added by hand for the
- * telemetry-history feature, same convention.
+ * telemetry-history feature, same convention. `devices.Update` and
+ * `sensors` were extended/added for device-management -- `Update` mirrors
+ * the migration's column-scoped GRANTs exactly (REQ-DM-1/2/3), so a payload
+ * outside the granted set fails to typecheck before it ever reaches PostgREST.
+ *
+ * Every table also carries `Insert`/`Update`/`Relationships` and every view
+ * carries `Relationships`, even where this app never calls those methods:
+ * supabase-js's `Database` generic only resolves at all when every table
+ * satisfies `GenericTable` (all four fields) and every view satisfies at
+ * least `Row`+`Relationships` -- one incomplete entry silently collapses the
+ * WHOLE `Schema` type param to `never`, which is what surfaced here once
+ * `.update()` was first used from this typed client. `measurements`' own
+ * `Insert`/`Update` are `Record<string, never>` on purpose: the client must
+ * never write to it (no insert policy, §7.1; REQ-RT-4).
  */
 export type Database = {
   public: {
@@ -25,7 +38,41 @@ export type Database = {
           name: string
           status: boolean
           last_seen: string | null
+          mac_address: string
+          location_ref: string | null
+          transport: string
+          provisioned: boolean
         }
+        Insert: {
+          mac_address: string
+          name: string
+        }
+        Update: {
+          name?: string
+          location_ref?: string | null
+          transport?: string
+          provisioned?: boolean
+        }
+        Relationships: []
+      }
+      sensors: {
+        Row: {
+          id: string
+          device_id: string
+          label: string | null
+          pin_connection: string | null
+          source: string
+          tag: string
+        }
+        Insert: {
+          device_id: string
+          source: string
+        }
+        Update: {
+          label?: string | null
+          pin_connection?: string | null
+        }
+        Relationships: []
       }
       measurements: {
         Row: {
@@ -35,6 +82,9 @@ export type Database = {
           quality: string
           ts_source: string
         }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
       }
     }
     Views: {
@@ -49,6 +99,7 @@ export type Database = {
           sensor_label: string | null
           device_name: string
         }
+        Relationships: []
       }
       mv_measurements_hourly: {
         Row: {
@@ -59,6 +110,7 @@ export type Database = {
           max_value: number
           sample_count: number
         }
+        Relationships: []
       }
       mv_measurements_daily: {
         Row: {
@@ -69,6 +121,7 @@ export type Database = {
           max_value: number
           sample_count: number
         }
+        Relationships: []
       }
     }
     Functions: Record<string, never>

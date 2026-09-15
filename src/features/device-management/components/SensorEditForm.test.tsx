@@ -1,0 +1,59 @@
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+
+import type { SensorSummary } from '../domain/device'
+import { SensorEditForm } from './SensorEditForm'
+
+const sensor: SensorSummary = {
+  id: 'sensor-1',
+  label: 'Fridge temp',
+  pinConnection: 'GPIO4',
+  source: 'DHT22',
+  tag: '',
+}
+
+describe('SensorEditForm', () => {
+  it('submits label and pin_connection only (REQ-DM-3)', () => {
+    const onSave = vi.fn()
+    render(
+      <SensorEditForm
+        sensor={sensor}
+        onSave={onSave}
+        isSaving={false}
+        errorMessage={null}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText(/label/i), {
+      target: { value: 'Freezer temp' },
+    })
+    fireEvent.change(screen.getByLabelText(/pin/i), {
+      target: { value: 'GPIO7' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    expect(onSave).toHaveBeenCalledWith({
+      label: 'Freezer temp',
+      pin_connection: 'GPIO7',
+    })
+  })
+
+  it('sends null for a cleared label instead of an empty string', () => {
+    const onSave = vi.fn()
+    render(
+      <SensorEditForm
+        sensor={sensor}
+        onSave={onSave}
+        isSaving={false}
+        errorMessage={null}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText(/label/i), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ label: null }),
+    )
+  })
+})
