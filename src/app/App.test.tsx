@@ -22,6 +22,7 @@ vi.mock('../features/telemetry-history', () => ({
   HistoryContainer: ({ sensorId }: { sensorId: string }) => (
     <p>History for {sensorId}</p>
   ),
+  HistoryTitleContainer: () => <h1>Sensor history</h1>,
 }))
 vi.mock('../features/device-management', () => ({
   DeviceManagementContainer: () => <p>Device management</p>,

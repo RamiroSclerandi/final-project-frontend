@@ -1,6 +1,9 @@
 import { Link, useParams } from 'react-router-dom'
 
-import { HistoryContainer } from '../features/telemetry-history'
+import {
+  HistoryContainer,
+  HistoryTitleContainer,
+} from '../features/telemetry-history'
 
 /** Historical series route for one sensor (CA-2). */
 export function HistoryPage() {
@@ -12,7 +15,7 @@ export function HistoryPage() {
   return (
     <main className="flex min-h-screen flex-col gap-6 bg-slate-950 px-4 py-8 text-slate-100">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Sensor {sensorId} history</h1>
+        <HistoryTitleContainer sensorId={sensorId} />
         <Link to="/" className="text-sm text-slate-400">
           Back to dashboard
         </Link>
