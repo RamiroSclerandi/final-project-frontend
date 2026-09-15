@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 
+import { formatReadingValue } from '../domain/formatReadingValue'
 import type { LatestReading } from '../domain/reading'
 
 const QUALITY_LABELS: Record<'out_of_range' | 'suspect', string> = {
@@ -17,7 +18,7 @@ export function LatestReadingCard({ reading }: LatestReadingCardProps) {
     <article className="flex flex-col gap-1 rounded border border-slate-800 bg-slate-900 p-4">
       <h3 className="text-sm text-slate-400">{reading.deviceName}</h3>
       <p className="text-2xl font-semibold text-slate-100">
-        {reading.value}{' '}
+        {formatReadingValue(reading.value)}{' '}
         <span className="text-base text-slate-400">{reading.unit}</span>
       </p>
       <p className="text-xs text-slate-500">

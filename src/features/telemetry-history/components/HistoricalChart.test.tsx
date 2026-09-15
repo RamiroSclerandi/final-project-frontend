@@ -48,6 +48,24 @@ describe('HistoricalChart', () => {
     ).toBe(true)
   })
 
+  it('does not start the Y axis at zero when values sit well above it', () => {
+    const points: HistoricalPoint[] = [
+      { t: '2026-09-15T09:00:00Z', value: 20, quality: 'ok' },
+      { t: '2026-09-15T10:00:00Z', value: 21, quality: 'ok' },
+      { t: '2026-09-15T11:00:00Z', value: 22, quality: 'ok' },
+    ]
+    const { container } = render(
+      <HistoricalChart points={points} isLoading={false} />,
+    )
+    const yAxisTicks = Array.from(
+      container.querySelectorAll(
+        '.recharts-yAxis-tick-labels .recharts-cartesian-axis-tick-value',
+      ),
+    ).map((el) => el.textContent)
+    expect(yAxisTicks.length).toBeGreaterThan(0)
+    expect(yAxisTicks).not.toContain('0')
+  })
+
   it('renders a 5,000-point raw series without throwing (REQ-HS-4)', () => {
     const points: HistoricalPoint[] = Array.from({ length: 5000 }, (_, i) => ({
       t: new Date(Date.UTC(2026, 8, 15) + i * 15_000).toISOString(),

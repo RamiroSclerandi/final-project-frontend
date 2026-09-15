@@ -113,7 +113,7 @@ export function HistoricalChart({ points, isLoading }: HistoricalChartProps) {
       data={toChartData(points)}
     >
       <XAxis dataKey="t" tick={false} />
-      <YAxis />
+      <YAxis domain={['auto', 'auto']} />
       <Tooltip content={<HistoricalTooltip />} />
       <Area
         dataKey="range"

@@ -1,6 +1,6 @@
 {
   "remote": "https://github.com/RamiroSclerandi/proyecto-final-backend.git",
-  "commit": "846c5abc34872891640d442d5e4d4bc495b3ae25",
+  "commit": "b13d5a41f3a348a1128b365f435d7f7d40d5a050",
   "sparsePath": "supabase",
   "note": "Bump this commit deliberately after each backend migration this repo depends on (D-6). Never float to a branch tip automatically."
 }

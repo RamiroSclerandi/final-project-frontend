@@ -1,130 +1,476 @@
-/**
- * Placeholder generated-types module.
- *
- * The real file is produced by `pnpm gen:types` (see D-4 in the design),
- * which needs `SUPABASE_PROJECT_ID` and `SUPABASE_ACCESS_TOKEN` — CI-only
- * secrets that are not available in this environment. This hand-written
- * placeholder is NOT a generated file; it exists only so `createClient`
- * has a `Database` type to compile against. Run `pnpm gen:types` against
- * the deployed project and commit the result before relying on real
- * column types.
- *
- * `v_latest_readings` was added by hand for the telemetry-live feature,
- * declaring only the columns that feature selects — replace with the real
- * generated file, which will carry every column, once `gen:types` can run.
- * `devices` was added by hand the same way, for the node-health feature.
- * `measurements` and both matviews were added by hand for the
- * telemetry-history feature, same convention. `devices.Update` and
- * `sensors` were extended/added for device-management -- `Update` mirrors
- * the migration's column-scoped GRANTs exactly (REQ-DM-1/2/3), so a payload
- * outside the granted set fails to typecheck before it ever reaches PostgREST.
- *
- * Every table also carries `Insert`/`Update`/`Relationships` and every view
- * carries `Relationships`, even where this app never calls those methods:
- * supabase-js's `Database` generic only resolves at all when every table
- * satisfies `GenericTable` (all four fields) and every view satisfies at
- * least `Row`+`Relationships` -- one incomplete entry silently collapses the
- * WHOLE `Schema` type param to `never`, which is what surfaced here once
- * `.update()` was first used from this typed client. `measurements`' own
- * `Insert`/`Update` are `Record<string, never>` on purpose: the client must
- * never write to it (no insert policy, §7.1; REQ-RT-4).
- */
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
+      device_configs: {
+        Row: {
+          applied_at: string | null
+          device_id: string
+          requested_at: string
+          sampling_interval_ms: number
+          transmit_interval_ms: number | null
+        }
+        Insert: {
+          applied_at?: string | null
+          device_id: string
+          requested_at?: string
+          sampling_interval_ms?: number
+          transmit_interval_ms?: number | null
+        }
+        Update: {
+          applied_at?: string | null
+          device_id?: string
+          requested_at?: string
+          sampling_interval_ms?: number
+          transmit_interval_ms?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_configs_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: true
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_configs_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: true
+            referencedRelation: "v_latest_readings"
+            referencedColumns: ["device_id"]
+          },
+        ]
+      }
       devices: {
         Row: {
+          created_at: string
+          firmware_version: string | null
           id: string
-          name: string
-          status: boolean
           last_seen: string | null
-          mac_address: string
           location_ref: string | null
-          transport: string
-          provisioned: boolean
-        }
-        Insert: {
           mac_address: string
           name: string
-        }
-        Update: {
-          name?: string
-          location_ref?: string | null
-          transport?: string
-          provisioned?: boolean
-        }
-        Relationships: []
-      }
-      sensors: {
-        Row: {
-          id: string
-          device_id: string
-          label: string | null
-          pin_connection: string | null
-          source: string
-          tag: string
+          owner_id: string | null
+          provisioned: boolean
+          status: boolean
+          transport: string
         }
         Insert: {
-          device_id: string
-          source: string
+          created_at?: string
+          firmware_version?: string | null
+          id?: string
+          last_seen?: string | null
+          location_ref?: string | null
+          mac_address: string
+          name: string
+          owner_id?: string | null
+          provisioned?: boolean
+          status?: boolean
+          transport?: string
         }
         Update: {
-          label?: string | null
-          pin_connection?: string | null
+          created_at?: string
+          firmware_version?: string | null
+          id?: string
+          last_seen?: string | null
+          location_ref?: string | null
+          mac_address?: string
+          name?: string
+          owner_id?: string | null
+          provisioned?: boolean
+          status?: boolean
+          transport?: string
         }
         Relationships: []
       }
       measurements: {
         Row: {
-          sensor_id: string
-          value: number
-          timestamp: string
+          battery_level: number | null
+          boot: number | null
+          id: number
+          metadata: Json | null
           quality: string
+          rssi: number | null
+          sample_count: number | null
+          sensor_id: string
+          seq: number | null
+          timestamp: string
           ts_source: string
+          value: number
+          value_max: number | null
+          value_min: number | null
         }
-        Insert: Record<string, never>
-        Update: Record<string, never>
+        Insert: {
+          battery_level?: number | null
+          boot?: number | null
+          id?: never
+          metadata?: Json | null
+          quality?: string
+          rssi?: number | null
+          sample_count?: number | null
+          sensor_id: string
+          seq?: number | null
+          timestamp: string
+          ts_source?: string
+          value: number
+          value_max?: number | null
+          value_min?: number | null
+        }
+        Update: {
+          battery_level?: number | null
+          boot?: number | null
+          id?: never
+          metadata?: Json | null
+          quality?: string
+          rssi?: number | null
+          sample_count?: number | null
+          sensor_id?: string
+          seq?: number | null
+          timestamp?: string
+          ts_source?: string
+          value?: number
+          value_max?: number | null
+          value_min?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "measurements_sensor_id_fkey"
+            columns: ["sensor_id"]
+            isOneToOne: false
+            referencedRelation: "sensors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      raw_messages: {
+        Row: {
+          device_hint: string | null
+          error: string | null
+          id: number
+          payload: Json
+          processed: boolean
+          received_at: string
+          source: string
+          topic: string
+        }
+        Insert: {
+          device_hint?: string | null
+          error?: string | null
+          id?: never
+          payload: Json
+          processed?: boolean
+          received_at?: string
+          source: string
+          topic: string
+        }
+        Update: {
+          device_hint?: string | null
+          error?: string | null
+          id?: never
+          payload?: Json
+          processed?: boolean
+          received_at?: string
+          source?: string
+          topic?: string
+        }
         Relationships: []
+      }
+      sensor_types: {
+        Row: {
+          created_at: string
+          expected_max: number | null
+          expected_min: number | null
+          id: string
+          name: string
+          unit: string
+        }
+        Insert: {
+          created_at?: string
+          expected_max?: number | null
+          expected_min?: number | null
+          id?: string
+          name: string
+          unit: string
+        }
+        Update: {
+          created_at?: string
+          expected_max?: number | null
+          expected_min?: number | null
+          id?: string
+          name?: string
+          unit?: string
+        }
+        Relationships: []
+      }
+      sensors: {
+        Row: {
+          created_at: string
+          device_id: string
+          id: string
+          label: string | null
+          pin_connection: string | null
+          source: string
+          tag: string
+          type_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          id?: string
+          label?: string | null
+          pin_connection?: string | null
+          source: string
+          tag?: string
+          type_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          id?: string
+          label?: string | null
+          pin_connection?: string | null
+          source?: string
+          tag?: string
+          type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sensors_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sensors_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "v_latest_readings"
+            referencedColumns: ["device_id"]
+          },
+          {
+            foreignKeyName: "sensors_type_id_fkey"
+            columns: ["type_id"]
+            isOneToOne: false
+            referencedRelation: "sensor_types"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
-      v_latest_readings: {
+      mv_measurements_daily: {
         Row: {
-          sensor_id: string
-          value: number
-          timestamp: string
-          quality: string
-          channel: string
-          unit: string
-          sensor_label: string | null
-          device_name: string
+          avg_value: number | null
+          bucket: string | null
+          max_value: number | null
+          min_value: number | null
+          sample_count: number | null
+          sensor_id: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "measurements_sensor_id_fkey"
+            columns: ["sensor_id"]
+            isOneToOne: false
+            referencedRelation: "sensors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mv_measurements_hourly: {
         Row: {
-          sensor_id: string
-          bucket: string
-          avg_value: number
-          min_value: number
-          max_value: number
-          sample_count: number
+          avg_value: number | null
+          bucket: string | null
+          max_value: number | null
+          min_value: number | null
+          sample_count: number | null
+          sensor_id: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "measurements_sensor_id_fkey"
+            columns: ["sensor_id"]
+            isOneToOne: false
+            referencedRelation: "sensors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      mv_measurements_daily: {
+      v_latest_readings: {
         Row: {
-          sensor_id: string
-          bucket: string
-          avg_value: number
-          min_value: number
-          max_value: number
-          sample_count: number
+          battery_level: number | null
+          channel: string | null
+          device_id: string | null
+          device_name: string | null
+          device_online: boolean | null
+          location_ref: string | null
+          mac_address: string | null
+          quality: string | null
+          rssi: number | null
+          sensor_id: string | null
+          sensor_label: string | null
+          sensor_source: string | null
+          sensor_tag: string | null
+          timestamp: string | null
+          transport: string | null
+          unit: string | null
+          value: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "measurements_sensor_id_fkey"
+            columns: ["sensor_id"]
+            isOneToOne: false
+            referencedRelation: "sensors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
-    Functions: Record<string, never>
-    Enums: Record<string, never>
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
