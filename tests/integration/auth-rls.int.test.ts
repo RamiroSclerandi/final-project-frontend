@@ -112,4 +112,21 @@ describe('single-user-auth: authenticated read access (REQ-AUTH-4)', () => {
       expect(data).toEqual([])
     }
   })
+
+  // REQ-AUTH-3: the backend's config.toml sets enable_signup = false. The
+  // seeded user above proves the ONLY way an account is created is through
+  // the admin API (bypassing signup entirely); this test proves the client
+  // path a real attacker or a stray UI regression would use is rejected.
+  it('rejects a signUp attempt against the local stack (REQ-AUTH-3, enable_signup=false)', async () => {
+    const signupEmail = `auth-signup-disabled-${Date.now()}@example.com`
+
+    const { data, error } = await anonClient.auth.signUp({
+      email: signupEmail,
+      password: testPassword,
+    })
+
+    expect(error).not.toBeNull()
+    expect(data.user).toBeNull()
+    expect(data.session).toBeNull()
+  })
 })

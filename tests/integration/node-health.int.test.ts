@@ -32,7 +32,7 @@ function readLocalSupabaseStatus(): LocalSupabaseStatus {
   return JSON.parse(output) as LocalSupabaseStatus
 }
 
-describe('node-health: unknown-sensor detection and device status (REQ-RT-3, REQ-NH-1)', () => {
+describe('node-health: unknown-sensor detection and device status (REQ-RT-3, REQ-NH-1, REQ-NH-2)', () => {
   const status = readLocalSupabaseStatus()
 
   // No generic here, same reason as the other integration files: database.types.ts
@@ -42,6 +42,7 @@ describe('node-health: unknown-sensor detection and device status (REQ-RT-3, REQ
     status.SERVICE_ROLE_KEY,
   )
   const authenticatedClient = createClient(status.API_URL, status.ANON_KEY)
+  const anonClient = createClient(status.API_URL, status.ANON_KEY)
 
   const testEmail = `node-health-${Date.now()}@example.com`
   const testPassword = 'correct horse battery staple'
@@ -208,5 +209,50 @@ describe('node-health: unknown-sensor detection and device status (REQ-RT-3, REQ
     expect(payload.new.status).toBe(false)
 
     await authenticatedClient.removeChannel(channel)
+  })
+
+  // REQ-NH-2: raw_messages has RLS enabled with zero CREATE POLICY
+  // statements, so it must return an empty result to every client -- not an
+  // error, an empty set (D-9c's "no row leaks" shape, applied to a table
+  // instead of a view). Seeding a real row first is the point: without it,
+  // an empty result would prove nothing, since there would be nothing to
+  // leak either way.
+  it('returns raw_messages as empty for authenticated and anonymous clients despite a real row existing (REQ-NH-2)', async () => {
+    const { data: seeded, error: seedError } = await serviceRoleClient
+      .from('raw_messages')
+      .insert({
+        topic: 'dl/v1/EE77FF88AA99/data',
+        payload: { value: 1 },
+        source: 'hivemq',
+      })
+      .select('id')
+      .single()
+    if (seedError || !seeded) {
+      throw new Error(
+        `Failed to seed a raw_messages row: ${seedError?.message}`,
+      )
+    }
+    const seededId = (seeded as { id: number }).id
+
+    try {
+      const authenticated = await authenticatedClient
+        .from('raw_messages')
+        .select('id')
+        .eq('id', seededId)
+      expect(authenticated.error).toBeNull()
+      expect(authenticated.data).toEqual([])
+
+      const anon = await anonClient
+        .from('raw_messages')
+        .select('id')
+        .eq('id', seededId)
+      if (anon.error) {
+        expect(anon.error).not.toBeNull()
+      } else {
+        expect(anon.data).toEqual([])
+      }
+    } finally {
+      await serviceRoleClient.from('raw_messages').delete().eq('id', seededId)
+    }
   })
 })
