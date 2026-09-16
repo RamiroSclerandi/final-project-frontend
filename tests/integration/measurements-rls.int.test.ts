@@ -233,8 +233,19 @@ describe('realtime-telemetry: measurements RLS (REQ-AUTH-4, REQ-HS-5/6, REQ-RT-4
       config: { postgres_changes_options: { wait: true } },
     })
 
+    // Filtering on sensor_id alone is not enough: the beforeAll seed insert
+    // targets this same sensor, and its WAL-replicated event can arrive
+    // after SUBSCRIBED under load, matching the filter with the seed's
+    // value (21.5) instead of the row this test inserts below (42.5).
+    // Matching on that exact value too -- known upfront, unlike a
+    // server-generated id, so there is no window where a genuine event
+    // could arrive before the identity to match it against exists -- makes
+    // the wait unambiguous. Any other event on the channel is ignored, not
+    // treated as a match or a failure.
+    const insertedValue = 42.5
+
     const delivered = new Promise<{
-      new: { sensor_id: string; value: number }
+      new: { id: number; sensor_id: string; value: number }
     }>((resolve, reject) => {
       const timer = setTimeout(
         () => reject(new Error('Timed out waiting for the realtime INSERT')),
@@ -244,11 +255,21 @@ describe('realtime-telemetry: measurements RLS (REQ-AUTH-4, REQ-HS-5/6, REQ-RT-4
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'measurements' },
         (payload) => {
-          const row = payload.new as { sensor_id: string; value: number }
-          if (row.sensor_id === createdSensorId) {
+          const row = payload.new as {
+            id: number
+            sensor_id: string
+            value: number
+          }
+          if (
+            row.sensor_id === createdSensorId &&
+            row.value === insertedValue
+          ) {
             clearTimeout(timer)
             resolve({ new: row })
           }
+          // Any other event (e.g. the beforeAll seed's delayed WAL
+          // replication) is ignored -- it is not the row this test cares
+          // about, so it must not resolve or reject the wait.
         },
       )
     })
@@ -267,24 +288,28 @@ describe('realtime-telemetry: measurements RLS (REQ-AUTH-4, REQ-HS-5/6, REQ-RT-4
     })
 
     const t0 = performance.now()
-    const { error: insertError } = await serviceRoleClient
+    const { data: insertedRow, error: insertError } = await serviceRoleClient
       .from('measurements')
       .insert({
         sensor_id: createdSensorId as string,
-        value: 42.5,
+        value: insertedValue,
         timestamp: new Date().toISOString(),
       })
-    if (insertError) {
+      .select('id')
+      .single()
+    if (insertError || !insertedRow) {
       throw new Error(
-        `Failed to insert via service role: ${insertError.message}`,
+        `Failed to insert via service role: ${insertError?.message}`,
       )
     }
+    const insertedMeasurementId = (insertedRow as { id: number }).id
 
     const payload = await delivered
     const elapsedMs = performance.now() - t0
 
+    expect(payload.new.id).toBe(insertedMeasurementId)
     expect(payload.new.sensor_id).toBe(createdSensorId)
-    expect(payload.new.value).toBe(42.5)
+    expect(payload.new.value).toBe(insertedValue)
     expect(elapsedMs).toBeLessThan(2000)
 
     await authenticatedClient.removeChannel(channel)
