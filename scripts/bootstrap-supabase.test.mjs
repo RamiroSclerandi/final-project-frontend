@@ -2,6 +2,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   rmSync,
   writeFileSync,
 } from 'node:fs'
@@ -13,6 +14,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import {
   ensureRequiredEmptyDirectories,
   validateBackendSentinels,
+  writeMqttTestEnv,
 } from './bootstrap-supabase.mjs'
 
 const VALID_CONFIG_TOML = 'enable_signup = false\n'
@@ -103,6 +105,25 @@ describe('validateBackendSentinels', () => {
     writeFixture()
 
     expect(() => validateBackendSentinels(backendRoot)).not.toThrow()
+  })
+})
+
+describe('writeMqttTestEnv', () => {
+  // The RC-8 broker test needs the Edge Function to see a full MQTT_WS_URL
+  // pointing at the mosquitto container by name, never a real credential.
+  it('writes MQTT_WS_URL pointing at the mosquitto container and throwaway credentials', () => {
+    backendRoot = mkdtempSync(join(tmpdir(), 'bootstrap-supabase-'))
+    mkdirSync(join(backendRoot, 'supabase', 'functions'), { recursive: true })
+
+    writeMqttTestEnv(backendRoot)
+
+    const content = readFileSync(
+      join(backendRoot, 'supabase', 'functions', '.env'),
+      'utf8',
+    )
+    expect(content).toContain('MQTT_WS_URL=ws://mosquitto:9001')
+    expect(content).toContain('MQTT_USER=test')
+    expect(content).toContain('MQTT_PASSWORD=test')
   })
 })
 

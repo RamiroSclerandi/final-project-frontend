@@ -78,8 +78,15 @@ jobs:
         working-directory: .supabase-backend
         run: supabase start
 
+      - name: Start the REQ-RC-8 test broker
+        run: node scripts/test-broker.mjs start
+
       - name: Integration tests
         run: pnpm test:integration
+
+      - name: Stop the REQ-RC-8 test broker
+        if: always()
+        run: node scripts/test-broker.mjs stop
 
   types-drift:
     name: Types drift
