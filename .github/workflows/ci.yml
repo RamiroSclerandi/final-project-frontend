@@ -81,14 +81,6 @@ jobs:
       - name: Start the REQ-RC-8 test broker
         run: node scripts/test-broker.mjs start
 
-      # Throwaway: confirms the edge-runtime container can reach the broker
-      # by container name on GitHub's Docker Engine runner (the local Podman
-      # spike, obs #383, does not transfer to Docker). Removed once green.
-      - name: Probe edge-runtime -> broker reachability
-        run: |
-          docker exec supabase_edge_runtime_proyecto-final-backend \
-            bash -c '(exec 3<>/dev/tcp/mosquitto/9001 && echo PROBE-OK) || echo PROBE-FAIL'
-
       - name: Integration tests
         run: pnpm test:integration
 
