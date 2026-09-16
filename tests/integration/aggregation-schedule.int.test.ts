@@ -22,13 +22,32 @@ interface SqlQueryResult<T> {
   rows: T[]
 }
 
+function hasRows<T>(value: unknown): value is SqlQueryResult<T> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    Array.isArray((value as { rows?: unknown }).rows)
+  )
+}
+
+// `supabase db query --output-format json` wraps rows in `{ rows, boundary,
+// warning }` on some platforms and returns a bare array on others (observed
+// difference between this repo's local Windows runs and the Linux CI
+// runner, same CLI version). Accept either shape rather than assume one.
 function queryLocalDb<T>(sql: string): T[] {
   const output = execFileSync(
     'supabase',
     ['db', 'query', sql, '--local', '--output-format', 'json'],
     { cwd: BACKEND_DIR, encoding: 'utf8' },
   )
-  return (JSON.parse(output) as SqlQueryResult<T>).rows
+  const parsed: unknown = JSON.parse(output)
+  if (Array.isArray(parsed)) {
+    return parsed as T[]
+  }
+  if (hasRows<T>(parsed)) {
+    return parsed.rows
+  }
+  throw new Error(`Unexpected "supabase db query" output shape: ${output}`)
 }
 
 describe('aggregation-schedule: pg_cron and refresh jobs (REQ-AGG-1, REQ-AGG-2, REQ-AGG-3)', () => {
