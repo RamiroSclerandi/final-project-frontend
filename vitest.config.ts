@@ -9,6 +9,12 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
-    exclude: [...configDefaults.exclude, 'tests/integration/**'],
+    exclude: [
+      ...configDefaults.exclude,
+      'tests/integration/**',
+      // Deno test files from the sparse-checked-out backend (D-6); they use
+      // Deno.test, not Vitest, and must never be swept into this run.
+      '.supabase-backend/**',
+    ],
   },
 })

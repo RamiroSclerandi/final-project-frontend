@@ -7,7 +7,13 @@
 // missing the thing it claims to prove (threat matrix: git repository selection).
 
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { dirname, join } from 'node:path'
 
@@ -90,6 +96,23 @@ export function ensureRequiredEmptyDirectories(backendRoot) {
   }
 }
 
+/**
+ * Points the Edge Function's MQTT_WS_URL at the throwaway test broker
+ * (`scripts/test-broker.mjs`) by container name, so `supabase start`'s
+ * edge-runtime container reaches it over the network they share (REQ-RC-8).
+ * Never a real broker credential -- mosquitto runs with anonymous access.
+ */
+export function writeMqttTestEnv(backendRoot) {
+  const envPath = join(backendRoot, 'supabase', 'functions', '.env')
+  const content = [
+    'MQTT_WS_URL=ws://mosquitto:9001',
+    'MQTT_USER=test',
+    'MQTT_PASSWORD=test',
+    '',
+  ].join('\n')
+  writeFileSync(envPath, content)
+}
+
 function readLockFile() {
   if (!existsSync(LOCK_FILE)) {
     throw new Error(
@@ -133,6 +156,7 @@ function main() {
   const lock = readLockFile()
   sparseCheckoutBackend(lock)
   ensureRequiredEmptyDirectories(CHECKOUT_DIR)
+  writeMqttTestEnv(CHECKOUT_DIR)
   validateBackendSentinels(CHECKOUT_DIR)
   console.log('bootstrap-supabase: backend contract verified.')
 }
