@@ -93,6 +93,25 @@ describe('HistoryContainer', () => {
     expect(screen.getByRole('status')).toHaveTextContent(/provisional/i)
   })
 
+  it('shows the provisional banner from the raw last point above the chart point budget (REQ-HS-4)', () => {
+    const points: HistoricalPoint[] = Array.from({ length: 5000 }, (_, i) => ({
+      t: new Date(Date.UTC(2026, 8, 15) + i * 15_000).toISOString(),
+      value: 20 + (i % 3),
+      quality: 'ok',
+    }))
+    points.push({
+      t: new Date(Date.UTC(2026, 8, 15) + 5000 * 15_000).toISOString(),
+      value: 30,
+      quality: 'ok',
+      partial: true,
+    })
+    useHistoricalSeriesMock.mockReturnValue(baseResult(points))
+
+    render(<HistoryContainer sensorId={SENSOR_ID} />)
+
+    expect(screen.getByRole('status')).toHaveTextContent(/provisional/i)
+  })
+
   it('re-queries the hook with a new range when a preset is picked', () => {
     render(<HistoryContainer sensorId={SENSOR_ID} />)
 

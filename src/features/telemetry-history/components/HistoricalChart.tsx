@@ -1,9 +1,14 @@
+import { useMemo } from 'react'
 import { Area, ComposedChart, Line, Tooltip, XAxis, YAxis } from 'recharts'
 
+import { downsampleLTTB } from '../domain/downsample'
 import type { HistoricalPoint } from '../domain/historicalPoint'
 
 const CHART_WIDTH = 800
 const CHART_HEIGHT = 320
+
+/** REQ-HS-4: rendering budget -- downsampling applies only at this boundary. */
+export const CHART_POINT_BUDGET = 5000
 
 interface ChartDatum {
   t: string
@@ -99,6 +104,11 @@ export interface HistoricalChartProps {
  * so it mounts synchronously in both the browser and jsdom tests.
  */
 export function HistoricalChart({ points, isLoading }: HistoricalChartProps) {
+  const chartData = useMemo(
+    () => toChartData(downsampleLTTB(points, CHART_POINT_BUDGET)),
+    [points],
+  )
+
   if (isLoading) {
     return <p className="text-slate-400">Loading chart…</p>
   }
@@ -107,11 +117,7 @@ export function HistoricalChart({ points, isLoading }: HistoricalChartProps) {
   }
 
   return (
-    <ComposedChart
-      width={CHART_WIDTH}
-      height={CHART_HEIGHT}
-      data={toChartData(points)}
-    >
+    <ComposedChart width={CHART_WIDTH} height={CHART_HEIGHT} data={chartData}>
       <XAxis dataKey="t" tick={false} />
       <YAxis domain={['auto', 'auto']} />
       <Tooltip content={<HistoricalTooltip />} />

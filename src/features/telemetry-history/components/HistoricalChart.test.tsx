@@ -2,7 +2,11 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 import type { HistoricalPoint } from '../domain/historicalPoint'
-import { HistoricalChart, HistoricalTooltip } from './HistoricalChart'
+import {
+  CHART_POINT_BUDGET,
+  HistoricalChart,
+  HistoricalTooltip,
+} from './HistoricalChart'
 
 const basePoints: HistoricalPoint[] = [
   { t: '2026-09-15T09:00:00Z', value: 20, quality: 'ok' },
@@ -83,10 +87,10 @@ describe('HistoricalChart', () => {
     )
   })
 
-  it('the densest in-scope range (24h raw at 15s) exceeds the 5,000-point budget, tracked as a follow-up (D-8)', () => {
+  it('downsamples the densest in-scope range (24h raw at 15s) to stay within the chart point budget (REQ-HS-4, D-8)', () => {
     const densestRawPointCount = (24 * 60 * 60) / 15
     expect(densestRawPointCount).toBe(5760)
-    expect(densestRawPointCount).toBeGreaterThan(5000)
+    expect(densestRawPointCount).toBeGreaterThan(CHART_POINT_BUDGET)
 
     const points: HistoricalPoint[] = Array.from(
       { length: densestRawPointCount },
@@ -99,7 +103,11 @@ describe('HistoricalChart', () => {
     const { container } = render(
       <HistoricalChart points={points} isLoading={false} />,
     )
-    expect(container.querySelector('svg')).not.toBeNull()
+    const linePath = container.querySelector('.recharts-line-curve')
+    expect(linePath).not.toBeNull()
+    const segmentCount =
+      (linePath?.getAttribute('d') ?? '').split('L').length - 1
+    expect(segmentCount).toBeLessThanOrEqual(CHART_POINT_BUDGET)
   })
 })
 
