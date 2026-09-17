@@ -160,19 +160,21 @@ describe('node-health: unknown-sensor detection and device status (REQ-RT-3, REQ
       config: { postgres_changes_options: { wait: true } },
     })
 
+    // The handler must be registered before `subscribe()` (bindings travel in
+    // the join payload), but the delivery budget is armed only once the
+    // channel is SUBSCRIBED: on the first join after `supabase start` the
+    // server lazily connects to the tenant database and starts replication,
+    // and with `wait: true` it holds the join `ok` until the postgres_changes
+    // subscription is confirmed -- ~6 s on this host, which used to consume
+    // the delivery budget before the UPDATE was even issued.
     const delivered = new Promise<{ new: { id: string; status: boolean } }>(
-      (resolve, reject) => {
-        const timer = setTimeout(
-          () => reject(new Error('Timed out waiting for the realtime UPDATE')),
-          5000,
-        )
+      (resolve) => {
         channel.on(
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'devices' },
           (payload) => {
             const row = payload.new as { id: string; status: boolean }
             if (row.id === createdDeviceId) {
-              clearTimeout(timer)
               resolve({ new: row })
             }
           },
@@ -180,15 +182,23 @@ describe('node-health: unknown-sensor detection and device status (REQ-RT-3, REQ
       },
     )
 
+    // The SDK owns the join budget (DEFAULT_POSTGRES_CHANGES_WAIT_TIMEOUT
+    // plus grace) and reports a failed join through its own statuses.
     await new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error('Channel never reached SUBSCRIBED')),
-        5000,
-      )
-      channel.subscribe((subscribeStatus) => {
+      channel.subscribe((subscribeStatus, subscribeError) => {
         if (subscribeStatus === 'SUBSCRIBED') {
-          clearTimeout(timer)
           resolve()
+          return
+        }
+        if (
+          subscribeStatus === 'CHANNEL_ERROR' ||
+          subscribeStatus === 'TIMED_OUT'
+        ) {
+          reject(
+            new Error(
+              `Channel failed to subscribe (${subscribeStatus}): ${subscribeError?.message ?? 'no details'}`,
+            ),
+          )
         }
       })
     })
@@ -203,7 +213,16 @@ describe('node-health: unknown-sensor detection and device status (REQ-RT-3, REQ
       )
     }
 
-    const payload = await delivered
+    let deliveryTimer: ReturnType<typeof setTimeout> | undefined
+    const payload = await Promise.race([
+      delivered,
+      new Promise<never>((_, reject) => {
+        deliveryTimer = setTimeout(
+          () => reject(new Error('Timed out waiting for the realtime UPDATE')),
+          5000,
+        )
+      }),
+    ]).finally(() => clearTimeout(deliveryTimer))
 
     expect(payload.new.id).toBe(createdDeviceId)
     expect(payload.new.status).toBe(false)
