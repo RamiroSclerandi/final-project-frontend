@@ -10,6 +10,8 @@ export interface DeviceListProps {
   onSaveSensor: (sensorId: string, update: SensorUpdate) => void
   savingDeviceId: string | null
   savingSensorId: string | null
+  errorDeviceId: string | null
+  errorSensorId: string | null
   errorMessage: string | null
 }
 
@@ -20,6 +22,8 @@ export function DeviceList({
   onSaveSensor,
   savingDeviceId,
   savingSensorId,
+  errorDeviceId,
+  errorSensorId,
   errorMessage,
 }: DeviceListProps) {
   if (devices.length === 0) {
@@ -37,7 +41,7 @@ export function DeviceList({
             device={device}
             onSave={(update) => onSaveDevice(device.id, update)}
             isSaving={savingDeviceId === device.id}
-            errorMessage={savingDeviceId === device.id ? errorMessage : null}
+            errorMessage={errorDeviceId === device.id ? errorMessage : null}
           />
           <ul className="mt-3 flex flex-col gap-2 border-t border-slate-800 pt-3">
             {device.sensors.map((sensor) => (
@@ -47,7 +51,7 @@ export function DeviceList({
                   onSave={(update) => onSaveSensor(sensor.id, update)}
                   isSaving={savingSensorId === sensor.id}
                   errorMessage={
-                    savingSensorId === sensor.id ? errorMessage : null
+                    errorSensorId === sensor.id ? errorMessage : null
                   }
                 />
               </li>

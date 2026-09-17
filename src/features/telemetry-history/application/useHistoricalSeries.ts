@@ -31,7 +31,10 @@ async function fetchGranularSeries(
   }
 
   if (granularity === 'hourly') {
-    const aggregatePoints = await fetchHourlyAggregate(sensorId, fromIso, toIso)
+    const [aggregatePoints, latestRaw] = await Promise.all([
+      fetchHourlyAggregate(sensorId, fromIso, toIso),
+      fetchLatestMeasurement(sensorId),
+    ])
     const lastBucket = aggregatePoints.at(-1)?.t ?? null
     const rawTail = lastBucket
       ? await fetchRawMeasurements(sensorId, lastBucket, toIso)
@@ -40,18 +43,24 @@ async function fetchGranularSeries(
       points: mergeHourlyTail(aggregatePoints, rawTail),
       aggregationStale: isAggregationStale(
         lastBucket,
-        new Date(toIso),
+        latestRaw?.t ?? null,
         'hourly',
       ),
     }
   }
 
-  const aggregatePoints = await fetchDailyAggregate(sensorId, fromIso, toIso)
+  const [aggregatePoints, latestRaw] = await Promise.all([
+    fetchDailyAggregate(sensorId, fromIso, toIso),
+    fetchLatestMeasurement(sensorId),
+  ])
   const lastBucket = aggregatePoints.at(-1)?.t ?? null
-  const latestRaw = await fetchLatestMeasurement(sensorId)
   return {
     points: mergeDailyTail(aggregatePoints, latestRaw),
-    aggregationStale: isAggregationStale(lastBucket, new Date(toIso), 'daily'),
+    aggregationStale: isAggregationStale(
+      lastBucket,
+      latestRaw?.t ?? null,
+      'daily',
+    ),
   }
 }
 
