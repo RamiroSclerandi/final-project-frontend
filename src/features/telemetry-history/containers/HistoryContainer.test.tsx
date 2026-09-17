@@ -110,7 +110,9 @@ describe('HistoryContainer', () => {
     render(<HistoryContainer sensorId={SENSOR_ID} />)
 
     expect(screen.getByRole('status')).toHaveTextContent(/provisional/i)
-  })
+    // Renders the real chart (LTTB + Recharts SVG) in jsdom, which can exceed
+    // the default 5 s timeout under full-suite contention.
+  }, 15_000)
 
   it('re-queries the hook with a new range when a preset is picked', () => {
     render(<HistoryContainer sensorId={SENSOR_ID} />)

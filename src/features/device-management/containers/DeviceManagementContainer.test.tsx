@@ -97,4 +97,45 @@ describe('DeviceManagementContainer', () => {
 
     expect(screen.getByRole('alert')).toBeInTheDocument()
   })
+
+  it('shows an error for the sensor whose update failed, after isPending settles to false', () => {
+    useDevicesMock.mockReturnValue({
+      data: [
+        {
+          id: 'device-1',
+          macAddress: 'AABBCCDDEEFF',
+          name: 'Kitchen node',
+          locationRef: null,
+          transport: 'wifi-mqtt',
+          provisioned: true,
+          sensors: [
+            {
+              id: 'sensor-1',
+              label: 'Fridge temp',
+              pinConnection: null,
+              source: 'DHT22',
+              tag: '',
+            },
+          ],
+        },
+      ],
+      isLoading: false,
+    })
+    useUpdateDeviceMock.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+      isError: false,
+    })
+    useUpdateSensorMock.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+      isError: true,
+      error: new Error('boom'),
+      variables: { sensorId: 'sensor-1', update: { label: 'Fridge temp' } },
+    })
+
+    render(<DeviceManagementContainer />)
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+  })
 })
