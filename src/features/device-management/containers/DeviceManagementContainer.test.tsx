@@ -64,4 +64,37 @@ describe('DeviceManagementContainer', () => {
 
     expect(screen.getByDisplayValue('Kitchen node')).toBeInTheDocument()
   })
+
+  it('shows an error for the device whose update failed, after isPending settles to false', () => {
+    useDevicesMock.mockReturnValue({
+      data: [
+        {
+          id: 'device-1',
+          macAddress: 'AABBCCDDEEFF',
+          name: 'Kitchen node',
+          locationRef: null,
+          transport: 'wifi-mqtt',
+          provisioned: true,
+          sensors: [],
+        },
+      ],
+      isLoading: false,
+    })
+    useUpdateDeviceMock.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+      isError: true,
+      error: new Error('boom'),
+      variables: { deviceId: 'device-1', update: { name: 'Kitchen node' } },
+    })
+    useUpdateSensorMock.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+      isError: false,
+    })
+
+    render(<DeviceManagementContainer />)
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+  })
 })

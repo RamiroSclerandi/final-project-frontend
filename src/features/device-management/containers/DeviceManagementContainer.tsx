@@ -14,6 +14,19 @@ export function DeviceManagementContainer() {
     return <p className="text-slate-400">Loading devices…</p>
   }
 
+  const attemptedDeviceId = updateDeviceMutation.variables?.deviceId ?? null
+  const attemptedSensorId = updateSensorMutation.variables?.sensorId ?? null
+
+  const savingDeviceId = updateDeviceMutation.isPending
+    ? attemptedDeviceId
+    : null
+  const savingSensorId = updateSensorMutation.isPending
+    ? attemptedSensorId
+    : null
+
+  const errorDeviceId = updateDeviceMutation.isError ? attemptedDeviceId : null
+  const errorSensorId = updateSensorMutation.isError ? attemptedSensorId : null
+
   const errorMessage =
     updateDeviceMutation.isError || updateSensorMutation.isError
       ? toSafeUpdateErrorMessage(
@@ -30,16 +43,10 @@ export function DeviceManagementContainer() {
       onSaveSensor={(sensorId, update) =>
         updateSensorMutation.mutate({ sensorId, update })
       }
-      savingDeviceId={
-        updateDeviceMutation.isPending
-          ? (updateDeviceMutation.variables?.deviceId ?? null)
-          : null
-      }
-      savingSensorId={
-        updateSensorMutation.isPending
-          ? (updateSensorMutation.variables?.sensorId ?? null)
-          : null
-      }
+      savingDeviceId={savingDeviceId}
+      savingSensorId={savingSensorId}
+      errorDeviceId={errorDeviceId}
+      errorSensorId={errorSensorId}
       errorMessage={errorMessage}
     />
   )
