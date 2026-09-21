@@ -1,16 +1,19 @@
 import { useEffect, useState, type ReactNode } from 'react'
 
 import { readStorageItem, writeStorageItem } from '../../lib/storage'
-import { ThemeContext, type Theme } from './ThemeContext'
-
-const STORAGE_KEY = 'ui.theme.v1'
+import {
+  DEFAULT_THEME,
+  THEME_STORAGE_KEY,
+  ThemeContext,
+  type Theme,
+} from './ThemeContext'
 
 function readInitialTheme(initialTheme?: Theme): Theme {
   if (initialTheme) {
     return initialTheme
   }
-  const stored = readStorageItem(STORAGE_KEY)
-  return stored === 'light' || stored === 'dark' ? stored : 'dark'
+  const stored = readStorageItem(THEME_STORAGE_KEY)
+  return stored === 'light' || stored === 'dark' ? stored : DEFAULT_THEME
 }
 
 /**
@@ -31,7 +34,7 @@ export function ThemeProvider({
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
-    writeStorageItem(STORAGE_KEY, theme)
+    writeStorageItem(THEME_STORAGE_KEY, theme)
   }, [theme])
 
   return (
