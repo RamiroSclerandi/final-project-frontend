@@ -5,4 +5,20 @@ import type { Dictionary } from '../dictionary'
  * key is a compile error; `dictionaries.parity.test.ts` is the runtime
  * regression guard for the same invariant.
  */
-export const es: Dictionary = {}
+export const es: Dictionary = {
+  shell: {
+    locale: {
+      label: 'Idioma',
+      es: 'Español',
+      en: 'English',
+    },
+    theme: {
+      toggle: 'Cambiar tema',
+    },
+  },
+  status: {
+    online: 'En línea',
+    offline: 'Desconectado',
+    unknown: 'Desconocido',
+  },
+}
