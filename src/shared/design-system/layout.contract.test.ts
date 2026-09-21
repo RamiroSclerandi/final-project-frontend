@@ -1,0 +1,138 @@
+import { describe, expect, it } from 'vitest'
+
+import { collectSourceFiles, type SourceFile } from '../test/collectSourceFiles'
+
+type LayoutRule = 'fixed-width' | 'chart-width-constant' | 'js-breakpoint'
+
+interface LayoutFinding {
+  file: string
+  line: number
+  match: string
+  rule: LayoutRule
+}
+
+const FIXED_WIDTH_PATTERN = /\b(?:min-)?w-\[(\d+)px\]/g
+const CHART_WIDTH_PATTERN = /\bCHART_WIDTH\b/g
+const JS_BREAKPOINT_PATTERN = /\bmatchMedia\b|\bwindow\.innerWidth\b/g
+const MAX_FIXED_WIDTH_PX = 320
+
+/**
+ * Scans source text for layout patterns that break mobile-first, CSS-only
+ * responsiveness (REQ-MOBILE-1, REQ-MOBILE-2): a fixed-pixel width class
+ * wider than the smallest supported viewport, a `CHART_WIDTH`-style
+ * constant, or JS reading `matchMedia`/`window.innerWidth` to drive layout.
+ * Kept inline in this test file (no separate production module) per the
+ * design's "node:fs + TypeScript compiler API, zero deps" testing strategy.
+ */
+function findLayoutViolations(sources: SourceFile[]): LayoutFinding[] {
+  const findings: LayoutFinding[] = []
+
+  for (const { file, text } of sources) {
+    text.split('\n').forEach((line, index) => {
+      for (const match of line.matchAll(FIXED_WIDTH_PATTERN)) {
+        if (Number(match[1]) > MAX_FIXED_WIDTH_PX) {
+          findings.push({
+            file,
+            line: index + 1,
+            match: match[0],
+            rule: 'fixed-width',
+          })
+        }
+      }
+      for (const match of line.matchAll(CHART_WIDTH_PATTERN)) {
+        findings.push({
+          file,
+          line: index + 1,
+          match: match[0],
+          rule: 'chart-width-constant',
+        })
+      }
+      for (const match of line.matchAll(JS_BREAKPOINT_PATTERN)) {
+        findings.push({
+          file,
+          line: index + 1,
+          match: match[0],
+          rule: 'js-breakpoint',
+        })
+      }
+    })
+  }
+
+  return findings
+}
+
+describe('findLayoutViolations', () => {
+  it('flags a fixed-pixel width class over 320px', () => {
+    const findings = findLayoutViolations([
+      { file: 'Example.tsx', text: 'className="w-[400px]"' },
+    ])
+
+    expect(findings).toEqual([
+      { file: 'Example.tsx', line: 1, match: 'w-[400px]', rule: 'fixed-width' },
+    ])
+  })
+
+  it('does not flag a fixed-pixel width at or under 320px', () => {
+    const findings = findLayoutViolations([
+      { file: 'Example.tsx', text: 'className="min-w-[320px]"' },
+    ])
+
+    expect(findings).toEqual([])
+  })
+
+  it('flags a CHART_WIDTH-style constant', () => {
+    const findings = findLayoutViolations([
+      { file: 'Example.tsx', text: 'const CHART_WIDTH = 800' },
+    ])
+
+    expect(findings).toEqual([
+      {
+        file: 'Example.tsx',
+        line: 1,
+        match: 'CHART_WIDTH',
+        rule: 'chart-width-constant',
+      },
+    ])
+  })
+
+  it('flags matchMedia and window.innerWidth usage', () => {
+    const findings = findLayoutViolations([
+      {
+        file: 'Example.tsx',
+        text: 'if (window.matchMedia("(min-width: 768px)").matches) {}',
+      },
+      { file: 'Other.tsx', text: 'const w = window.innerWidth' },
+    ])
+
+    expect(findings).toEqual([
+      {
+        file: 'Example.tsx',
+        line: 1,
+        match: 'matchMedia',
+        rule: 'js-breakpoint',
+      },
+      {
+        file: 'Other.tsx',
+        line: 1,
+        match: 'window.innerWidth',
+        rule: 'js-breakpoint',
+      },
+    ])
+  })
+})
+
+// REQ-MOBILE-1/REQ-MOBILE-2: no fixed-pixel layout shell over 320px, no
+// `CHART_WIDTH`-style constant, and no JS-driven breakpoint logic. Scope
+// starts at the shared design system; `features/*/components` and
+// `src/pages` are added here only as each surface drops its legacy fixed
+// widths / `CHART_WIDTH` (see apply-progress -- `HistoricalChart.tsx` still
+// declares `CHART_WIDTH` until PR-8).
+const SCANNED_ROOTS = ['src/shared/design-system']
+
+describe('layout contract', () => {
+  it('finds zero layout violations under the scanned roots', () => {
+    const sources = collectSourceFiles(SCANNED_ROOTS, '.tsx')
+
+    expect(findLayoutViolations(sources)).toEqual([])
+  })
+})

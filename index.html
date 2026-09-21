@@ -5,6 +5,20 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Telemetry Dashboard</title>
+    <script>
+      // Applies the stored theme before the first paint so the page never
+      // flashes the default one. ThemeProvider owns it from mount onwards;
+      // src/shared/design-system/theme/ThemeContext.ts holds the shared
+      // constants and a contract test fails if these copies drift.
+      try {
+        var storedTheme = localStorage.getItem('ui.theme.v1')
+        document.documentElement.dataset.theme =
+          storedTheme === 'light' ? 'light' : 'dark'
+      } catch (error) {
+        // Site data can be blocked; the default theme still has to apply.
+        document.documentElement.dataset.theme = 'dark'
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
