@@ -37,6 +37,18 @@ describe('translate', () => {
     )
   })
 
+  it('throws when a plural key is used without a numeric count outside production', () => {
+    expect(() => translate(fixture, 'en', 'fleet.kpi.nodes')).toThrow(
+      /plural key.*numeric "count"/,
+    )
+  })
+
+  it('falls back to the other form for a countless plural key in production', () => {
+    vi.stubEnv('MODE', 'production')
+
+    expect(translate(fixture, 'en', 'fleet.kpi.nodes')).toBe('{count} nodes')
+  })
+
   it('throws on an unknown key outside production', () => {
     expect(() => translate(fixture, 'en', 'nope.missing')).toThrow(
       /Missing translation "nope.missing"/,

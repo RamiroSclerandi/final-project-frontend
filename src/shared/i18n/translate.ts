@@ -48,6 +48,25 @@ function resolveMissingKey(key: string, locale: Locale): string {
 }
 
 /**
+ * A plural key rendered without a count silently picks a form that may not
+ * match the number beside it, so it fails loudly while developing and degrades
+ * to the plural form in production rather than blanking the screen.
+ */
+function resolveMissingCount(
+  node: PluralNode,
+  key: string,
+  locale: Locale,
+  params?: TranslationParams,
+): string {
+  if (import.meta.env.MODE === 'production') {
+    return interpolate(node.other, params)
+  }
+  throw new Error(
+    `Translation "${key}" for "${locale}" is a plural key; pass a numeric "count" param`,
+  )
+}
+
+/**
  * Resolves `key` (a dot-path) against `dictionary`, interpolating `{param}`
  * placeholders and selecting a plural form when the leaf is a `{ one, other
  * }` node and `params.count` is a number (D9, REQ-I18N-2).
@@ -69,9 +88,11 @@ export function translate<Dict extends object>(
   }
 
   if (isPluralNode(node)) {
-    const count = typeof params?.count === 'number' ? params.count : undefined
-    const form = count === undefined ? 'other' : selectPluralForm(locale, count)
-    return interpolate(node[form], params)
+    const count = params?.count
+    if (typeof count !== 'number') {
+      return resolveMissingCount(node, key, locale, params)
+    }
+    return interpolate(node[selectPluralForm(locale, count)], params)
   }
 
   return resolveMissingKey(key, locale)
