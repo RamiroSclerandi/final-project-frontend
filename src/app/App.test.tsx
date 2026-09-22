@@ -1,5 +1,10 @@
-import { render, screen } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import { render, screen, within } from '@testing-library/react'
+import {
+  Children,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+} from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { App } from './App'
@@ -31,10 +36,97 @@ vi.mock('../features/remote-config', () => ({
   RemoteConfigContainer: () => <p>Remote config</p>,
 }))
 
+const AUTHENTICATED_SESSION = {
+  userId: 'user-1',
+  email: 'operator@example.com',
+}
+
 function renderAppAt(path: string) {
   window.history.pushState({}, '', path)
   return render(<App />)
 }
+
+/** A `<Route>`-shaped element's props this helper actually reads. */
+interface RouteLikeProps {
+  path?: string
+  index?: boolean
+  children?: ReactNode
+}
+
+function routeProps(element: ReactElement): RouteLikeProps {
+  // Test-only introspection: `element.props` is typed `any` by React's own
+  // types for a generic `ReactElement`, so this narrows it to the handful
+  // of fields every `<Route>` in this tree actually uses.
+  return element.props as RouteLikeProps
+}
+
+function resolveRoutePath(
+  prefix: string,
+  path: string | undefined,
+  isIndex: boolean,
+): string | null {
+  if (isIndex) {
+    return prefix === '' ? '/' : prefix
+  }
+  if (path === undefined) {
+    return null
+  }
+  if (path.startsWith('/')) {
+    return path
+  }
+  return `${prefix}/${path}`
+}
+
+function collectRoutePaths(node: ReactNode, prefix: string, paths: string[]) {
+  Children.forEach(node, (child) => {
+    if (!isValidElement(child)) {
+      return
+    }
+    const { path, index, children } = routeProps(child)
+    const ownPath = resolveRoutePath(prefix, path, Boolean(index))
+    if (ownPath !== null) {
+      paths.push(ownPath)
+    }
+    if (children) {
+      collectRoutePaths(children, ownPath ?? prefix, paths)
+    }
+  })
+}
+
+/**
+ * Flattens `<App/>`'s configured route paths without rendering (REQ-SHELL-5).
+ * `App` itself calls no hooks -- it only composes provider JSX -- so calling
+ * it directly here is safe and lets this walk `.props.children` down to the
+ * `<Route>` tree without ever invoking `AuthProvider`/`I18nProvider`/etc.
+ */
+function routesOf(appElement: ReactElement<Record<string, never>>): string[] {
+  const paths: string[] = []
+  const tree = (appElement.type as () => ReactNode)()
+  collectRoutePaths(tree, '', paths)
+  return paths
+}
+
+describe('App routes', () => {
+  it('does not expose a /signup route (REQ-SHELL-5, REQ-AUTH-1)', () => {
+    expect(routesOf(<App />)).not.toContain('/signup')
+  })
+
+  it('exposes the full REQ-SHELL-2 route tree', () => {
+    expect(routesOf(<App />)).toEqual(
+      expect.arrayContaining([
+        '/login',
+        '/',
+        '/history/:sensorId',
+        '/devices',
+        '/nodes/:id',
+        '/nodes/:id/sensors/:sid',
+        '/admin',
+        '/alerts',
+        '/*',
+      ]),
+    )
+  })
+})
 
 describe('App', () => {
   beforeEach(() => {
@@ -42,7 +134,11 @@ describe('App', () => {
   })
 
   it('redirects an unauthenticated visitor away from the dashboard route to login', () => {
-    useAuthMock.mockReturnValue({ status: 'unauthenticated', signIn: vi.fn() })
+    useAuthMock.mockReturnValue({
+      status: 'unauthenticated',
+      session: null,
+      signIn: vi.fn(),
+    })
 
     renderAppAt('/')
 
@@ -50,19 +146,25 @@ describe('App', () => {
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
   })
 
-  it('renders the dashboard with a logout action for an authenticated visitor', () => {
-    useAuthMock.mockReturnValue({ status: 'authenticated', signOut: vi.fn() })
+  it('renders the dashboard content with the shell chrome for an authenticated visitor', () => {
+    useAuthMock.mockReturnValue({
+      status: 'authenticated',
+      session: AUTHENTICATED_SESSION,
+      signOut: vi.fn(),
+    })
 
     renderAppAt('/')
 
-    expect(
-      screen.getByRole('heading', { name: /dashboard/i }),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Live dashboard')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /log out/i })).toBeInTheDocument()
   })
 
   it('renders the login form at /login', () => {
-    useAuthMock.mockReturnValue({ status: 'unauthenticated', signIn: vi.fn() })
+    useAuthMock.mockReturnValue({
+      status: 'unauthenticated',
+      session: null,
+      signIn: vi.fn(),
+    })
 
     renderAppAt('/login')
 
@@ -70,7 +172,11 @@ describe('App', () => {
   })
 
   it('redirects an unauthenticated visitor away from the history route', () => {
-    useAuthMock.mockReturnValue({ status: 'unauthenticated', signIn: vi.fn() })
+    useAuthMock.mockReturnValue({
+      status: 'unauthenticated',
+      session: null,
+      signIn: vi.fn(),
+    })
 
     renderAppAt('/history/sensor-1')
 
@@ -78,7 +184,11 @@ describe('App', () => {
   })
 
   it('renders the history page for an authenticated visitor', () => {
-    useAuthMock.mockReturnValue({ status: 'authenticated', signOut: vi.fn() })
+    useAuthMock.mockReturnValue({
+      status: 'authenticated',
+      session: AUTHENTICATED_SESSION,
+      signOut: vi.fn(),
+    })
 
     renderAppAt('/history/sensor-1')
 
@@ -86,7 +196,11 @@ describe('App', () => {
   })
 
   it('redirects an unauthenticated visitor away from the devices route', () => {
-    useAuthMock.mockReturnValue({ status: 'unauthenticated', signIn: vi.fn() })
+    useAuthMock.mockReturnValue({
+      status: 'unauthenticated',
+      session: null,
+      signIn: vi.fn(),
+    })
 
     renderAppAt('/devices')
 
@@ -94,20 +208,81 @@ describe('App', () => {
   })
 
   it('renders the devices page for an authenticated visitor (CA-3)', () => {
-    useAuthMock.mockReturnValue({ status: 'authenticated', signOut: vi.fn() })
+    useAuthMock.mockReturnValue({
+      status: 'authenticated',
+      session: AUTHENTICATED_SESSION,
+      signOut: vi.fn(),
+    })
 
     renderAppAt('/devices')
 
     expect(screen.getByText('Device management')).toBeInTheDocument()
   })
 
-  it('links from the dashboard to device management', () => {
-    useAuthMock.mockReturnValue({ status: 'authenticated', signOut: vi.fn() })
+  it('renders a reserved placeholder for /alerts (REQ-SHELL-2)', () => {
+    useAuthMock.mockReturnValue({
+      status: 'authenticated',
+      session: AUTHENTICATED_SESSION,
+      signOut: vi.fn(),
+    })
+
+    renderAppAt('/alerts')
+
+    expect(
+      screen.getByText('Alerting is not available yet.'),
+    ).toBeInTheDocument()
+  })
+
+  it('renders a coming-soon placeholder for /nodes/:id (not implemented until PR-6)', () => {
+    useAuthMock.mockReturnValue({
+      status: 'authenticated',
+      session: AUTHENTICATED_SESSION,
+      signOut: vi.fn(),
+    })
+
+    renderAppAt('/nodes/device-1')
+
+    expect(
+      screen.getByText('This view is not available yet.'),
+    ).toBeInTheDocument()
+  })
+
+  it('redirects an unknown path to / (REQ-SHELL-2)', () => {
+    useAuthMock.mockReturnValue({
+      status: 'authenticated',
+      session: AUTHENTICATED_SESSION,
+      signOut: vi.fn(),
+    })
+
+    renderAppAt('/this-route-does-not-exist')
+
+    expect(screen.getByText('Live dashboard')).toBeInTheDocument()
+  })
+
+  it('renders the shell navigation with links to Fleet, Alerts, and Admin', () => {
+    useAuthMock.mockReturnValue({
+      status: 'authenticated',
+      session: AUTHENTICATED_SESSION,
+      signOut: vi.fn(),
+    })
 
     renderAppAt('/')
 
-    expect(
-      screen.getByRole('link', { name: /manage devices/i }),
-    ).toHaveAttribute('href', '/devices')
+    const nav = screen.getByRole('navigation', { name: /main navigation/i })
+    expect(nav).toBeInTheDocument()
+    // Exact names, not a substring match: the shell's brand link also
+    // renders "Fleet Monitor", which a loose /fleet/i regex would also match.
+    expect(within(nav).getByRole('link', { name: 'Fleet' })).toHaveAttribute(
+      'href',
+      '/',
+    )
+    expect(within(nav).getByRole('link', { name: 'Alerts' })).toHaveAttribute(
+      'href',
+      '/alerts',
+    )
+    expect(within(nav).getByRole('link', { name: 'Admin' })).toHaveAttribute(
+      'href',
+      '/admin',
+    )
   })
 })

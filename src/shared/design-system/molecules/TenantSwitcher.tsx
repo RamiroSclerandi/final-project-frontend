@@ -29,7 +29,7 @@ export function TenantSwitcher({
 }: TenantSwitcherProps) {
   if (tenants.length === 1) {
     return (
-      <span className="text-sm text-text">
+      <span className="min-w-0 truncate text-sm text-text">
         <VisuallyHidden>{label}</VisuallyHidden>
         {current.name}
       </span>

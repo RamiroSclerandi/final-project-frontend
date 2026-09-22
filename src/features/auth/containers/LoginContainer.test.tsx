@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { renderWithProviders } from '../../../shared/test/renderWithProviders'
 import { LoginContainer } from './LoginContainer'
 
 const navigateMock = vi.hoisted(() => vi.fn())
@@ -32,7 +33,7 @@ describe('LoginContainer', () => {
 
   it('navigates to the dashboard route on successful sign-in', async () => {
     signInMock.mockResolvedValue({ error: null })
-    render(<LoginContainer />)
+    renderWithProviders(<LoginContainer />)
 
     fillAndSubmit('operator@example.com', 'right-password')
 
@@ -47,7 +48,7 @@ describe('LoginContainer', () => {
 
   it('shows the generic error and does not navigate on rejected sign-in', async () => {
     signInMock.mockResolvedValue({ error: 'Invalid email or password.' })
-    render(<LoginContainer />)
+    renderWithProviders(<LoginContainer />)
 
     fillAndSubmit('operator@example.com', 'wrong-password')
 

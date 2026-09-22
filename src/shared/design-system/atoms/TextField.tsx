@@ -5,6 +5,8 @@ export interface TextFieldProps {
   onChange: (value: string) => void
   type?: 'text' | 'email' | 'password' | 'number'
   autoComplete?: string
+  name?: string
+  required?: boolean
   error?: string
 }
 
@@ -16,6 +18,8 @@ export function TextField({
   onChange,
   type = 'text',
   autoComplete,
+  name,
+  required,
   error,
 }: TextFieldProps) {
   const errorId = `${id}-error`
@@ -31,6 +35,8 @@ export function TextField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         autoComplete={autoComplete}
+        name={name}
+        required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
         className="min-h-11 rounded-md border border-border bg-surface px-3 text-base text-text focus:border-accent"
