@@ -17,7 +17,7 @@ export async function fetchLatestReadings(): Promise<LatestReading[]> {
  * nullable. Drop any row missing a field the domain requires rather than
  * pass an unproven null through the type boundary.
  */
-function isCompleteReading<
+export function isCompleteReading<
   T extends {
     sensor_id: string | null
     device_id: string | null
