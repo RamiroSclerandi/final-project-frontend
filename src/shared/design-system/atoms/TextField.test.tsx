@@ -25,6 +25,23 @@ describe('TextField', () => {
     expect(input).toHaveValue('Pump 3')
   })
 
+  it('forwards required and name so native form validation still applies', () => {
+    render(
+      <TextField
+        id="email"
+        label="Email"
+        value=""
+        onChange={() => {}}
+        name="email"
+        required
+      />,
+    )
+
+    const input = screen.getByLabelText('Email')
+    expect(input).toBeRequired()
+    expect(input).toHaveAttribute('name', 'email')
+  })
+
   it('exposes the error text as an alert tied to the input', () => {
     render(
       <TextField
