@@ -9,6 +9,14 @@
  */
 export const en = {
   shell: {
+    brand: 'Fleet Monitor',
+    skipToContent: 'Skip to content',
+    nav: {
+      label: 'Main navigation',
+      fleet: 'Fleet',
+      alerts: 'Alerts',
+      admin: 'Admin',
+    },
     locale: {
       label: 'Language',
       es: 'Español',
@@ -17,10 +25,35 @@ export const en = {
     theme: {
       toggle: 'Toggle theme',
     },
+    tenant: {
+      label: 'Tenant',
+    },
+    logout: 'Log out',
   },
   status: {
     online: 'Online',
     offline: 'Offline',
     unknown: 'Unknown',
+  },
+  auth: {
+    login: {
+      email: 'Email',
+      password: 'Password',
+      submit: 'Log in',
+    },
+  },
+  reserved: {
+    alerts: {
+      title: 'Alerts',
+      description: 'Alerting is not available yet.',
+    },
+    admin: {
+      title: 'Admin',
+      description: 'The admin area is not available yet.',
+    },
+    comingSoon: {
+      title: 'Coming soon',
+      description: 'This view is not available yet.',
+    },
   },
 }

@@ -1,11 +1,12 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
+import { renderWithProviders } from '../../../shared/test/renderWithProviders'
 import { LoginForm } from './LoginForm'
 
 describe('LoginForm', () => {
   it('renders email and password fields with a submit button and no signup link', () => {
-    render(
+    renderWithProviders(
       <LoginForm onSubmit={vi.fn()} isSubmitting={false} errorMessage={null} />,
     )
 
@@ -19,7 +20,7 @@ describe('LoginForm', () => {
   it('calls onSubmit with the entered email and password', () => {
     const onSubmit = vi.fn()
 
-    render(
+    renderWithProviders(
       <LoginForm
         onSubmit={onSubmit}
         isSubmitting={false}
@@ -42,7 +43,7 @@ describe('LoginForm', () => {
   })
 
   it('shows the given error message', () => {
-    render(
+    renderWithProviders(
       <LoginForm
         onSubmit={vi.fn()}
         isSubmitting={false}
@@ -54,10 +55,23 @@ describe('LoginForm', () => {
   })
 
   it('disables the submit button while submitting', () => {
-    render(
+    renderWithProviders(
       <LoginForm onSubmit={vi.fn()} isSubmitting={true} errorMessage={null} />,
     )
 
     expect(screen.getByRole('button', { name: /log in/i })).toBeDisabled()
+  })
+
+  it('shows translated field labels in Spanish', () => {
+    renderWithProviders(
+      <LoginForm onSubmit={vi.fn()} isSubmitting={false} errorMessage={null} />,
+      { locale: 'es' },
+    )
+
+    expect(screen.getByLabelText('Correo electrónico')).toBeInTheDocument()
+    expect(screen.getByLabelText('Contraseña')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Iniciar sesión' }),
+    ).toBeInTheDocument()
   })
 })

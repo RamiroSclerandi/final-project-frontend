@@ -1,5 +1,9 @@
 import { useState, type FormEvent } from 'react'
 
+import { Button } from '../../../shared/design-system/atoms/Button'
+import { TextField } from '../../../shared/design-system/atoms/TextField'
+import { useTranslation } from '../../../shared/i18n/useTranslation'
+
 export interface LoginFormProps {
   onSubmit: (email: string, password: string) => void
   isSubmitting: boolean
@@ -16,6 +20,7 @@ export function LoginForm({
   isSubmitting,
   errorMessage,
 }: LoginFormProps) {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
@@ -29,38 +34,34 @@ export function LoginForm({
       onSubmit={handleSubmit}
       className="flex w-full max-w-sm flex-col gap-4"
     >
-      <div className="flex flex-col gap-1">
-        <label htmlFor="login-email">Email</label>
-        <input
-          id="login-email"
-          name="email"
-          type="email"
-          autoComplete="username"
-          required
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="login-password">Password</label>
-        <input
-          id="login-password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-        />
-      </div>
+      <TextField
+        id="login-email"
+        label={t('auth.login.email')}
+        type="email"
+        name="email"
+        autoComplete="username"
+        value={email}
+        onChange={setEmail}
+        required
+      />
+      <TextField
+        id="login-password"
+        label={t('auth.login.password')}
+        type="password"
+        name="password"
+        autoComplete="current-password"
+        value={password}
+        onChange={setPassword}
+        required
+      />
       {errorMessage && (
-        <p role="alert" className="text-sm text-red-500">
+        <p role="alert" className="text-sm text-danger">
           {errorMessage}
         </p>
       )}
-      <button type="submit" disabled={isSubmitting}>
-        Log in
-      </button>
+      <Button type="submit" variant="primary" disabled={isSubmitting}>
+        {t('auth.login.submit')}
+      </Button>
     </form>
   )
 }

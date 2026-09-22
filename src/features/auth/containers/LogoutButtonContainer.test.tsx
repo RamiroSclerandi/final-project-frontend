@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { renderWithProviders } from '../../../shared/test/renderWithProviders'
 import { LogoutButtonContainer } from './LogoutButtonContainer'
 
 const signOutMock = vi.hoisted(() => vi.fn())
@@ -15,7 +16,7 @@ describe('LogoutButtonContainer', () => {
   })
 
   it('calls useAuth().signOut when the button is clicked', () => {
-    render(<LogoutButtonContainer />)
+    renderWithProviders(<LogoutButtonContainer />)
 
     fireEvent.click(screen.getByRole('button', { name: /log out/i }))
 
