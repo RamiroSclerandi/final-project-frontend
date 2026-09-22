@@ -8,8 +8,8 @@ import { I18nProvider } from '../shared/i18n/I18nProvider'
 import { useTranslation } from '../shared/i18n/useTranslation'
 import { AdminPage } from '../pages/AdminPage'
 import { AlertsPage } from '../pages/AlertsPage'
-import { DashboardPage } from '../pages/DashboardPage'
 import { DevicesPage } from '../pages/DevicesPage'
+import { FleetPage } from '../pages/FleetPage'
 import { HistoryPage } from '../pages/HistoryPage'
 import { LoginPage } from '../pages/LoginPage'
 import { AppShellContainer } from './AppShellContainer'
@@ -58,7 +58,7 @@ export function App() {
                     </RequireSession>
                   }
                 >
-                  <Route index element={<DashboardPage />} />
+                  <Route index element={<FleetPage />} />
                   <Route path="history/:sensorId" element={<HistoryPage />} />
                   <Route path="devices" element={<DevicesPage />} />
                   <Route path="nodes/:id" element={<ComingSoonPlaceholder />} />
