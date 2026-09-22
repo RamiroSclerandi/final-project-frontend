@@ -5,13 +5,16 @@ import { toReadingsRecord } from './toReadingsRecord'
 
 const base: LatestReading = {
   sensorId: 'a',
+  deviceId: 'device-1',
   value: 1,
   timestamp: 't',
   quality: 'ok',
   channel: 'c',
   unit: 'u',
   sensorLabel: null,
+  sensorTag: 'l1',
   deviceName: 'A',
+  rssi: null,
 }
 
 describe('toReadingsRecord', () => {

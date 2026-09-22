@@ -20,21 +20,25 @@ export async function fetchLatestReadings(): Promise<LatestReading[]> {
 function isCompleteReading<
   T extends {
     sensor_id: string | null
+    device_id: string | null
     value: number | null
     timestamp: string | null
     quality: string | null
     channel: string | null
     unit: string | null
+    sensor_tag: string | null
     device_name: string | null
   },
 >(row: T): row is T & LatestReadingRow {
   return (
     row.sensor_id !== null &&
+    row.device_id !== null &&
     row.value !== null &&
     row.timestamp !== null &&
     row.quality !== null &&
     row.channel !== null &&
     row.unit !== null &&
+    row.sensor_tag !== null &&
     row.device_name !== null
   )
 }
