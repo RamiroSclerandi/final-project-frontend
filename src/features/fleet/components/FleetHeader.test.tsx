@@ -43,6 +43,26 @@ describe('FleetHeader', () => {
     expect(screen.queryByText(/^Alerts$/)).toBeNull()
   })
 
+  // PR-4 debt R3-unknown-kpi-hidden: a partial statuses map must not read as
+  // "0 online / 0 offline" -- the unknown count needs its own visible KPI.
+  it('shows the unknown-status count as its own KPI, distinct from online/offline', () => {
+    renderWithProviders(
+      <FleetHeader
+        summary={{
+          total: 11,
+          online: 5,
+          offline: 2,
+          unknown: 4,
+          qualityAlerts: 1,
+        }}
+        connectionStatus="live"
+      />,
+    )
+
+    expect(screen.getByText('Unknown')).toBeInTheDocument()
+    expect(screen.getByText('4')).toBeInTheDocument()
+  })
+
   it('renders the realtime connection status', () => {
     renderWithProviders(
       <FleetHeader

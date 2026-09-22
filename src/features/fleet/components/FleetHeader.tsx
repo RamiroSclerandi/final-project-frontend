@@ -30,9 +30,10 @@ export function FleetHeader({ summary, connectionStatus }: FleetHeaderProps) {
         </div>
         <ConnectionStatusBadge status={connectionStatus} />
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <KpiStat label={t('fleet.kpi.online')} value={summary.online} />
         <KpiStat label={t('fleet.kpi.offline')} value={summary.offline} />
+        <KpiStat label={t('status.unknown')} value={summary.unknown} />
         <KpiStat
           label={t('fleet.kpi.qualityAlerts')}
           value={summary.qualityAlerts}
