@@ -122,16 +122,27 @@ describe('findLayoutViolations', () => {
 })
 
 // REQ-MOBILE-1/REQ-MOBILE-2: no fixed-pixel layout shell over 320px, no
-// `CHART_WIDTH`-style constant, and no JS-driven breakpoint logic. Scope
-// starts at the shared design system; `features/*/components` and
-// `src/pages` are added here only as each surface drops its legacy fixed
-// widths / `CHART_WIDTH` (see apply-progress -- `HistoricalChart.tsx` still
-// declares `CHART_WIDTH` until PR-8).
-const SCANNED_ROOTS = ['src/shared/design-system']
+// `CHART_WIDTH`-style constant, and no JS-driven breakpoint logic. Widened
+// in ui-redesign PR-4 to also cover `src/app` and every feature's
+// `components/` directory (previously `src/shared/design-system` only).
+const SCANNED_ROOTS = [
+  'src/shared/design-system',
+  'src/app',
+  'src/features/*/components',
+]
+
+// Legacy components not yet migrated off a `CHART_WIDTH`-style constant,
+// each with the PR that removes it. Do not weaken the pattern or the
+// scanned roots to paper over these -- widen the exclusion list only.
+const LAYOUT_EXCLUSIONS = new Set([
+  'src/features/telemetry-history/components/HistoricalChart.tsx', // PR-8
+])
 
 describe('layout contract', () => {
   it('finds zero layout violations under the scanned roots', () => {
-    const sources = collectSourceFiles(SCANNED_ROOTS, '.tsx')
+    const sources = collectSourceFiles(SCANNED_ROOTS, '.tsx').filter(
+      (source) => !LAYOUT_EXCLUSIONS.has(source.file.replaceAll('\\', '/')),
+    )
 
     expect(findLayoutViolations(sources)).toEqual([])
   })

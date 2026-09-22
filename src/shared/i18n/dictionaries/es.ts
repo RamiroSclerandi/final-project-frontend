@@ -33,6 +33,42 @@ export const es: Dictionary = {
     offline: 'Desconectado',
     unknown: 'Desconocido',
   },
+  common: {
+    notAvailable: 'No disponible',
+    retry: 'Reintentar',
+  },
+  connection: {
+    connecting: 'Conectando…',
+    live: 'En vivo',
+    reconnecting: 'Reconectando…',
+    down: 'Desconectado',
+  },
+  fleet: {
+    title: 'Flota',
+    kpi: {
+      nodes: { one: '{count} nodo', other: '{count} nodos' },
+      online: 'En línea',
+      offline: 'Desconectado',
+      qualityAlerts: 'Alertas de calidad de datos',
+    },
+    column: {
+      node: 'Nodo',
+      location: 'Ubicación',
+      status: 'Estado',
+      headline: 'Último valor',
+      lastSeen: 'Visto por última vez',
+      trend: 'Últimos 60 min',
+      alerts: 'Calidad de datos',
+    },
+    empty: {
+      title: 'Aún no hay nodos',
+      body: 'Aprovisionar un dispositivo para verlo aquí.',
+    },
+    error: {
+      title: 'Flota no disponible',
+      body: 'No se pudo cargar la flota. Reintentar.',
+    },
+  },
   auth: {
     login: {
       email: 'Correo electrónico',

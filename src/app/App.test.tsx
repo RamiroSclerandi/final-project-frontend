@@ -17,11 +17,8 @@ vi.mock('../features/auth/application/AuthProvider', () => ({
 vi.mock('../features/auth/application/useAuth', () => ({
   useAuth: useAuthMock,
 }))
-vi.mock('../features/telemetry', () => ({
-  LiveDashboardContainer: () => <p>Live dashboard</p>,
-}))
-vi.mock('../features/node-health', () => ({
-  NodeHealthContainer: () => <p>Node health</p>,
+vi.mock('../features/fleet', () => ({
+  FleetContainer: () => <p>Fleet nodes</p>,
 }))
 vi.mock('../features/telemetry-history', () => ({
   HistoryContainer: ({ sensorId }: { sensorId: string }) => (
@@ -146,7 +143,7 @@ describe('App', () => {
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
   })
 
-  it('renders the dashboard content with the shell chrome for an authenticated visitor', () => {
+  it('renders the fleet content with the shell chrome for an authenticated visitor', () => {
     useAuthMock.mockReturnValue({
       status: 'authenticated',
       session: AUTHENTICATED_SESSION,
@@ -155,7 +152,7 @@ describe('App', () => {
 
     renderAppAt('/')
 
-    expect(screen.getByText('Live dashboard')).toBeInTheDocument()
+    expect(screen.getByText('Fleet nodes')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /log out/i })).toBeInTheDocument()
   })
 
@@ -256,7 +253,7 @@ describe('App', () => {
 
     renderAppAt('/this-route-does-not-exist')
 
-    expect(screen.getByText('Live dashboard')).toBeInTheDocument()
+    expect(screen.getByText('Fleet nodes')).toBeInTheDocument()
   })
 
   it('renders the shell navigation with links to Fleet, Alerts, and Admin', () => {

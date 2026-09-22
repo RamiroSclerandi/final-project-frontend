@@ -25,6 +25,28 @@ function listFiles(root: string, extension: string): string[] {
 }
 
 /**
+ * Expands a single `*` path segment (e.g. "src/features/star/components",
+ * with `star` standing in for a literal `*`) to one concrete root per
+ * immediate child directory of the segment before the wildcard. Lets a
+ * scanner cover every feature's `components` directory without hardcoding a
+ * directory list that goes stale as features are added.
+ */
+function expandWildcardRoot(root: string): string[] {
+  const starIndex = root.indexOf('*')
+  if (starIndex === -1) {
+    return [root]
+  }
+  const parentDir = root.slice(0, starIndex).replace(/\/$/, '')
+  const suffix = root.slice(starIndex + 1)
+  if (!existsSync(parentDir)) {
+    return []
+  }
+  return readdirSync(parentDir)
+    .filter((entry) => statSync(join(parentDir, entry)).isDirectory())
+    .map((entry) => join(parentDir, entry) + suffix)
+}
+
+/**
  * Reads every non-test file with the given extension under each root,
  * relative to the repository working directory. Used by the source-contract
  * tests (palette, layout, no-literal) to scan real components without
@@ -34,7 +56,7 @@ export function collectSourceFiles(
   roots: string[],
   extension: '.ts' | '.tsx',
 ): SourceFile[] {
-  return roots.flatMap((root) =>
+  return roots.flatMap(expandWildcardRoot).flatMap((root) =>
     listFiles(root, extension).map((file) => ({
       file,
       text: readFileSync(file, 'utf-8'),

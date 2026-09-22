@@ -216,15 +216,35 @@ describe('findLiterals', () => {
 
 // REQ-I18N-3: no user-facing JSX text literal, and no literal
 // title/aria-label/placeholder/alt/aria-description/aria-roledescription,
-// may exist under the scanned directories. Scope starts at the shared
-// design system; each feature's `components/` directory and `src/pages`
-// are added here only once that surface is restyled to `t()` calls (see
-// apply-progress -- legacy components/pages are still full of literals).
-const SCANNED_ROOTS = ['src/shared/design-system']
+// may exist under the scanned directories. Widened in ui-redesign PR-4 to
+// also cover `src/app` and every feature's `components/` directory
+// (previously `src/shared/design-system` only).
+const SCANNED_ROOTS = [
+  'src/shared/design-system',
+  'src/app',
+  'src/features/*/components',
+]
+
+// Legacy components not yet restyled to `t()` calls, each with the PR that
+// restyles it. Do not weaken the pattern or the scanned roots to paper over
+// these -- widen the exclusion list only, one line per file.
+const NO_LITERAL_EXCLUSIONS = new Set([
+  'src/features/device-management/components/DeviceEditForm.tsx', // PR-7
+  'src/features/device-management/components/DeviceList.tsx', // PR-7
+  'src/features/device-management/components/SensorEditForm.tsx', // PR-7
+  'src/features/remote-config/components/SamplingIntervalControl.tsx', // PR-7
+  'src/features/remote-config/components/SamplingIntervalList.tsx', // PR-7
+  'src/features/telemetry-history/components/DegradedStateBanner.tsx', // PR-8
+  'src/features/telemetry-history/components/HistoricalChart.tsx', // PR-8
+  'src/features/telemetry-history/components/HistoryTitle.tsx', // PR-8
+  'src/features/telemetry-history/components/RangePicker.tsx', // PR-8
+])
 
 describe('no-literal contract', () => {
   it('finds zero user-facing literals under the scanned roots', () => {
-    const sources = collectSourceFiles(SCANNED_ROOTS, '.tsx')
+    const sources = collectSourceFiles(SCANNED_ROOTS, '.tsx').filter(
+      (source) => !NO_LITERAL_EXCLUSIONS.has(source.file.replaceAll('\\', '/')),
+    )
 
     expect(findLiterals(sources)).toEqual([])
   })
