@@ -1,8 +1,16 @@
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import { describe, expect, it } from 'vitest'
 
 import { collectSourceFiles, type SourceFile } from '../test/collectSourceFiles'
 
-type LayoutRule = 'fixed-width' | 'chart-width-constant' | 'js-breakpoint'
+type LayoutRule =
+  | 'fixed-width'
+  | 'chart-width-constant'
+  | 'js-breakpoint'
+  | 'unknown-breakpoint'
 
 interface LayoutFinding {
   file: string
@@ -16,6 +24,39 @@ const CHART_WIDTH_PATTERN = /\bCHART_WIDTH\b/g
 const JS_BREAKPOINT_PATTERN = /\bmatchMedia\b|\bwindow\.innerWidth\b/g
 const MAX_FIXED_WIDTH_PX = 320
 
+// `--breakpoint-*: initial` in index.css deletes Tailwind's defaults, so only
+// these three variants exist. A prefix outside this set emits no CSS at all:
+// the class is silently dropped and the layout never responds. Read from the
+// stylesheet rather than hardcoded, so adding a breakpoint cannot desync them.
+const BREAKPOINT_PATTERN = /--breakpoint-([a-z0-9]+):/g
+const RESPONSIVE_PREFIX_PATTERN = /(?:^|\s|")([a-z][a-z0-9]*):[a-z[-]/g
+const NON_BREAKPOINT_VARIANTS = new Set([
+  'dark',
+  'hover',
+  'focus',
+  'active',
+  'disabled',
+  'group-hover',
+  'peer-focus',
+  'motion-safe',
+  'motion-reduce',
+  'print',
+  'first',
+  'last',
+  'odd',
+  'even',
+  'aria-pressed',
+  'data-hidden-stacked',
+])
+
+function readDefinedBreakpoints(stylesheet: string): Set<string> {
+  return new Set(
+    [...stylesheet.matchAll(BREAKPOINT_PATTERN)]
+      .map((match) => match[1])
+      .filter((name): name is string => name !== undefined && name !== '*'),
+  )
+}
+
 /**
  * Scans source text for layout patterns that break mobile-first, CSS-only
  * responsiveness (REQ-MOBILE-1, REQ-MOBILE-2): a fixed-pixel width class
@@ -24,7 +65,10 @@ const MAX_FIXED_WIDTH_PX = 320
  * Kept inline in this test file (no separate production module) per the
  * design's "node:fs + TypeScript compiler API, zero deps" testing strategy.
  */
-function findLayoutViolations(sources: SourceFile[]): LayoutFinding[] {
+function findLayoutViolations(
+  sources: SourceFile[],
+  breakpoints: Set<string> = new Set(['md', 'lg', 'xl']),
+): LayoutFinding[] {
   const findings: LayoutFinding[] = []
 
   for (const { file, text } of sources) {
@@ -54,6 +98,21 @@ function findLayoutViolations(sources: SourceFile[]): LayoutFinding[] {
           match: match[0],
           rule: 'js-breakpoint',
         })
+      }
+      for (const match of line.matchAll(RESPONSIVE_PREFIX_PATTERN)) {
+        const prefix = match[1]
+        if (
+          prefix !== undefined &&
+          !breakpoints.has(prefix) &&
+          !NON_BREAKPOINT_VARIANTS.has(prefix)
+        ) {
+          findings.push({
+            file,
+            line: index + 1,
+            match: `${prefix}:`,
+            rule: 'unknown-breakpoint',
+          })
+        }
       }
     })
   }
@@ -119,6 +178,37 @@ describe('findLayoutViolations', () => {
       },
     ])
   })
+
+  it('flags a responsive prefix that no breakpoint token defines', () => {
+    const findings = findLayoutViolations([
+      { file: 'Example.tsx', text: 'className="flex-col sm:flex-row"' },
+    ])
+
+    expect(findings).toEqual([
+      {
+        file: 'Example.tsx',
+        line: 1,
+        match: 'sm:',
+        rule: 'unknown-breakpoint',
+      },
+    ])
+  })
+
+  it('accepts the prefixes the theme actually defines', () => {
+    const findings = findLayoutViolations([
+      { file: 'Example.tsx', text: 'className="md:flex-row xl:table-cell"' },
+    ])
+
+    expect(findings).toEqual([])
+  })
+
+  it('reads the breakpoint names out of the stylesheet', () => {
+    const breakpoints = readDefinedBreakpoints(
+      '@theme {\n  --breakpoint-*: initial;\n  --breakpoint-md: 768px;\n}',
+    )
+
+    expect([...breakpoints]).toEqual(['md'])
+  })
 })
 
 // REQ-MOBILE-1/REQ-MOBILE-2: no fixed-pixel layout shell over 320px, no
@@ -144,6 +234,13 @@ describe('layout contract', () => {
       (source) => !LAYOUT_EXCLUSIONS.has(source.file.replaceAll('\\', '/')),
     )
 
-    expect(findLayoutViolations(sources)).toEqual([])
+    const breakpoints = readDefinedBreakpoints(
+      readFileSync(
+        resolve(dirname(fileURLToPath(import.meta.url)), '../../index.css'),
+        'utf8',
+      ),
+    )
+
+    expect(findLayoutViolations(sources, breakpoints)).toEqual([])
   })
 })
