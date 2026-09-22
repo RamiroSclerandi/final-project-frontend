@@ -56,16 +56,35 @@ describe('findRawPaletteClasses', () => {
 })
 
 // REQ-DT-1: presentational components must consume only semantic token
-// classes, never raw Tailwind palette classes. Scope starts at the shared
-// design system; each feature's `components/` directory is added here only
-// once that feature has been restyled off raw palette classes (tracked in
-// apply-progress -- legacy `features/*/components` still use them and would
-// fail this contract today).
-const SCANNED_ROOTS = ['src/shared/design-system']
+// classes, never raw Tailwind palette classes. Widened in ui-redesign PR-4
+// to also cover `src/app` and every feature's `components/` directory
+// (previously `src/shared/design-system` only).
+const SCANNED_ROOTS = [
+  'src/shared/design-system',
+  'src/app',
+  'src/features/*/components',
+]
+
+// Legacy components not yet restyled off raw palette classes, each with the
+// PR that restyles it. Do not weaken the pattern or the scanned roots to
+// paper over these -- widen the exclusion list only, one line per file.
+const PALETTE_EXCLUSIONS = new Set([
+  'src/features/data-export/components/ExportButton.tsx', // PR-8
+  'src/features/device-management/components/DeviceEditForm.tsx', // PR-7
+  'src/features/device-management/components/DeviceList.tsx', // PR-7
+  'src/features/device-management/components/SensorEditForm.tsx', // PR-7
+  'src/features/remote-config/components/SamplingIntervalControl.tsx', // PR-7
+  'src/features/remote-config/components/SamplingIntervalList.tsx', // PR-7
+  'src/features/telemetry-history/components/DegradedStateBanner.tsx', // PR-8
+  'src/features/telemetry-history/components/HistoricalChart.tsx', // PR-8
+  'src/features/telemetry-history/components/RangePicker.tsx', // PR-8
+])
 
 describe('palette contract', () => {
-  it('finds zero raw palette classes under the scanned design-system roots', () => {
-    const sources = collectSourceFiles(SCANNED_ROOTS, '.tsx')
+  it('finds zero raw palette classes under the scanned roots', () => {
+    const sources = collectSourceFiles(SCANNED_ROOTS, '.tsx').filter(
+      (source) => !PALETTE_EXCLUSIONS.has(source.file.replaceAll('\\', '/')),
+    )
 
     expect(findRawPaletteClasses(sources)).toEqual([])
   })
