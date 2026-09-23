@@ -1,0 +1,112 @@
+import { screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+
+import { renderWithProviders } from '../../../shared/test/renderWithProviders'
+import type { SensorChannelGroup } from '../domain/nodeReading'
+import { SensorGroup } from './SensorGroup'
+
+const FOUR_PHASE_GROUP: SensorChannelGroup = {
+  channel: 'voltage',
+  unit: 'V',
+  phases: [
+    {
+      tag: 'l1',
+      sensorId: 'v-l1',
+      label: null,
+      value: 220,
+      quality: 'ok',
+      timestamp: '2026-09-22T10:00:00Z',
+    },
+    {
+      tag: 'l2',
+      sensorId: 'v-l2',
+      label: null,
+      value: 221,
+      quality: 'ok',
+      timestamp: '2026-09-22T10:00:00Z',
+    },
+    {
+      tag: 'l3',
+      sensorId: 'v-l3',
+      label: null,
+      value: 219,
+      quality: 'ok',
+      timestamp: '2026-09-22T10:00:00Z',
+    },
+    {
+      tag: 'total',
+      sensorId: 'v-total',
+      label: null,
+      value: 660,
+      quality: 'ok',
+      timestamp: '2026-09-22T10:00:00Z',
+    },
+  ],
+}
+
+const SINGLE_UNLABELED_GROUP: SensorChannelGroup = {
+  channel: 'humidity',
+  unit: '%',
+  phases: [
+    {
+      tag: '',
+      sensorId: 'humidity-1',
+      label: null,
+      value: 55.5,
+      quality: 'ok',
+      timestamp: '2026-09-22T10:00:00Z',
+    },
+  ],
+}
+
+describe('SensorGroup', () => {
+  it('renders L1/L2/L3/Total column headers in that order (REQ-NODE-2)', () => {
+    renderWithProviders(
+      <SensorGroup group={FOUR_PHASE_GROUP} nodeId="device-1" />,
+    )
+
+    expect(
+      screen.getAllByRole('columnheader').map((header) => header.textContent),
+    ).toEqual(['L1', 'L2', 'L3', 'Total'])
+  })
+
+  it('renders one unlabeled column header for a single empty-tag phase (REQ-NODE-3)', () => {
+    renderWithProviders(
+      <SensorGroup group={SINGLE_UNLABELED_GROUP} nodeId="device-1" />,
+    )
+
+    const headers = screen.getAllByRole('columnheader')
+    expect(headers).toHaveLength(1)
+    // An empty tag must not become an empty header -- the point of the
+    // requirement is a column a reader can name, not a blank one.
+    expect(headers[0]).toHaveTextContent(/\S/)
+  })
+
+  // Below 768px `.table-stack` turns each cell into a labelled row, taking its
+  // caption from `data-label`. Four phase columns cannot fit a phone otherwise.
+  it('carries the stacking contract so phases become labelled rows on a phone', () => {
+    renderWithProviders(
+      <SensorGroup group={FOUR_PHASE_GROUP} nodeId="device-1" />,
+    )
+
+    expect(screen.getByRole('table')).toHaveClass('table-stack')
+    const headerTexts = screen
+      .getAllByRole('columnheader')
+      .map((header) => header.textContent)
+    const cellLabels = screen
+      .getAllByRole('cell')
+      .map((cell) => cell.getAttribute('data-label'))
+    expect(cellLabels).toEqual(headerTexts)
+  })
+
+  it('links each phase cell to its sensor detail route', () => {
+    renderWithProviders(
+      <SensorGroup group={FOUR_PHASE_GROUP} nodeId="device-1" />,
+    )
+
+    expect(screen.getByRole('link', { name: /220/ })).toHaveAttribute(
+      'href',
+      '/nodes/device-1/sensors/v-l1',
+    )
+  })
+})
