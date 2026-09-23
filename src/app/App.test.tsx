@@ -29,6 +29,9 @@ vi.mock('../features/telemetry-history', () => ({
 vi.mock('../features/device-management', () => ({
   DeviceManagementContainer: () => <p>Device management</p>,
 }))
+vi.mock('../features/node', () => ({
+  NodeContainer: ({ deviceId }: { deviceId: string }) => <p>Node {deviceId}</p>,
+}))
 vi.mock('../features/remote-config', () => ({
   RemoteConfigContainer: () => <p>Remote config</p>,
 }))
@@ -230,7 +233,7 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
-  it('renders a coming-soon placeholder for /nodes/:id (not implemented until PR-6)', () => {
+  it('renders the node detail page for /nodes/:id (ui-redesign PR-6)', () => {
     useAuthMock.mockReturnValue({
       status: 'authenticated',
       session: AUTHENTICATED_SESSION,
@@ -238,6 +241,18 @@ describe('App', () => {
     })
 
     renderAppAt('/nodes/device-1')
+
+    expect(screen.getByText('Node device-1')).toBeInTheDocument()
+  })
+
+  it('renders a coming-soon placeholder for /nodes/:id/sensors/:sid (not implemented until PR-8)', () => {
+    useAuthMock.mockReturnValue({
+      status: 'authenticated',
+      session: AUTHENTICATED_SESSION,
+      signOut: vi.fn(),
+    })
+
+    renderAppAt('/nodes/device-1/sensors/sensor-1')
 
     expect(
       screen.getByText('This view is not available yet.'),

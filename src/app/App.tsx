@@ -12,16 +12,17 @@ import { DevicesPage } from '../pages/DevicesPage'
 import { FleetPage } from '../pages/FleetPage'
 import { HistoryPage } from '../pages/HistoryPage'
 import { LoginPage } from '../pages/LoginPage'
+import { NodePage } from '../pages/NodePage'
 import { AppShellContainer } from './AppShellContainer'
 import { RequireSession } from './RequireSession'
 
 const queryClient = new QueryClient()
 
 /**
- * A stand-in for `/nodes/:id` and `/nodes/:id/sensors/:sid`, which don't
- * have real pages yet (Node ships in PR-6, Sensor in PR-8). Reuses the
- * `ReservedPage` template directly rather than a dedicated page file, since
- * there is no page-specific behavior to add yet.
+ * A stand-in for `/nodes/:id/sensors/:sid`, which doesn't have a real page
+ * yet (Sensor ships in PR-8). Reuses the `ReservedPage` template directly
+ * rather than a dedicated page file, since there is no page-specific
+ * behavior to add yet.
  */
 function ComingSoonPlaceholder() {
   const { t } = useTranslation()
@@ -61,7 +62,7 @@ export function App() {
                   <Route index element={<FleetPage />} />
                   <Route path="history/:sensorId" element={<HistoryPage />} />
                   <Route path="devices" element={<DevicesPage />} />
-                  <Route path="nodes/:id" element={<ComingSoonPlaceholder />} />
+                  <Route path="nodes/:id" element={<NodePage />} />
                   <Route
                     path="nodes/:id/sensors/:sid"
                     element={<ComingSoonPlaceholder />}
