@@ -1,5 +1,8 @@
 export type Granularity = 'raw' | 'hourly' | 'daily'
 
+/** REQ-HS-8: an explicit user override, or 'auto' to fall back to REQ-HS-1. */
+export type GranularityChoice = Granularity | 'auto'
+
 const HOUR_MS = 60 * 60 * 1000
 const DAY_MS = 24 * HOUR_MS
 const NINETY_DAYS_MS = 90 * DAY_MS

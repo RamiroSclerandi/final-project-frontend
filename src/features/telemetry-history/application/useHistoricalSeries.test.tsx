@@ -129,6 +129,33 @@ describe('useHistoricalSeries', () => {
     expect(result.current.points).toEqual([])
   })
 
+  it('uses the explicit granularity override instead of the computed one (REQ-HS-8)', async () => {
+    const to = new Date('2026-09-15T12:00:00Z')
+    const from = new Date(to.getTime() - 2 * DAY_MS) // would resolve to 'hourly' unaided
+    const { result } = renderHook(
+      () => useHistoricalSeries(SENSOR_ID, from, to, 'daily'),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.granularity).toBe('daily')
+    expect(repositoryMocks.fetchDailyAggregate).toHaveBeenCalled()
+    expect(repositoryMocks.fetchHourlyAggregate).not.toHaveBeenCalled()
+  })
+
+  it('falls back to chooseGranularity when the override is "auto" (REQ-HS-8)', async () => {
+    const to = new Date('2026-09-15T12:00:00Z')
+    const from = new Date(to.getTime() - 2 * DAY_MS)
+    const { result } = renderHook(
+      () => useHistoricalSeries(SENSOR_ID, from, to, 'auto'),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.granularity).toBe('hourly')
+    expect(repositoryMocks.fetchHourlyAggregate).toHaveBeenCalled()
+  })
+
   it('merges the raw tail into the hourly aggregate (REQ-HS-3, D-3)', async () => {
     const to = new Date('2026-09-15T12:00:00Z')
     const from = new Date(to.getTime() - 7 * DAY_MS)

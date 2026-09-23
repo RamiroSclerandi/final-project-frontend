@@ -1,14 +1,34 @@
 import { useMemo } from 'react'
-import { Area, ComposedChart, Line, Tooltip, XAxis, YAxis } from 'recharts'
+import {
+  Area,
+  ComposedChart,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 
+import type { TranslationKey } from '../../../shared/i18n/dictionary'
+import { useTranslation } from '../../../shared/i18n/useTranslation'
 import { downsampleLTTB } from '../domain/downsample'
 import type { HistoricalPoint } from '../domain/historicalPoint'
 
-const CHART_WIDTH = 800
 const CHART_HEIGHT = 320
 
 /** REQ-HS-4: rendering budget -- downsampling applies only at this boundary. */
 export const CHART_POINT_BUDGET = 5000
+
+type MarkerReason = 'outOfRange' | 'suspect' | 'clockUnsynced' | 'partial'
+
+const MARKER_REASON_KEYS = {
+  outOfRange: 'chart.marker.outOfRange',
+  suspect: 'chart.marker.suspect',
+  clockUnsynced: 'chart.marker.clockUnsynced',
+  partial: 'chart.marker.partial',
+} satisfies Record<MarkerReason, TranslationKey>
+
+type TranslateFn = ReturnType<typeof useTranslation>['t']
 
 interface ChartDatum {
   t: string
@@ -16,34 +36,64 @@ interface ChartDatum {
   range?: [number, number]
   sampleCount?: number
   markedLabel: string | null
+  markedReasons: MarkerReason[]
 }
 
 /** D-7: data enters marked, never hidden -- one label per marker present. */
-function markedLabel(point: HistoricalPoint): string | null {
-  const reasons: string[] = []
+function markedReasons(point: HistoricalPoint): MarkerReason[] {
+  const reasons: MarkerReason[] = []
   if (point.quality && point.quality !== 'ok') {
-    reasons.push(point.quality === 'out_of_range' ? 'out of range' : 'suspect')
+    reasons.push(point.quality === 'out_of_range' ? 'outOfRange' : 'suspect')
   }
   if (point.tsSource === 'server') {
-    reasons.push('clock unsynced')
+    reasons.push('clockUnsynced')
   }
   if (point.partial) {
     reasons.push('partial')
   }
-  return reasons.length > 0 ? `marked data point (${reasons.join(', ')})` : null
+  return reasons
 }
 
-function toChartData(points: HistoricalPoint[]): ChartDatum[] {
-  return points.map((point) => ({
-    t: point.t,
-    value: point.value,
-    range:
-      point.min !== undefined && point.max !== undefined
-        ? [point.min, point.max]
-        : undefined,
-    sampleCount: point.sampleCount,
-    markedLabel: markedLabel(point),
-  }))
+function toChartData(points: HistoricalPoint[], t: TranslateFn): ChartDatum[] {
+  return points.map((point) => {
+    const reasons = markedReasons(point)
+    return {
+      t: point.t,
+      value: point.value,
+      range:
+        point.min !== undefined && point.max !== undefined
+          ? [point.min, point.max]
+          : undefined,
+      sampleCount: point.sampleCount,
+      markedReasons: reasons,
+      markedLabel:
+        reasons.length > 0
+          ? t('chart.markedPoint', {
+              reasons: reasons
+                .map((reason) => t(MARKER_REASON_KEYS[reason]))
+                .join(', '),
+            })
+          : null,
+    }
+  })
+}
+
+/**
+ * Marker paint by reason (D-7): out-of-range and suspect are a filled color,
+ * provisional/clock-unsynced is a dotted outline, never a fill color -- it
+ * must stay visually distinct even without color perception.
+ */
+function markerPaint(reasons: MarkerReason[]): {
+  fill: string
+  strokeDasharray?: string
+} {
+  if (reasons.includes('outOfRange')) {
+    return { fill: 'var(--color-quality-out-of-range)' }
+  }
+  if (reasons.includes('suspect')) {
+    return { fill: 'var(--color-quality-suspect)' }
+  }
+  return { fill: 'none', strokeDasharray: '2 2' }
 }
 
 function renderMarkedDot(props: {
@@ -55,6 +105,7 @@ function renderMarkedDot(props: {
   if (!payload?.markedLabel || cx === undefined || cy === undefined) {
     return <g />
   }
+  const { fill, strokeDasharray } = markerPaint(payload.markedReasons)
   return (
     <circle
       cx={cx}
@@ -62,7 +113,9 @@ function renderMarkedDot(props: {
       r={5}
       role="img"
       aria-label={payload.markedLabel}
-      className="fill-amber-400 stroke-slate-950"
+      fill={fill}
+      stroke="var(--color-text-muted)"
+      strokeDasharray={strokeDasharray}
     />
   )
 }
@@ -78,16 +131,17 @@ export interface HistoricalTooltipProps {
 
 /** Exported standalone so its content is unit-testable without a chart hover (D-6). */
 export function HistoricalTooltip({ active, payload }: HistoricalTooltipProps) {
+  const { t } = useTranslation()
   const point = active ? payload?.[0]?.payload : undefined
   if (!point) {
     return null
   }
   return (
-    <div className="rounded border border-slate-700 bg-slate-900 p-2 text-xs text-slate-100">
+    <div className="rounded border border-border bg-surface p-2 text-xs text-text">
       <p>{point.t}</p>
       <p>{point.value}</p>
       {point.sampleCount !== undefined && (
-        <p>mean of {point.sampleCount} samples</p>
+        <p>{t('chart.meanOf', { count: point.sampleCount })}</p>
       )}
     </div>
   )
@@ -100,40 +154,54 @@ export interface HistoricalChartProps {
 
 /**
  * Recharts line with a min/max band and marked out-of-range/partial/clock-
- * unsynced points (D-7). Fixed pixel size rather than `ResponsiveContainer`
- * so it mounts synchronously in both the browser and jsdom tests.
+ * unsynced points (D-7). Renders inside `ResponsiveContainer` so it fills
+ * its parent's width (REQ-SENSOR-1, REQ-MOBILE-4). `initialDimension` seeds
+ * a synchronous first render wherever `ResizeObserver` is absent, which is
+ * what makes this testable in jsdom (research S1). Do not add a
+ * `ResizeObserver` stub to the test setup: recharts skips its measurement
+ * only while the global is undefined, so a stub makes it measure a
+ * layout-less document, read 0x0, and render nothing at all.
  */
 export function HistoricalChart({ points, isLoading }: HistoricalChartProps) {
+  const { t } = useTranslation()
   const chartData = useMemo(
-    () => toChartData(downsampleLTTB(points, CHART_POINT_BUDGET)),
-    [points],
+    () => toChartData(downsampleLTTB(points, CHART_POINT_BUDGET), t),
+    [points, t],
   )
 
   if (isLoading) {
-    return <p className="text-slate-400">Loading chart…</p>
+    return <p className="text-text-muted">{t('chart.loading')}</p>
   }
   if (points.length === 0) {
-    return <p className="text-slate-400">No data for this range.</p>
+    return <p className="text-text-muted">{t('chart.empty')}</p>
   }
 
   return (
-    <ComposedChart width={CHART_WIDTH} height={CHART_HEIGHT} data={chartData}>
-      <XAxis dataKey="t" tick={false} />
-      <YAxis domain={['auto', 'auto']} />
-      <Tooltip content={<HistoricalTooltip />} />
-      <Area
-        dataKey="range"
-        stroke="none"
-        fill="#334155"
-        fillOpacity={0.5}
-        isAnimationActive={false}
-      />
-      <Line
-        dataKey="value"
-        stroke="#34d399"
-        dot={renderMarkedDot}
-        isAnimationActive={false}
-      />
-    </ComposedChart>
+    <div className="min-w-0 w-full">
+      <ResponsiveContainer
+        width="100%"
+        height={CHART_HEIGHT}
+        initialDimension={{ width: 800, height: CHART_HEIGHT }}
+      >
+        <ComposedChart data={chartData}>
+          <XAxis dataKey="t" tick={false} />
+          <YAxis domain={['auto', 'auto']} />
+          <Tooltip content={<HistoricalTooltip />} />
+          <Area
+            dataKey="range"
+            stroke="none"
+            fill="var(--color-surface-raised)"
+            fillOpacity={0.5}
+            isAnimationActive={false}
+          />
+          <Line
+            dataKey="value"
+            stroke="var(--color-accent)"
+            dot={renderMarkedDot}
+            isAnimationActive={false}
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
   )
 }

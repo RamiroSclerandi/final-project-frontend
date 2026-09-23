@@ -1,3 +1,6 @@
+import { Button } from '../../../shared/design-system/atoms/Button'
+import { useTranslation } from '../../../shared/i18n/useTranslation'
+
 export interface ExportButtonProps {
   onExport: () => void
   isExporting: boolean
@@ -10,13 +13,17 @@ export function ExportButton({
   isExporting,
   error,
 }: ExportButtonProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex flex-col gap-1">
-      <button type="button" onClick={onExport} disabled={isExporting}>
-        {isExporting ? 'Exporting…' : 'Export CSV'}
-      </button>
+      <Button variant="secondary" onClick={onExport} disabled={isExporting}>
+        {isExporting
+          ? t('sensor.export.inProgress')
+          : t('sensor.export.action')}
+      </Button>
       {error && (
-        <p role="alert" className="text-sm text-red-500">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}

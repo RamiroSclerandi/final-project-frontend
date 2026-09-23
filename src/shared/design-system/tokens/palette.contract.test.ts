@@ -68,12 +68,9 @@ const SCANNED_ROOTS = [
 // Legacy components not yet restyled off raw palette classes, each with the
 // PR that restyles it. Do not weaken the pattern or the scanned roots to
 // paper over these -- widen the exclusion list only, one line per file.
-const PALETTE_EXCLUSIONS = new Set([
-  'src/features/data-export/components/ExportButton.tsx', // PR-8
-  'src/features/telemetry-history/components/DegradedStateBanner.tsx', // PR-8
-  'src/features/telemetry-history/components/HistoricalChart.tsx', // PR-8
-  'src/features/telemetry-history/components/RangePicker.tsx', // PR-8
-])
+// Empty as of ui-redesign PR-8: the last four entries (ExportButton,
+// DegradedStateBanner, HistoricalChart, RangePicker) were restyled that PR.
+const PALETTE_EXCLUSIONS = new Set<string>([])
 
 describe('palette contract', () => {
   it('finds zero raw palette classes under the scanned roots', () => {
