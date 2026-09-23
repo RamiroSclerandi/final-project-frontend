@@ -60,15 +60,19 @@ export function NodeHeader({
       <div className="flex flex-wrap items-center gap-3">
         <StatusChip status={status} />
         <SignalBars bars={bars} label={rssiLabel} />
-        {lastSeen ? (
-          <RelativeTime iso={lastSeen} />
-        ) : (
-          <span>{notAvailable}</span>
-        )}
         <Chip>
-          {firmwareVersion
-            ? t('node.header.firmware', { version: firmwareVersion })
-            : notAvailable}
+          {lastSeen ? (
+            <>
+              {t('node.header.lastSeenLabel')} <RelativeTime iso={lastSeen} />
+            </>
+          ) : (
+            `${t('node.header.lastSeenLabel')} ${notAvailable}`
+          )}
+        </Chip>
+        <Chip>
+          {t('node.header.firmware', {
+            version: firmwareVersion ?? notAvailable,
+          })}
         </Chip>
         <Chip>{t('node.header.transport', { transport })}</Chip>
       </div>

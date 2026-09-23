@@ -109,4 +109,57 @@ describe('SensorGroup', () => {
       '/nodes/device-1/sensors/v-l1',
     )
   })
+
+  // Debt fix: the caption used to render the raw snake_case sensor_types.name
+  // (e.g. "active_energy") straight from the backend instead of a translated
+  // label.
+  it('renders the translated channel label in the caption, not the raw channel name', () => {
+    renderWithProviders(
+      <SensorGroup
+        group={{ ...FOUR_PHASE_GROUP, channel: 'active_energy', unit: 'kWh' }}
+        nodeId="device-1"
+      />,
+    )
+
+    expect(screen.getByText('Active energy · kWh')).toBeInTheDocument()
+    expect(screen.queryByText(/active_energy/)).toBeNull()
+  })
+
+  it('falls back to the raw channel name for an unseeded channel instead of crashing', () => {
+    renderWithProviders(
+      <SensorGroup
+        group={{ ...FOUR_PHASE_GROUP, channel: 'future_channel', unit: 'x' }}
+        nodeId="device-1"
+      />,
+    )
+
+    expect(screen.getByText('future_channel · x')).toBeInTheDocument()
+  })
+
+  // Debt fix: `in` matches inherited Object.prototype keys, so a tag of
+  // literally "constructor" used to resolve to Object's constructor function
+  // instead of falling back to the sensor's own label -- Object.hasOwn is the
+  // correct own-property check.
+  it('does not treat an inherited Object.prototype key as a named phase tag', () => {
+    const groupWithPrototypeTag: SensorChannelGroup = {
+      channel: 'voltage',
+      unit: 'V',
+      phases: [
+        {
+          tag: 'constructor',
+          sensorId: 'weird-1',
+          label: 'Weird sensor',
+          value: 1,
+          quality: 'ok',
+          timestamp: '2026-09-22T10:00:00Z',
+        },
+      ],
+    }
+
+    renderWithProviders(
+      <SensorGroup group={groupWithPrototypeTag} nodeId="device-1" />,
+    )
+
+    expect(screen.getByRole('columnheader')).toHaveTextContent('Weird sensor')
+  })
 })

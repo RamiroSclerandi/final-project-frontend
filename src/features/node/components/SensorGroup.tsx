@@ -28,8 +28,53 @@ const QUALITY_KEYS: Record<Quality, TranslationKey> = {
   provisional: 'quality.provisional',
 }
 
+// The seeded `sensor_types.name` values (#412). Anything unseeded falls back
+// to the raw channel name in `channelLabel` below rather than crashing.
+// `satisfies` (not an explicit `Record<string, ...>` annotation) keeps the
+// literal key union so `keyof typeof CHANNEL_LABEL_KEYS` narrows to those 14
+// keys instead of widening to `string`.
+const CHANNEL_LABEL_KEYS = {
+  temperature: 'node.channel.temperature',
+  pressure: 'node.channel.pressure',
+  humidity: 'node.channel.humidity',
+  voltage: 'node.channel.voltage',
+  current: 'node.channel.current',
+  power: 'node.channel.power',
+  illuminance: 'node.channel.illuminance',
+  co2: 'node.channel.co2',
+  soil_moisture: 'node.channel.soilMoisture',
+  frequency: 'node.channel.frequency',
+  reactive_power: 'node.channel.reactivePower',
+  apparent_power: 'node.channel.apparentPower',
+  power_factor: 'node.channel.powerFactor',
+  active_energy: 'node.channel.activeEnergy',
+} satisfies Record<string, TranslationKey>
+
+// `in` also matches inherited Object.prototype keys (e.g. a tag of literally
+// "constructor"), which would then resolve to Object's own constructor
+// function instead of falling back. `Object.hasOwn` is the correct
+// own-property check.
 function isNamedPhaseTag(tag: string): tag is keyof typeof PHASE_LABEL_KEYS {
-  return tag in PHASE_LABEL_KEYS
+  return Object.hasOwn(PHASE_LABEL_KEYS, tag)
+}
+
+function isKnownChannel(
+  channel: string,
+): channel is keyof typeof CHANNEL_LABEL_KEYS {
+  return Object.hasOwn(CHANNEL_LABEL_KEYS, channel)
+}
+
+/**
+ * A magnitude's translated display name (debt fix: the caption used to
+ * render the raw snake_case `sensor_types.name` straight from the backend).
+ * Falls back to the raw channel string for anything unseeded so an unknown
+ * future magnitude never crashes the page.
+ */
+function channelLabel(
+  channel: string,
+  t: (key: TranslationKey) => string,
+): string {
+  return isKnownChannel(channel) ? t(CHANNEL_LABEL_KEYS[channel]) : channel
 }
 
 /**
@@ -70,7 +115,7 @@ export function SensorGroup({ group, nodeId }: SensorGroupProps) {
   return (
     <table role="table" className="table-stack min-w-0 w-full tabular-nums">
       <caption className="text-left text-sm text-text-muted">
-        {group.channel} · {group.unit}
+        {channelLabel(group.channel, t)} · {group.unit}
       </caption>
       <thead>
         <tr role="row">
