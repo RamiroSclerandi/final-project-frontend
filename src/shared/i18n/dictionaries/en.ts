@@ -153,9 +153,55 @@ export const en = {
       title: 'Admin',
       description: 'The admin area is not available yet.',
     },
-    comingSoon: {
-      title: 'Coming soon',
-      description: 'This view is not available yet.',
+  },
+  chart: {
+    loading: 'Loading chart…',
+    empty: 'No data for this range.',
+    markedPoint: 'marked data point ({reasons})',
+    meanOf: 'mean of {count} samples',
+    marker: {
+      outOfRange: 'out of range',
+      suspect: 'suspect',
+      clockUnsynced: 'clock unsynced',
+      partial: 'partial',
+    },
+  },
+  sensor: {
+    breadcrumb: {
+      label: 'Breadcrumb',
+    },
+    header: {
+      unknownLabel: 'Sensor',
+    },
+    range: {
+      label: 'Range',
+      from: 'From',
+      to: 'To',
+      preset: {
+        hour: '1 hour',
+        day: '24 hours',
+        week: '7 days',
+        month: '30 days',
+        quarter: '90 days',
+        year: '1 year',
+      },
+    },
+    granularity: {
+      label: 'Granularity',
+      auto: 'Auto ({resolved})',
+      raw: 'Raw',
+      hourly: 'Hourly',
+      daily: 'Daily',
+    },
+    export: {
+      action: 'Export CSV',
+      inProgress: 'Exporting…',
+    },
+    degraded: {
+      aggregationStale:
+        'Aggregated data is behind; newest points may be missing.',
+      newestPointPartial:
+        'The newest point is provisional and may still change.',
     },
   },
   config: {

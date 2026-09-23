@@ -228,12 +228,9 @@ const SCANNED_ROOTS = [
 // Legacy components not yet restyled to `t()` calls, each with the PR that
 // restyles it. Do not weaken the pattern or the scanned roots to paper over
 // these -- widen the exclusion list only, one line per file.
-const NO_LITERAL_EXCLUSIONS = new Set([
-  'src/features/telemetry-history/components/DegradedStateBanner.tsx', // PR-8
-  'src/features/telemetry-history/components/HistoricalChart.tsx', // PR-8
-  'src/features/telemetry-history/components/HistoryTitle.tsx', // PR-8
-  'src/features/telemetry-history/components/RangePicker.tsx', // PR-8
-])
+// Empty as of ui-redesign PR-8: DegradedStateBanner, HistoricalChart, and
+// RangePicker were restyled that PR; HistoryTitle was deleted that PR.
+const NO_LITERAL_EXCLUSIONS = new Set<string>([])
 
 describe('no-literal contract', () => {
   it('finds zero user-facing literals under the scanned roots', () => {

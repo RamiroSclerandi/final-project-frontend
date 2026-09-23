@@ -1,11 +1,13 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { renderWithProviders } from '../../../shared/test/renderWithProviders'
 import type { HistoricalPoint } from '../domain/historicalPoint'
-import { HistoryContainer } from './HistoryContainer'
+import { SensorContainer } from './SensorContainer'
 
 const useHistoricalSeriesMock = vi.hoisted(() => vi.fn())
 const useCsvExportMock = vi.hoisted(() => vi.fn())
+const useLatestReadingsMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../application/useHistoricalSeries', () => ({
   useHistoricalSeries: useHistoricalSeriesMock,
@@ -24,8 +26,12 @@ vi.mock('../../data-export', () => ({
     </button>
   ),
 }))
+vi.mock('../../telemetry', () => ({
+  useLatestReadings: useLatestReadingsMock,
+}))
 
 const NOW = new Date('2026-09-15T12:00:00Z')
+const DEVICE_ID = 'device-1'
 const SENSOR_ID = 'sensor-1'
 
 function baseResult(points: HistoricalPoint[] = []) {
@@ -46,24 +52,28 @@ beforeEach(() => {
   useCsvExportMock
     .mockReset()
     .mockReturnValue({ exportRange: vi.fn(), isExporting: false, error: null })
+  useLatestReadingsMock.mockReset().mockReturnValue({ data: undefined })
 })
 
 afterEach(() => {
   vi.useRealTimers()
 })
 
-describe('HistoryContainer', () => {
+describe('SensorContainer', () => {
   it('wires the picker, hook, and chart for the given sensor', () => {
     useHistoricalSeriesMock.mockReturnValue(
       baseResult([{ t: '2026-09-15T11:00:00Z', value: 21, quality: 'ok' }]),
     )
 
-    const { container } = render(<HistoryContainer sensorId={SENSOR_ID} />)
+    const { container } = renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
 
     expect(useHistoricalSeriesMock).toHaveBeenCalledWith(
       SENSOR_ID,
       expect.any(Date),
       expect.any(Date),
+      'auto',
     )
     expect(container.querySelector('svg')).not.toBeNull()
   })
@@ -74,7 +84,9 @@ describe('HistoryContainer', () => {
       aggregationStale: true,
     })
 
-    render(<HistoryContainer sensorId={SENSOR_ID} />)
+    renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
 
     expect(screen.getByRole('status')).toHaveTextContent(
       /aggregated data is behind/i,
@@ -88,7 +100,9 @@ describe('HistoryContainer', () => {
       ]),
     )
 
-    render(<HistoryContainer sensorId={SENSOR_ID} />)
+    renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
 
     expect(screen.getByRole('status')).toHaveTextContent(/provisional/i)
   })
@@ -107,7 +121,9 @@ describe('HistoryContainer', () => {
     })
     useHistoricalSeriesMock.mockReturnValue(baseResult(points))
 
-    render(<HistoryContainer sensorId={SENSOR_ID} />)
+    renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
 
     expect(screen.getByRole('status')).toHaveTextContent(/provisional/i)
     // Renders the real chart (LTTB + Recharts SVG) in jsdom, which can exceed
@@ -115,7 +131,9 @@ describe('HistoryContainer', () => {
   }, 15_000)
 
   it('re-queries the hook with a new range when a preset is picked', () => {
-    render(<HistoryContainer sensorId={SENSOR_ID} />)
+    renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
 
     fireEvent.click(screen.getByRole('button', { name: /1 hour/i }))
 
@@ -123,6 +141,24 @@ describe('HistoryContainer', () => {
       SENSOR_ID,
       new Date(NOW.getTime() - 60 * 60 * 1000),
       NOW,
+      'auto',
+    )
+  })
+
+  it('requests a new granularity from the hook when the override changes (REQ-HS-8)', () => {
+    renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
+
+    fireEvent.change(screen.getByLabelText(/granularity/i), {
+      target: { value: 'daily' },
+    })
+
+    expect(useHistoricalSeriesMock).toHaveBeenLastCalledWith(
+      SENSOR_ID,
+      expect.any(Date),
+      expect.any(Date),
+      'daily',
     )
   })
 
@@ -134,13 +170,47 @@ describe('HistoryContainer', () => {
       error: null,
     })
 
-    render(<HistoryContainer sensorId={SENSOR_ID} />)
+    renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
     fireEvent.click(screen.getByRole('button', { name: /export csv/i }))
 
     expect(exportRange).toHaveBeenCalledWith(
       SENSOR_ID,
       new Date(NOW.getTime() - 24 * 60 * 60 * 1000).toISOString(),
       NOW.toISOString(),
+    )
+  })
+
+  it("renders the sensor's breadcrumb and latest value once the reading is cached", () => {
+    useLatestReadingsMock.mockReturnValue({
+      data: {
+        [SENSOR_ID]: {
+          sensorId: SENSOR_ID,
+          deviceId: DEVICE_ID,
+          value: 21.5,
+          timestamp: '2026-09-15T11:00:00Z',
+          quality: 'ok',
+          channel: 'temperature',
+          unit: 'degC',
+          sensorLabel: 'Greenhouse',
+          sensorTag: 'l1',
+          deviceName: 'Node A',
+          rssi: -60,
+        },
+      },
+    })
+
+    renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
+
+    expect(
+      screen.getByRole('heading', { name: 'Greenhouse' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Node A' })).toHaveAttribute(
+      'href',
+      `/nodes/${DEVICE_ID}`,
     )
   })
 })

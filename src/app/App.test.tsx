@@ -21,10 +21,17 @@ vi.mock('../features/fleet', () => ({
   FleetContainer: () => <p>Fleet nodes</p>,
 }))
 vi.mock('../features/telemetry-history', () => ({
-  HistoryContainer: ({ sensorId }: { sensorId: string }) => (
-    <p>History for {sensorId}</p>
+  SensorContainer: ({
+    deviceId,
+    sensorId,
+  }: {
+    deviceId: string
+    sensorId: string
+  }) => (
+    <p>
+      Sensor {sensorId} on {deviceId}
+    </p>
   ),
-  HistoryTitleContainer: () => <h1>Sensor history</h1>,
 }))
 vi.mock('../features/node', () => ({
   NodeContainer: ({ deviceId }: { deviceId: string }) => <p>Node {deviceId}</p>,
@@ -110,7 +117,6 @@ describe('App routes', () => {
       expect.arrayContaining([
         '/login',
         '/',
-        '/history/:sensorId',
         '/nodes/:id',
         '/nodes/:id/sensors/:sid',
         '/admin',
@@ -164,30 +170,6 @@ describe('App', () => {
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
   })
 
-  it('redirects an unauthenticated visitor away from the history route', () => {
-    useAuthMock.mockReturnValue({
-      status: 'unauthenticated',
-      session: null,
-      signIn: vi.fn(),
-    })
-
-    renderAppAt('/history/sensor-1')
-
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
-  })
-
-  it('renders the history page for an authenticated visitor', () => {
-    useAuthMock.mockReturnValue({
-      status: 'authenticated',
-      session: AUTHENTICATED_SESSION,
-      signOut: vi.fn(),
-    })
-
-    renderAppAt('/history/sensor-1')
-
-    expect(screen.getByText('History for sensor-1')).toBeInTheDocument()
-  })
-
   it('renders a reserved placeholder for /alerts (REQ-SHELL-2)', () => {
     useAuthMock.mockReturnValue({
       status: 'authenticated',
@@ -214,7 +196,7 @@ describe('App', () => {
     expect(screen.getByText('Node device-1')).toBeInTheDocument()
   })
 
-  it('renders a coming-soon placeholder for /nodes/:id/sensors/:sid (not implemented until PR-8)', () => {
+  it('renders the sensor detail page for /nodes/:id/sensors/:sid (ui-redesign PR-8)', () => {
     useAuthMock.mockReturnValue({
       status: 'authenticated',
       session: AUTHENTICATED_SESSION,
@@ -223,9 +205,7 @@ describe('App', () => {
 
     renderAppAt('/nodes/device-1/sensors/sensor-1')
 
-    expect(
-      screen.getByText('This view is not available yet.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Sensor sensor-1 on device-1')).toBeInTheDocument()
   })
 
   it('redirects an unknown path to / (REQ-SHELL-2)', () => {

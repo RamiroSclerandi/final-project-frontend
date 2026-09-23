@@ -2,37 +2,18 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { AuthProvider } from '../features/auth'
-import { ReservedPage } from '../shared/design-system/templates/ReservedPage'
 import { ThemeProvider } from '../shared/design-system/theme/ThemeProvider'
 import { I18nProvider } from '../shared/i18n/I18nProvider'
-import { useTranslation } from '../shared/i18n/useTranslation'
 import { AdminPage } from '../pages/AdminPage'
 import { AlertsPage } from '../pages/AlertsPage'
 import { FleetPage } from '../pages/FleetPage'
-import { HistoryPage } from '../pages/HistoryPage'
 import { LoginPage } from '../pages/LoginPage'
 import { NodePage } from '../pages/NodePage'
+import { SensorPage } from '../pages/SensorPage'
 import { AppShellContainer } from './AppShellContainer'
 import { RequireSession } from './RequireSession'
 
 const queryClient = new QueryClient()
-
-/**
- * A stand-in for `/nodes/:id/sensors/:sid`, which doesn't have a real page
- * yet (Sensor ships in PR-8). Reuses the `ReservedPage` template directly
- * rather than a dedicated page file, since there is no page-specific
- * behavior to add yet.
- */
-function ComingSoonPlaceholder() {
-  const { t } = useTranslation()
-
-  return (
-    <ReservedPage
-      title={t('reserved.comingSoon.title')}
-      description={t('reserved.comingSoon.description')}
-    />
-  )
-}
 
 /**
  * Composition root: wires the query client, auth, locale, and theme
@@ -59,11 +40,10 @@ export function App() {
                   }
                 >
                   <Route index element={<FleetPage />} />
-                  <Route path="history/:sensorId" element={<HistoryPage />} />
                   <Route path="nodes/:id" element={<NodePage />} />
                   <Route
                     path="nodes/:id/sensors/:sid"
-                    element={<ComingSoonPlaceholder />}
+                    element={<SensorPage />}
                   />
                   <Route path="admin" element={<AdminPage />} />
                   <Route path="alerts" element={<AlertsPage />} />

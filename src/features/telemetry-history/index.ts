@@ -1,3 +1,2 @@
-export { HistoryContainer } from './containers/HistoryContainer'
-export { HistoryTitleContainer } from './containers/HistoryTitleContainer'
+export { SensorContainer } from './containers/SensorContainer'
 export { fetchRawMeasurements } from './infrastructure/historyRepository'

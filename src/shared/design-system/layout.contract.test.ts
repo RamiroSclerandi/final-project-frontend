@@ -224,9 +224,9 @@ const SCANNED_ROOTS = [
 // Legacy components not yet migrated off a `CHART_WIDTH`-style constant,
 // each with the PR that removes it. Do not weaken the pattern or the
 // scanned roots to paper over these -- widen the exclusion list only.
-const LAYOUT_EXCLUSIONS = new Set([
-  'src/features/telemetry-history/components/HistoricalChart.tsx', // PR-8
-])
+// Empty as of ui-redesign PR-8: HistoricalChart dropped CHART_WIDTH in
+// favor of ResponsiveContainer that PR.
+const LAYOUT_EXCLUSIONS = new Set<string>([])
 
 describe('layout contract', () => {
   it('finds zero layout violations under the scanned roots', () => {

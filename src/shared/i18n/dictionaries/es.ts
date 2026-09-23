@@ -151,9 +151,55 @@ export const es: Dictionary = {
       title: 'Administración',
       description: 'El área de administración aún no está disponible.',
     },
-    comingSoon: {
-      title: 'Próximamente',
-      description: 'Esta vista aún no está disponible.',
+  },
+  chart: {
+    loading: 'Cargando gráfico…',
+    empty: 'No hay datos para este rango.',
+    markedPoint: 'punto de datos marcado ({reasons})',
+    meanOf: 'media de {count} muestras',
+    marker: {
+      outOfRange: 'fuera de rango',
+      suspect: 'sospechoso',
+      clockUnsynced: 'reloj desincronizado',
+      partial: 'parcial',
+    },
+  },
+  sensor: {
+    breadcrumb: {
+      label: 'Ruta de navegación',
+    },
+    header: {
+      unknownLabel: 'Sensor',
+    },
+    range: {
+      label: 'Rango',
+      from: 'Desde',
+      to: 'Hasta',
+      preset: {
+        hour: '1 hora',
+        day: '24 horas',
+        week: '7 días',
+        month: '30 días',
+        quarter: '90 días',
+        year: '1 año',
+      },
+    },
+    granularity: {
+      label: 'Granularidad',
+      auto: 'Automático ({resolved})',
+      raw: 'Sin procesar',
+      hourly: 'Por hora',
+      daily: 'Diario',
+    },
+    export: {
+      action: 'Exportar CSV',
+      inProgress: 'Exportando…',
+    },
+    degraded: {
+      aggregationStale:
+        'Los datos agregados están desactualizados; podrían faltar los puntos más recientes.',
+      newestPointPartial:
+        'El punto más reciente es provisional y podría cambiar.',
     },
   },
   config: {
