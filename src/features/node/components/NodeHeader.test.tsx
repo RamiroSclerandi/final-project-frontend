@@ -38,10 +38,22 @@ describe('NodeHeader', () => {
     expect(document.querySelector('[aria-hidden="true"]')).not.toBeNull()
   })
 
-  it('renders "Not available" when firmwareVersion is null (REQ-NODE-1)', () => {
+  it('renders a labelled "Not available" when firmwareVersion is null (REQ-NODE-1)', () => {
     renderWithProviders(<NodeHeader {...BASE_PROPS} firmwareVersion={null} />)
 
-    expect(screen.getByText('Not available')).toBeInTheDocument()
+    expect(screen.getByText('Firmware: Not available')).toBeInTheDocument()
+  })
+
+  // Debt fix: firmware and last-seen used to both fall back to a bare,
+  // unlabelled "Not available" -- indistinguishable from each other, unlike
+  // signal and transport which always carry a label.
+  it('labels firmware and last-seen separately when both are missing', () => {
+    renderWithProviders(
+      <NodeHeader {...BASE_PROPS} firmwareVersion={null} lastSeen={null} />,
+    )
+
+    expect(screen.getByText('Firmware: Not available')).toBeInTheDocument()
+    expect(screen.getByText('Last seen: Not available')).toBeInTheDocument()
   })
 
   it('renders the transport value', () => {

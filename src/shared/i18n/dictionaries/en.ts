@@ -44,6 +44,7 @@ export const en = {
   common: {
     notAvailable: 'Not available',
     retry: 'Retry',
+    dismiss: 'Dismiss',
   },
   connection: {
     connecting: 'Connecting…',
@@ -98,9 +99,10 @@ export const en = {
   node: {
     header: {
       configure: 'Configure',
-      firmware: 'Firmware {version}',
+      firmware: 'Firmware: {version}',
       transport: 'Transport: {transport}',
       rssi: 'Signal: {rssi} dBm',
+      lastSeenLabel: 'Last seen:',
     },
     phase: {
       l1: 'L1',
@@ -108,6 +110,25 @@ export const en = {
       l3: 'L3',
       total: 'Total',
       value: 'Value',
+    },
+    channel: {
+      temperature: 'Temperature',
+      pressure: 'Pressure',
+      humidity: 'Humidity',
+      voltage: 'Voltage',
+      current: 'Current',
+      power: 'Power',
+      illuminance: 'Illuminance',
+      co2: 'CO2',
+      soilMoisture: 'Soil moisture',
+      frequency: 'Frequency',
+      reactivePower: 'Reactive power',
+      apparentPower: 'Apparent power',
+      powerFactor: 'Power factor',
+      activeEnergy: 'Active energy',
+    },
+    config: {
+      title: 'Configure {name}',
     },
     notFound: {
       title: 'Node not found',
@@ -135,6 +156,24 @@ export const en = {
     comingSoon: {
       title: 'Coming soon',
       description: 'This view is not available yet.',
+    },
+  },
+  config: {
+    requested: 'Requested {seconds} s · {relative}',
+    notConfigured: 'Not configured',
+    samplingIntervalLabel: 'Sampling interval (seconds)',
+    rangeError: 'Enter a value between {min} and {max} seconds.',
+    apply: 'Apply',
+    save: 'Save',
+    device: {
+      name: 'Name',
+      location: 'Location',
+      transport: 'Transport',
+      provisioned: 'Provisioned',
+    },
+    sensor: {
+      label: 'Label',
+      pin: 'Pin',
     },
   },
 }

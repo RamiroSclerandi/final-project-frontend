@@ -1,5 +1,8 @@
 import { useState } from 'react'
 
+import { Button } from '../../../shared/design-system/atoms/Button'
+import { TextField } from '../../../shared/design-system/atoms/TextField'
+import { useTranslation } from '../../../shared/i18n/useTranslation'
 import type { DeviceConfigSummary } from '../domain/deviceConfig'
 import {
   MAX_SAMPLING_INTERVAL_SECONDS,
@@ -17,8 +20,9 @@ export interface SamplingIntervalControlProps {
 }
 
 /**
- * One device's sampling-interval control (REQ-RC-2, REQ-RC-3). No
- * applied-state UI: the firmware never reports the applied value back.
+ * One device's sampling-interval control (REQ-RC-2, REQ-RC-3, REQ-CFG-3,
+ * REQ-RC-11). Requested-only display -- the firmware never reports an
+ * applied value back, so no "applied" text is ever rendered.
  */
 export function SamplingIntervalControl({
   summary,
@@ -26,6 +30,8 @@ export function SamplingIntervalControl({
   isSaving,
   errorMessage,
 }: SamplingIntervalControlProps) {
+  const { t, formatRelativeTime } = useTranslation()
+  const [mountedAtMs] = useState(() => Date.now())
   const { deviceId, deviceName, config } = summary
   const [seconds, setSeconds] = useState(
     config
@@ -37,42 +43,41 @@ export function SamplingIntervalControl({
 
   return (
     <div className="flex flex-wrap items-end gap-3">
-      <p className="w-full font-medium">{deviceName}</p>
-      <p className="w-full text-xs text-slate-500">
+      <p className="w-full font-medium text-text">{deviceName}</p>
+      <p className="w-full text-sm text-text-muted">
         {config
-          ? `Requested ${samplingIntervalMsToSeconds(config.samplingIntervalMs)}s at ${config.requestedAt}`
-          : 'Not configured'}
+          ? t('config.requested', {
+              seconds: samplingIntervalMsToSeconds(config.samplingIntervalMs),
+              relative: formatRelativeTime(config.requestedAt, mountedAtMs),
+            })
+          : t('config.notConfigured')}
       </p>
-      <div className="flex flex-col gap-1">
-        <label htmlFor={`sampling-interval-${deviceId}`}>
-          Sampling interval (seconds)
-        </label>
-        <input
-          id={`sampling-interval-${deviceId}`}
-          type="number"
-          min={MIN_SAMPLING_INTERVAL_SECONDS}
-          max={MAX_SAMPLING_INTERVAL_SECONDS}
-          value={seconds}
-          onChange={(event) => setSeconds(event.target.value)}
-        />
-      </div>
+      <TextField
+        id={`sampling-interval-${deviceId}`}
+        label={t('config.samplingIntervalLabel')}
+        type="number"
+        value={seconds}
+        onChange={setSeconds}
+      />
       {!isValid && seconds !== '' ? (
-        <p role="alert" className="w-full text-sm text-amber-400">
-          Enter a value between {MIN_SAMPLING_INTERVAL_SECONDS} and{' '}
-          {MAX_SAMPLING_INTERVAL_SECONDS} seconds.
+        <p role="alert" className="w-full text-sm text-warning">
+          {t('config.rangeError', {
+            min: MIN_SAMPLING_INTERVAL_SECONDS,
+            max: MAX_SAMPLING_INTERVAL_SECONDS,
+          })}
         </p>
       ) : errorMessage ? (
-        <p role="alert" className="w-full text-sm text-red-500">
+        <p role="alert" className="w-full text-sm text-danger">
           {errorMessage}
         </p>
       ) : null}
-      <button
-        type="button"
+      <Button
+        variant="primary"
         disabled={!isValid || isSaving}
         onClick={() => onApply(ms)}
       >
-        Apply
-      </button>
+        {t('config.apply')}
+      </Button>
     </div>
   )
 }

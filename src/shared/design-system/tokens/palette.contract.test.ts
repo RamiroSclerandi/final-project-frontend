@@ -70,11 +70,6 @@ const SCANNED_ROOTS = [
 // paper over these -- widen the exclusion list only, one line per file.
 const PALETTE_EXCLUSIONS = new Set([
   'src/features/data-export/components/ExportButton.tsx', // PR-8
-  'src/features/device-management/components/DeviceEditForm.tsx', // PR-7
-  'src/features/device-management/components/DeviceList.tsx', // PR-7
-  'src/features/device-management/components/SensorEditForm.tsx', // PR-7
-  'src/features/remote-config/components/SamplingIntervalControl.tsx', // PR-7
-  'src/features/remote-config/components/SamplingIntervalList.tsx', // PR-7
   'src/features/telemetry-history/components/DegradedStateBanner.tsx', // PR-8
   'src/features/telemetry-history/components/HistoricalChart.tsx', // PR-8
   'src/features/telemetry-history/components/RangePicker.tsx', // PR-8
