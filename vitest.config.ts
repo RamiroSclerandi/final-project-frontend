@@ -9,6 +9,16 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
+    // `shared/api/supabase` throws at import time when these are missing, which
+    // is what we want of the real app and wrong for a unit test: importing a
+    // module that merely sits downstream of the client should not need
+    // credentials. These placeholders are never dialled -- the unit tier mocks
+    // every repository -- and CI has no `.env`, so without them any test whose
+    // import graph reaches the client fails before its first assertion.
+    env: {
+      VITE_SUPABASE_URL: 'http://127.0.0.1:54321',
+      VITE_SUPABASE_ANON_KEY: 'unit-test-anon-key',
+    },
     exclude: [
       ...configDefaults.exclude,
       'tests/integration/**',
