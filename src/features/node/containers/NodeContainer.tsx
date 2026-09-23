@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Button } from '../../../shared/design-system/atoms/Button'
@@ -6,9 +6,11 @@ import { Skeleton } from '../../../shared/design-system/atoms/Skeleton'
 import type { NodeStatus } from '../../../shared/design-system/atoms/StatusDot'
 import { EmptyState } from '../../../shared/design-system/molecules/EmptyState'
 import { useTranslation } from '../../../shared/i18n/useTranslation'
-import { useDevices } from '../../device-management'
+import { DeviceConfigContainer, useDevices } from '../../device-management'
 import { useDeviceStatuses, useRealtimeDeviceStatuses } from '../../node-health'
+import { SamplingIntervalContainer } from '../../remote-config'
 import { useLatestReadings, useRealtimeReadings } from '../../telemetry'
+import { NodeConfigDrawer } from '../components/NodeConfigDrawer'
 import { NodeHeader } from '../components/NodeHeader'
 import { SensorGroup } from '../components/SensorGroup'
 import { groupSensorsByChannel } from '../domain/groupSensorsByChannel'
@@ -39,6 +41,7 @@ function deriveStatus(status: StatusInput | undefined): NodeStatus {
  */
 export function NodeContainer({ deviceId }: NodeContainerProps) {
   const { t } = useTranslation()
+  const [isConfigOpen, setIsConfigOpen] = useState(false)
   const devicesQuery = useDevices()
   const statusesQuery = useDeviceStatuses()
   useRealtimeDeviceStatuses()
@@ -112,6 +115,7 @@ export function NodeContainer({ deviceId }: NodeContainerProps) {
         firmwareVersion={device.firmwareVersion}
         transport={device.transport}
         rssi={pickNodeRssi(readings)}
+        onOpenConfig={() => setIsConfigOpen(true)}
       />
       {groups.length === 0 ? (
         <EmptyState title={t('node.empty.title')} body={t('node.empty.body')} />
@@ -122,6 +126,14 @@ export function NodeContainer({ deviceId }: NodeContainerProps) {
           ))}
         </div>
       )}
+      <NodeConfigDrawer
+        open={isConfigOpen}
+        onClose={() => setIsConfigOpen(false)}
+        title={t('node.config.title', { name: device.name })}
+      >
+        <DeviceConfigContainer deviceId={deviceId} />
+        <SamplingIntervalContainer deviceId={deviceId} />
+      </NodeConfigDrawer>
     </div>
   )
 }

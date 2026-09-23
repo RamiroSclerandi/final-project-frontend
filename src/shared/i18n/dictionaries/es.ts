@@ -42,6 +42,7 @@ export const es: Dictionary = {
   common: {
     notAvailable: 'No disponible',
     retry: 'Reintentar',
+    dismiss: 'Descartar',
   },
   connection: {
     connecting: 'Conectando…',
@@ -96,9 +97,10 @@ export const es: Dictionary = {
   node: {
     header: {
       configure: 'Configurar',
-      firmware: 'Firmware {version}',
+      firmware: 'Firmware: {version}',
       transport: 'Transporte: {transport}',
       rssi: 'Señal: {rssi} dBm',
+      lastSeenLabel: 'Visto por última vez:',
     },
     phase: {
       l1: 'L1',
@@ -106,6 +108,25 @@ export const es: Dictionary = {
       l3: 'L3',
       total: 'Total',
       value: 'Valor',
+    },
+    channel: {
+      temperature: 'Temperatura',
+      pressure: 'Presión',
+      humidity: 'Humedad',
+      voltage: 'Voltaje',
+      current: 'Corriente',
+      power: 'Potencia',
+      illuminance: 'Iluminancia',
+      co2: 'CO2',
+      soilMoisture: 'Humedad del suelo',
+      frequency: 'Frecuencia',
+      reactivePower: 'Potencia reactiva',
+      apparentPower: 'Potencia aparente',
+      powerFactor: 'Factor de potencia',
+      activeEnergy: 'Energía activa',
+    },
+    config: {
+      title: 'Configurar {name}',
     },
     notFound: {
       title: 'Nodo no encontrado',
@@ -133,6 +154,24 @@ export const es: Dictionary = {
     comingSoon: {
       title: 'Próximamente',
       description: 'Esta vista aún no está disponible.',
+    },
+  },
+  config: {
+    requested: 'Solicitado {seconds} s · {relative}',
+    notConfigured: 'Sin configurar',
+    samplingIntervalLabel: 'Intervalo de muestreo (segundos)',
+    rangeError: 'Ingresar un valor entre {min} y {max} segundos.',
+    apply: 'Aplicar',
+    save: 'Guardar',
+    device: {
+      name: 'Nombre',
+      location: 'Ubicación',
+      transport: 'Transporte',
+      provisioned: 'Aprovisionado',
+    },
+    sensor: {
+      label: 'Etiqueta',
+      pin: 'Pin',
     },
   },
 }

@@ -26,14 +26,8 @@ vi.mock('../features/telemetry-history', () => ({
   ),
   HistoryTitleContainer: () => <h1>Sensor history</h1>,
 }))
-vi.mock('../features/device-management', () => ({
-  DeviceManagementContainer: () => <p>Device management</p>,
-}))
 vi.mock('../features/node', () => ({
   NodeContainer: ({ deviceId }: { deviceId: string }) => <p>Node {deviceId}</p>,
-}))
-vi.mock('../features/remote-config', () => ({
-  RemoteConfigContainer: () => <p>Remote config</p>,
 }))
 
 const AUTHENTICATED_SESSION = {
@@ -117,7 +111,6 @@ describe('App routes', () => {
         '/login',
         '/',
         '/history/:sensorId',
-        '/devices',
         '/nodes/:id',
         '/nodes/:id/sensors/:sid',
         '/admin',
@@ -193,30 +186,6 @@ describe('App', () => {
     renderAppAt('/history/sensor-1')
 
     expect(screen.getByText('History for sensor-1')).toBeInTheDocument()
-  })
-
-  it('redirects an unauthenticated visitor away from the devices route', () => {
-    useAuthMock.mockReturnValue({
-      status: 'unauthenticated',
-      session: null,
-      signIn: vi.fn(),
-    })
-
-    renderAppAt('/devices')
-
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
-  })
-
-  it('renders the devices page for an authenticated visitor (CA-3)', () => {
-    useAuthMock.mockReturnValue({
-      status: 'authenticated',
-      session: AUTHENTICATED_SESSION,
-      signOut: vi.fn(),
-    })
-
-    renderAppAt('/devices')
-
-    expect(screen.getByText('Device management')).toBeInTheDocument()
   })
 
   it('renders a reserved placeholder for /alerts (REQ-SHELL-2)', () => {

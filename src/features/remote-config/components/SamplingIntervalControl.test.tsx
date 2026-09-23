@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
+import { renderWithProviders } from '../../../shared/test/renderWithProviders'
 import type { DeviceConfigSummary } from '../domain/deviceConfig'
 import { SamplingIntervalControl } from './SamplingIntervalControl'
 
@@ -12,7 +13,7 @@ const summary: DeviceConfigSummary = {
 
 describe('SamplingIntervalControl', () => {
   it('shows "Not configured" when there is no device_configs row yet', () => {
-    render(
+    renderWithProviders(
       <SamplingIntervalControl
         summary={summary}
         onApply={vi.fn()}
@@ -21,17 +22,17 @@ describe('SamplingIntervalControl', () => {
       />,
     )
 
-    expect(screen.getByText(/not configured/i)).toBeInTheDocument()
+    expect(screen.getByText('Not configured')).toBeInTheDocument()
   })
 
-  it('shows the requested value and time when a config row exists', () => {
-    render(
+  it('shows the requested value and relative time, never an applied-state string (REQ-CFG-3, REQ-RC-11)', () => {
+    renderWithProviders(
       <SamplingIntervalControl
         summary={{
           ...summary,
           config: {
-            samplingIntervalMs: 60000,
-            requestedAt: '2026-09-15T12:00:00Z',
+            samplingIntervalMs: 30000,
+            requestedAt: new Date().toISOString(),
           },
         }}
         onApply={vi.fn()}
@@ -40,16 +41,13 @@ describe('SamplingIntervalControl', () => {
       />,
     )
 
-    expect(
-      screen.getByText(/requested 60s at 2026-09-15T12:00:00Z/i),
-    ).toBeInTheDocument()
-    // Non-Requirement (spec remote-config): no applied_at confirmation UI.
+    expect(screen.getByText(/^Requested 30 s ·/)).toBeInTheDocument()
     expect(screen.queryByText(/applied/i)).not.toBeInTheDocument()
   })
 
   it('applies the entered seconds, converted to milliseconds, within range (REQ-RC-2)', () => {
     const onApply = vi.fn()
-    render(
+    renderWithProviders(
       <SamplingIntervalControl
         summary={summary}
         onApply={onApply}
@@ -68,7 +66,7 @@ describe('SamplingIntervalControl', () => {
 
   it('disables Apply and shows a range message for an out-of-range value, without calling onApply', () => {
     const onApply = vi.fn()
-    render(
+    renderWithProviders(
       <SamplingIntervalControl
         summary={summary}
         onApply={onApply}
@@ -88,7 +86,7 @@ describe('SamplingIntervalControl', () => {
   })
 
   it('disables Apply while saving', () => {
-    render(
+    renderWithProviders(
       <SamplingIntervalControl
         summary={summary}
         onApply={vi.fn()}
@@ -104,7 +102,7 @@ describe('SamplingIntervalControl', () => {
   })
 
   it('shows a server error message when the value is otherwise valid', () => {
-    render(
+    renderWithProviders(
       <SamplingIntervalControl
         summary={summary}
         onApply={vi.fn()}

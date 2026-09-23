@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
+import { renderWithProviders } from '../../../shared/test/renderWithProviders'
 import type { Device } from '../domain/device'
 import { DeviceEditForm } from './DeviceEditForm'
 
@@ -17,7 +18,7 @@ const device: Device = {
 
 describe('DeviceEditForm', () => {
   it('shows the read-only mac address alongside the editable fields', () => {
-    render(
+    renderWithProviders(
       <DeviceEditForm
         device={device}
         onSave={vi.fn()}
@@ -31,7 +32,7 @@ describe('DeviceEditForm', () => {
 
   it('submits an allowlisted update with the edited values, never mac_address (REQ-DM-4)', () => {
     const onSave = vi.fn()
-    render(
+    renderWithProviders(
       <DeviceEditForm
         device={device}
         onSave={onSave}
@@ -62,7 +63,7 @@ describe('DeviceEditForm', () => {
   })
 
   it('disables the submit button while saving and shows the error message', () => {
-    render(
+    renderWithProviders(
       <DeviceEditForm
         device={device}
         onSave={vi.fn()}

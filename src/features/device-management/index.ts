@@ -1,2 +1,2 @@
-export { DeviceManagementContainer } from './containers/DeviceManagementContainer'
+export { DeviceConfigContainer } from './containers/DeviceConfigContainer'
 export { useDevices } from './application/useDevices'

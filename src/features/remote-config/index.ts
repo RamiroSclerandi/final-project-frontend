@@ -1,1 +1,1 @@
-export { RemoteConfigContainer } from './containers/RemoteConfigContainer'
+export { SamplingIntervalContainer } from './containers/SamplingIntervalContainer'

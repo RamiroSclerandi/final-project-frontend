@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { renderWithProviders } from '../../../shared/test/renderWithProviders'
@@ -10,7 +10,12 @@ const useRealtimeDeviceStatusesMock = vi.hoisted(() => vi.fn())
 const useLatestReadingsMock = vi.hoisted(() => vi.fn())
 const useRealtimeReadingsMock = vi.hoisted(() => vi.fn())
 
-vi.mock('../../device-management', () => ({ useDevices: useDevicesMock }))
+vi.mock('../../device-management', () => ({
+  useDevices: useDevicesMock,
+  DeviceConfigContainer: ({ deviceId }: { deviceId: string }) => (
+    <p>Device config for {deviceId}</p>
+  ),
+}))
 vi.mock('../../node-health', () => ({
   useDeviceStatuses: useDeviceStatusesMock,
   useRealtimeDeviceStatuses: useRealtimeDeviceStatusesMock,
@@ -18,6 +23,11 @@ vi.mock('../../node-health', () => ({
 vi.mock('../../telemetry', () => ({
   useLatestReadings: useLatestReadingsMock,
   useRealtimeReadings: useRealtimeReadingsMock,
+}))
+vi.mock('../../remote-config', () => ({
+  SamplingIntervalContainer: ({ deviceId }: { deviceId: string }) => (
+    <p>Sampling interval for {deviceId}</p>
+  ),
 }))
 
 const DEVICE_A = {
@@ -172,7 +182,33 @@ describe('NodeContainer', () => {
     renderWithProviders(<NodeContainer deviceId="device-a" />)
 
     expect(screen.getAllByRole('table')).toHaveLength(1)
-    expect(screen.getByText(/voltage/)).toBeInTheDocument()
-    expect(screen.queryByText(/current/)).toBeNull()
+    // Channel labels are translated now (debt fix) -- "voltage" renders as
+    // "Voltage", so this must be case-insensitive.
+    expect(screen.getByText(/voltage/i)).toBeInTheDocument()
+    expect(screen.queryByText(/current/i)).toBeNull()
+  })
+
+  it('opens the config drawer with both device sections when Configure is clicked', () => {
+    useDevicesMock.mockReturnValue({
+      data: [DEVICE_A],
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+    mockHealthyDefaults()
+
+    renderWithProviders(<NodeContainer deviceId="device-a" />)
+
+    const dialog = document.querySelector('dialog')
+    expect(dialog).not.toBeNull()
+    expect(dialog).not.toHaveAttribute('open')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Configure' }))
+
+    expect(dialog).toHaveAttribute('open')
+    expect(screen.getByText('Device config for device-a')).toBeInTheDocument()
+    expect(
+      screen.getByText('Sampling interval for device-a'),
+    ).toBeInTheDocument()
   })
 })

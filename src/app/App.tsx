@@ -8,7 +8,6 @@ import { I18nProvider } from '../shared/i18n/I18nProvider'
 import { useTranslation } from '../shared/i18n/useTranslation'
 import { AdminPage } from '../pages/AdminPage'
 import { AlertsPage } from '../pages/AlertsPage'
-import { DevicesPage } from '../pages/DevicesPage'
 import { FleetPage } from '../pages/FleetPage'
 import { HistoryPage } from '../pages/HistoryPage'
 import { LoginPage } from '../pages/LoginPage'
@@ -61,7 +60,6 @@ export function App() {
                 >
                   <Route index element={<FleetPage />} />
                   <Route path="history/:sensorId" element={<HistoryPage />} />
-                  <Route path="devices" element={<DevicesPage />} />
                   <Route path="nodes/:id" element={<NodePage />} />
                   <Route
                     path="nodes/:id/sensors/:sid"

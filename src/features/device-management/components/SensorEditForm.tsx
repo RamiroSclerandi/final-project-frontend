@@ -1,5 +1,8 @@
 import { useState, type FormEvent } from 'react'
 
+import { Button } from '../../../shared/design-system/atoms/Button'
+import { TextField } from '../../../shared/design-system/atoms/TextField'
+import { useTranslation } from '../../../shared/i18n/useTranslation'
 import type { SensorSummary } from '../domain/device'
 import type { SensorUpdate } from '../domain/sensorUpdate'
 
@@ -10,13 +13,14 @@ export interface SensorEditFormProps {
   errorMessage: string | null
 }
 
-/** Inline sensor labeling form (REQ-DM-3). */
+/** Inline sensor labeling form (REQ-DM-3, REQ-CFG-2). */
 export function SensorEditForm({
   sensor,
   onSave,
   isSaving,
   errorMessage,
 }: SensorEditFormProps) {
+  const { t } = useTranslation()
   const [label, setLabel] = useState(sensor.label ?? '')
   const [pinConnection, setPinConnection] = useState(sensor.pinConnection ?? '')
 
@@ -29,35 +33,31 @@ export function SensorEditForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2">
-      <p className="text-xs text-slate-500">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <p className="text-xs text-text-muted">
         {sensor.source}
         {sensor.tag && ` (${sensor.tag})`}
       </p>
-      <div className="flex flex-col gap-1">
-        <label htmlFor={`sensor-label-${sensor.id}`}>Label</label>
-        <input
-          id={`sensor-label-${sensor.id}`}
-          value={label}
-          onChange={(event) => setLabel(event.target.value)}
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor={`sensor-pin-${sensor.id}`}>Pin</label>
-        <input
-          id={`sensor-pin-${sensor.id}`}
-          value={pinConnection}
-          onChange={(event) => setPinConnection(event.target.value)}
-        />
-      </div>
+      <TextField
+        id={`sensor-label-${sensor.id}`}
+        label={t('config.sensor.label')}
+        value={label}
+        onChange={setLabel}
+      />
+      <TextField
+        id={`sensor-pin-${sensor.id}`}
+        label={t('config.sensor.pin')}
+        value={pinConnection}
+        onChange={setPinConnection}
+      />
       {errorMessage && (
-        <p role="alert" className="w-full text-sm text-red-500">
+        <p role="alert" className="text-sm text-danger">
           {errorMessage}
         </p>
       )}
-      <button type="submit" disabled={isSaving}>
-        Save
-      </button>
+      <Button type="submit" variant="primary" disabled={isSaving}>
+        {t('config.save')}
+      </Button>
     </form>
   )
 }

@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
+import { renderWithProviders } from '../../../shared/test/renderWithProviders'
 import type { SensorSummary } from '../domain/device'
 import { SensorEditForm } from './SensorEditForm'
 
@@ -15,7 +16,7 @@ const sensor: SensorSummary = {
 describe('SensorEditForm', () => {
   it('submits label and pin_connection only (REQ-DM-3)', () => {
     const onSave = vi.fn()
-    render(
+    renderWithProviders(
       <SensorEditForm
         sensor={sensor}
         onSave={onSave}
@@ -40,7 +41,7 @@ describe('SensorEditForm', () => {
 
   it('sends null for a cleared label instead of an empty string', () => {
     const onSave = vi.fn()
-    render(
+    renderWithProviders(
       <SensorEditForm
         sensor={sensor}
         onSave={onSave}
