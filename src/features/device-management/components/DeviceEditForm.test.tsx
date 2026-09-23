@@ -11,6 +11,7 @@ const device: Device = {
   locationRef: 'Kitchen',
   transport: 'wifi-mqtt',
   provisioned: true,
+  firmwareVersion: null,
   sensors: [],
 }
 
