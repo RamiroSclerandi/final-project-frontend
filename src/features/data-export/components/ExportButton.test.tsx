@@ -1,12 +1,13 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
+import { renderWithProviders } from '../../../shared/test/renderWithProviders'
 import { ExportButton } from './ExportButton'
 
 describe('ExportButton', () => {
   it('calls onExport when clicked', () => {
     const onExport = vi.fn()
-    render(
+    renderWithProviders(
       <ExportButton onExport={onExport} isExporting={false} error={null} />,
     )
 
@@ -16,14 +17,16 @@ describe('ExportButton', () => {
   })
 
   it('disables the button and shows progress while exporting', () => {
-    render(<ExportButton onExport={vi.fn()} isExporting={true} error={null} />)
+    renderWithProviders(
+      <ExportButton onExport={vi.fn()} isExporting={true} error={null} />,
+    )
 
     expect(screen.getByRole('button')).toBeDisabled()
     expect(screen.getByRole('button')).toHaveTextContent(/exporting/i)
   })
 
   it('shows the error message when present', () => {
-    render(
+    renderWithProviders(
       <ExportButton
         onExport={vi.fn()}
         isExporting={false}
