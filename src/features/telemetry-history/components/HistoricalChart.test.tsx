@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
+import { renderWithProviders } from '../../../shared/test/renderWithProviders'
 import type { HistoricalPoint } from '../domain/historicalPoint'
 import {
   CHART_POINT_BUDGET,
@@ -17,24 +18,35 @@ const basePoints: HistoricalPoint[] = [
 
 describe('HistoricalChart', () => {
   it('shows a loading message', () => {
-    render(<HistoricalChart points={[]} isLoading />)
+    renderWithProviders(<HistoricalChart points={[]} isLoading />)
     expect(screen.getByText(/loading chart/i)).toBeInTheDocument()
   })
 
   it('shows an empty-range message when there are no points', () => {
-    render(<HistoricalChart points={[]} isLoading={false} />)
+    renderWithProviders(<HistoricalChart points={[]} isLoading={false} />)
     expect(screen.getByText(/no data for this range/i)).toBeInTheDocument()
   })
 
   it('renders the series without throwing', () => {
-    const { container } = render(
+    const { container } = renderWithProviders(
       <HistoricalChart points={basePoints} isLoading={false} />,
     )
     expect(container.querySelector('svg')).not.toBeNull()
   })
 
+  it('mounts inside a ResponsiveContainer that fills its container width (REQ-SENSOR-1, REQ-HS-4)', () => {
+    const { container } = renderWithProviders(
+      <HistoricalChart points={basePoints} isLoading={false} />,
+    )
+    expect(
+      container.querySelector('.recharts-responsive-container'),
+    ).not.toBeNull()
+  })
+
   it('marks out-of-range, partial, and clock-unsynced points, never hiding them (D-7)', () => {
-    render(<HistoricalChart points={basePoints} isLoading={false} />)
+    renderWithProviders(
+      <HistoricalChart points={basePoints} isLoading={false} />,
+    )
     const marked = screen.getAllByRole('img')
     expect(marked).toHaveLength(3)
     expect(
@@ -58,7 +70,7 @@ describe('HistoricalChart', () => {
       { t: '2026-09-15T10:00:00Z', value: 21, quality: 'ok' },
       { t: '2026-09-15T11:00:00Z', value: 22, quality: 'ok' },
     ]
-    const { container } = render(
+    const { container } = renderWithProviders(
       <HistoricalChart points={points} isLoading={false} />,
     )
     const yAxisTicks = Array.from(
@@ -77,7 +89,7 @@ describe('HistoricalChart', () => {
       quality: 'ok',
     }))
     const t0 = performance.now()
-    const { container } = render(
+    const { container } = renderWithProviders(
       <HistoricalChart points={points} isLoading={false} />,
     )
     const elapsedMs = performance.now() - t0
@@ -100,7 +112,7 @@ describe('HistoricalChart', () => {
         quality: 'ok',
       }),
     )
-    const { container } = render(
+    const { container } = renderWithProviders(
       <HistoricalChart points={points} isLoading={false} />,
     )
     const linePath = container.querySelector('.recharts-line-curve')
@@ -113,7 +125,7 @@ describe('HistoricalChart', () => {
 
 describe('HistoricalTooltip', () => {
   it('shows the sample count when the hovered point carries one', () => {
-    render(
+    renderWithProviders(
       <HistoricalTooltip
         active
         payload={[
@@ -127,7 +139,7 @@ describe('HistoricalTooltip', () => {
   })
 
   it('omits the sample-count line for a raw point', () => {
-    render(
+    renderWithProviders(
       <HistoricalTooltip
         active
         payload={[{ payload: { t: '2026-09-15T11:00:00Z', value: 22 } }]}
@@ -137,7 +149,9 @@ describe('HistoricalTooltip', () => {
   })
 
   it('renders nothing when inactive', () => {
-    const { container } = render(<HistoricalTooltip active={false} />)
+    const { container } = renderWithProviders(
+      <HistoricalTooltip active={false} />,
+    )
     expect(container).toBeEmptyDOMElement()
   })
 })
