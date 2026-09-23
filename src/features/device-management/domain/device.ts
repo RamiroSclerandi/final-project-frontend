@@ -17,6 +17,8 @@ export interface Device {
   locationRef: string | null
   transport: Transport
   provisioned: boolean
+  /** Additive read field (ui-redesign ADR D1, decision #419): `null` until the device reports one. */
+  firmwareVersion: string | null
   sensors: SensorSummary[]
 }
 
@@ -39,6 +41,7 @@ export interface DeviceRow {
   location_ref: string | null
   transport: string
   provisioned: boolean
+  firmware_version: string | null
   sensors: SensorRow[]
 }
 
@@ -60,6 +63,7 @@ export function toDevice(row: DeviceRow): Device {
     locationRef: row.location_ref,
     transport: row.transport as Transport,
     provisioned: row.provisioned,
+    firmwareVersion: row.firmware_version,
     sensors: row.sensors.map(toSensorSummary),
   }
 }

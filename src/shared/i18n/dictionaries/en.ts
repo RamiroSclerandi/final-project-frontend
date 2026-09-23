@@ -35,6 +35,12 @@ export const en = {
     offline: 'Offline',
     unknown: 'Unknown',
   },
+  quality: {
+    ok: 'OK',
+    outOfRange: 'Out of range',
+    suspect: 'Suspect',
+    provisional: 'Provisional',
+  },
   common: {
     notAvailable: 'Not available',
     retry: 'Retry',
@@ -87,6 +93,34 @@ export const en = {
       email: 'Email',
       password: 'Password',
       submit: 'Log in',
+    },
+  },
+  node: {
+    header: {
+      configure: 'Configure',
+      firmware: 'Firmware {version}',
+      transport: 'Transport: {transport}',
+      rssi: 'Signal: {rssi} dBm',
+    },
+    phase: {
+      l1: 'L1',
+      l2: 'L2',
+      l3: 'L3',
+      total: 'Total',
+      value: 'Value',
+    },
+    notFound: {
+      title: 'Node not found',
+      body: 'This node does not exist or is no longer available.',
+      backLink: 'Back to fleet',
+    },
+    empty: {
+      title: 'No readings yet',
+      body: 'This node has not reported any sensor data yet.',
+    },
+    error: {
+      title: 'Node unavailable',
+      body: 'This node could not be loaded. Try again.',
     },
   },
   reserved: {

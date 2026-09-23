@@ -11,6 +11,7 @@ const device: Device = {
   locationRef: 'Kitchen',
   transport: 'wifi-mqtt',
   provisioned: true,
+  firmwareVersion: null,
   sensors: [
     {
       id: 'sensor-1',
@@ -29,6 +30,7 @@ const otherDevice: Device = {
   locationRef: 'Garage',
   transport: 'wifi-mqtt',
   provisioned: true,
+  firmwareVersion: null,
   sensors: [
     {
       id: 'sensor-2',

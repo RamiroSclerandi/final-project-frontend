@@ -33,6 +33,12 @@ export const es: Dictionary = {
     offline: 'Desconectado',
     unknown: 'Desconocido',
   },
+  quality: {
+    ok: 'OK',
+    outOfRange: 'Fuera de rango',
+    suspect: 'Sospechoso',
+    provisional: 'Provisional',
+  },
   common: {
     notAvailable: 'No disponible',
     retry: 'Reintentar',
@@ -85,6 +91,34 @@ export const es: Dictionary = {
       email: 'Correo electrónico',
       password: 'Contraseña',
       submit: 'Iniciar sesión',
+    },
+  },
+  node: {
+    header: {
+      configure: 'Configurar',
+      firmware: 'Firmware {version}',
+      transport: 'Transporte: {transport}',
+      rssi: 'Señal: {rssi} dBm',
+    },
+    phase: {
+      l1: 'L1',
+      l2: 'L2',
+      l3: 'L3',
+      total: 'Total',
+      value: 'Valor',
+    },
+    notFound: {
+      title: 'Nodo no encontrado',
+      body: 'Este nodo no existe o ya no está disponible.',
+      backLink: 'Volver a la flota',
+    },
+    empty: {
+      title: 'Aún no hay lecturas',
+      body: 'Este nodo todavía no reportó datos de sensores.',
+    },
+    error: {
+      title: 'Nodo no disponible',
+      body: 'No se pudo cargar este nodo. Reintentar.',
     },
   },
   reserved: {

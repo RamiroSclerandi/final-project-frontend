@@ -10,6 +10,7 @@ const deviceA: Device = {
   locationRef: 'Garage',
   transport: 'wifi-mqtt',
   provisioned: true,
+  firmwareVersion: null,
   sensors: [],
 }
 const deviceB: Device = {
@@ -19,6 +20,7 @@ const deviceB: Device = {
   locationRef: null,
   transport: 'lorawan',
   provisioned: false,
+  firmwareVersion: null,
   sensors: [],
 }
 

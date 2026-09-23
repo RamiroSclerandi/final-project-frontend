@@ -11,6 +11,7 @@ describe('toDevice', () => {
       location_ref: 'Kitchen',
       transport: 'wifi-mqtt',
       provisioned: true,
+      firmware_version: '1.2.0',
       sensors: [
         {
           id: 'sensor-1',
@@ -29,6 +30,7 @@ describe('toDevice', () => {
       locationRef: 'Kitchen',
       transport: 'wifi-mqtt',
       provisioned: true,
+      firmwareVersion: '1.2.0',
       sensors: [
         {
           id: 'sensor-1',
@@ -49,10 +51,26 @@ describe('toDevice', () => {
       location_ref: null,
       transport: 'lorawan',
       provisioned: false,
+      firmware_version: null,
       sensors: [],
     })
 
     expect(result.sensors).toEqual([])
     expect(result.locationRef).toBeNull()
+  })
+
+  it('maps a null firmware_version to firmwareVersion (unprovisioned device, D12-style fallback)', () => {
+    const result = toDevice({
+      id: 'device-3',
+      mac_address: 'AABBCCDDEE22',
+      name: 'Unflashed node',
+      location_ref: null,
+      transport: 'wifi-mqtt',
+      provisioned: false,
+      firmware_version: null,
+      sensors: [],
+    })
+
+    expect(result.firmwareVersion).toBeNull()
   })
 })

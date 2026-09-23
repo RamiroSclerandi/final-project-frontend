@@ -16,4 +16,11 @@ describe('StatusChip', () => {
 
     expect(screen.getByText('Desconectado')).toBeInTheDocument()
   })
+
+  // PR-2 debt: the unknown status was never asserted.
+  it('translates the unknown status to its English label', () => {
+    renderWithProviders(<StatusChip status="unknown" />)
+
+    expect(screen.getByText('Unknown')).toBeInTheDocument()
+  })
 })
