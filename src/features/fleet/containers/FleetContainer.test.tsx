@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { renderWithProviders } from '../../../shared/test/renderWithProviders'
@@ -27,10 +27,25 @@ const DEVICE_A = {
   transport: 'wifi-mqtt',
 }
 
+const DEVICE_B = {
+  id: 'device-b',
+  name: 'Greenhouse B',
+  locationRef: 'Row 2',
+  transport: 'lorawan',
+}
+
 function mockHealthyDefaults() {
-  useDeviceStatusesMock.mockReturnValue({ data: {} })
+  useDeviceStatusesMock.mockReturnValue({
+    data: {},
+    isError: false,
+    refetch: vi.fn(),
+  })
   useRealtimeDeviceStatusesMock.mockReturnValue(undefined)
-  useLatestReadingsMock.mockReturnValue({ data: {} })
+  useLatestReadingsMock.mockReturnValue({
+    data: {},
+    isError: false,
+    refetch: vi.fn(),
+  })
   useRealtimeReadingsMock.mockReturnValue({ status: 'live' })
 }
 
@@ -64,6 +79,45 @@ describe('FleetContainer', () => {
     expect(screen.getByText('Fleet unavailable')).toBeInTheDocument()
     screen.getByRole('button', { name: 'Retry' }).click()
     expect(refetch).toHaveBeenCalledOnce()
+  })
+
+  // PR-4 debt R3-status-readings-errors-silent: only the devices query drove
+  // the error state, so a failed statuses/readings query rendered the table
+  // with silently-wrong data instead of an error.
+  it('surfaces the error state when the statuses query fails, not only the devices query', () => {
+    useDevicesMock.mockReturnValue({
+      data: [DEVICE_A],
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+    useDeviceStatusesMock.mockReturnValue({ data: {}, isError: true })
+    useRealtimeDeviceStatusesMock.mockReturnValue(undefined)
+    useLatestReadingsMock.mockReturnValue({ data: {}, isError: false })
+    useRealtimeReadingsMock.mockReturnValue({ status: 'live' })
+
+    renderWithProviders(<FleetContainer />)
+
+    expect(screen.getByText('Fleet unavailable')).toBeInTheDocument()
+    expect(screen.queryByRole('table')).toBeNull()
+  })
+
+  it('surfaces the error state when the readings query fails, not only the devices query', () => {
+    useDevicesMock.mockReturnValue({
+      data: [DEVICE_A],
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+    useDeviceStatusesMock.mockReturnValue({ data: {}, isError: false })
+    useRealtimeDeviceStatusesMock.mockReturnValue(undefined)
+    useLatestReadingsMock.mockReturnValue({ data: {}, isError: true })
+    useRealtimeReadingsMock.mockReturnValue({ status: 'live' })
+
+    renderWithProviders(<FleetContainer />)
+
+    expect(screen.getByText('Fleet unavailable')).toBeInTheDocument()
+    expect(screen.queryByRole('table')).toBeNull()
   })
 
   it('shows the empty state for a fleet with zero devices', () => {
@@ -102,5 +156,76 @@ describe('FleetContainer', () => {
       screen.getByRole('link', { name: 'Greenhouse A' }),
     ).toBeInTheDocument()
     expect(screen.getByText('1 node')).toBeInTheDocument()
+  })
+
+  it('narrows the rendered rows to offline nodes once the Offline filter chip is selected (REQ-FLEET-4)', () => {
+    useDevicesMock.mockReturnValue({
+      data: [DEVICE_A, DEVICE_B],
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+    useDeviceStatusesMock.mockReturnValue({
+      data: {
+        'device-a': { online: true, lastSeen: '2026-09-22T10:05:00Z' },
+        'device-b': { online: false, lastSeen: null },
+      },
+      isError: false,
+      refetch: vi.fn(),
+    })
+    useRealtimeDeviceStatusesMock.mockReturnValue(undefined)
+    useLatestReadingsMock.mockReturnValue({
+      data: {},
+      isError: false,
+      refetch: vi.fn(),
+    })
+    useRealtimeReadingsMock.mockReturnValue({ status: 'live' })
+
+    renderWithProviders(<FleetContainer />)
+
+    expect(
+      screen.getByRole('link', { name: 'Greenhouse A' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Greenhouse B' }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Offline' }))
+
+    expect(screen.queryByRole('link', { name: 'Greenhouse A' })).toBeNull()
+    expect(
+      screen.getByRole('link', { name: 'Greenhouse B' }),
+    ).toBeInTheDocument()
+  })
+
+  it('shows a "no matches" empty state when the filter narrows the rows to zero, keeping the filters visible', () => {
+    useDevicesMock.mockReturnValue({
+      data: [DEVICE_A],
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+    useDeviceStatusesMock.mockReturnValue({
+      data: { 'device-a': { online: true, lastSeen: '2026-09-22T10:05:00Z' } },
+      isError: false,
+      refetch: vi.fn(),
+    })
+    useRealtimeDeviceStatusesMock.mockReturnValue(undefined)
+    useLatestReadingsMock.mockReturnValue({
+      data: {},
+      isError: false,
+      refetch: vi.fn(),
+    })
+    useRealtimeReadingsMock.mockReturnValue({ status: 'live' })
+
+    renderWithProviders(<FleetContainer />)
+
+    fireEvent.change(screen.getByLabelText('Search nodes'), {
+      target: { value: 'no such node' },
+    })
+
+    expect(screen.queryByRole('table')).toBeNull()
+    expect(screen.getByText('No nodes match the filters')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'All' })).toBeInTheDocument()
   })
 })

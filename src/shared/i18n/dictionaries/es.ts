@@ -60,9 +60,20 @@ export const es: Dictionary = {
       trend: 'Últimos 60 min',
       alerts: 'Calidad de datos',
     },
+    filter: {
+      all: 'Todos',
+      online: 'En línea',
+      offline: 'Desconectado',
+      withAlerts: 'Con alertas',
+      search: 'Buscar nodos',
+    },
     empty: {
       title: 'Aún no hay nodos',
       body: 'Aprovisionar un dispositivo para verlo aquí.',
+    },
+    filteredEmpty: {
+      title: 'Ningún nodo coincide con los filtros',
+      body: 'Probar con otro estado o término de búsqueda.',
     },
     error: {
       title: 'Flota no disponible',

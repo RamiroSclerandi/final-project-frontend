@@ -62,9 +62,20 @@ export const en = {
       trend: 'Last 60 min',
       alerts: 'Data quality',
     },
+    filter: {
+      all: 'All',
+      online: 'Online',
+      offline: 'Offline',
+      withAlerts: 'With alerts',
+      search: 'Search nodes',
+    },
     empty: {
       title: 'No nodes yet',
       body: 'Provision a device to see it here.',
+    },
+    filteredEmpty: {
+      title: 'No nodes match the filters',
+      body: 'Try a different status or search term.',
     },
     error: {
       title: 'Fleet unavailable',
