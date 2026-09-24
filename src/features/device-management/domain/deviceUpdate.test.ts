@@ -11,6 +11,7 @@ const deviceA: Device = {
   transport: 'wifi-mqtt',
   provisioned: true,
   firmwareVersion: null,
+  ownerId: null,
   sensors: [],
 }
 const deviceB: Device = {
@@ -21,6 +22,7 @@ const deviceB: Device = {
   transport: 'lorawan',
   provisioned: false,
   firmwareVersion: null,
+  ownerId: null,
   sensors: [],
 }
 

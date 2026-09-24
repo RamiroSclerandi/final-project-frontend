@@ -19,6 +19,8 @@ export interface Device {
   provisioned: boolean
   /** Additive read field (ui-redesign ADR D1, decision #419): `null` until the device reports one. */
   firmwareVersion: string | null
+  /** Additive read field (ui-redesign ADR D1, decision #419): `null` until a user claims the device (REQ-ADMIN-1). */
+  ownerId: string | null
   sensors: SensorSummary[]
 }
 
@@ -42,6 +44,7 @@ export interface DeviceRow {
   transport: string
   provisioned: boolean
   firmware_version: string | null
+  owner_id: string | null
   sensors: SensorRow[]
 }
 
@@ -64,6 +67,7 @@ export function toDevice(row: DeviceRow): Device {
     transport: row.transport as Transport,
     provisioned: row.provisioned,
     firmwareVersion: row.firmware_version,
+    ownerId: row.owner_id,
     sensors: row.sensors.map(toSensorSummary),
   }
 }

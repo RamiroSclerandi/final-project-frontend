@@ -5,7 +5,7 @@ import type { DeviceUpdate } from '../domain/deviceUpdate'
 import type { SensorUpdate } from '../domain/sensorUpdate'
 
 const DEVICE_COLUMNS =
-  'id, mac_address, name, location_ref, transport, provisioned, firmware_version, sensors(id, label, pin_connection, source, tag)'
+  'id, mac_address, name, location_ref, transport, provisioned, firmware_version, owner_id, sensors(id, label, pin_connection, source, tag)'
 
 /** Every device with its sensors, for inline management (CA-3). */
 export async function fetchDevices(): Promise<Device[]> {
