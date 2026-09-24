@@ -147,9 +147,43 @@ export const es: Dictionary = {
       title: 'Alertas',
       description: 'La función de alertas aún no está disponible.',
     },
-    admin: {
-      title: 'Administración',
-      description: 'El área de administración aún no está disponible.',
+    adminClients: {
+      title: 'Clientes',
+      description: 'La gestión de clientes aún no está disponible.',
+    },
+    adminUsers: {
+      title: 'Usuarios',
+      description: 'La gestión de usuarios aún no está disponible.',
+    },
+  },
+  admin: {
+    title: 'Administración',
+    tabs: {
+      label: 'Secciones de administración',
+      unassigned: 'Dispositivos sin asignar',
+      clients: 'Clientes',
+      users: 'Usuarios',
+    },
+    unassigned: {
+      column: {
+        device: 'Dispositivo',
+        mac: 'Dirección MAC',
+        transport: 'Transporte',
+        provisioned: 'Aprovisionado',
+        lastSeen: 'Visto por última vez',
+      },
+      provisioned: {
+        yes: 'Sí',
+        no: 'No',
+      },
+      empty: {
+        title: 'Todos los dispositivos están asignados',
+        body: 'Todo dispositivo que reportó ya tiene un propietario.',
+      },
+      error: {
+        title: 'Dispositivos sin asignar no disponibles',
+        body: 'No se pudo cargar la lista de dispositivos. Reintentar.',
+      },
     },
   },
   chart: {

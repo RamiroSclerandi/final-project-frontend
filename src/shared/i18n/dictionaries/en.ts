@@ -149,9 +149,43 @@ export const en = {
       title: 'Alerts',
       description: 'Alerting is not available yet.',
     },
-    admin: {
-      title: 'Admin',
-      description: 'The admin area is not available yet.',
+    adminClients: {
+      title: 'Clients',
+      description: 'Client management is not available yet.',
+    },
+    adminUsers: {
+      title: 'Users',
+      description: 'User management is not available yet.',
+    },
+  },
+  admin: {
+    title: 'Admin',
+    tabs: {
+      label: 'Admin sections',
+      unassigned: 'Unassigned devices',
+      clients: 'Clients',
+      users: 'Users',
+    },
+    unassigned: {
+      column: {
+        device: 'Device',
+        mac: 'MAC address',
+        transport: 'Transport',
+        provisioned: 'Provisioned',
+        lastSeen: 'Last seen',
+      },
+      provisioned: {
+        yes: 'Yes',
+        no: 'No',
+      },
+      empty: {
+        title: 'Every device is assigned',
+        body: 'Every device that has reported in already has an owner.',
+      },
+      error: {
+        title: 'Unassigned devices unavailable',
+        body: 'The device list could not be loaded. Try again.',
+      },
     },
   },
   chart: {
