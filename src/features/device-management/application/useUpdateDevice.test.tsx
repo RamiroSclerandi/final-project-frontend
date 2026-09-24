@@ -19,6 +19,7 @@ const device: Device = {
   transport: 'wifi-mqtt',
   provisioned: true,
   firmwareVersion: null,
+  ownerId: null,
   sensors: [],
 }
 
