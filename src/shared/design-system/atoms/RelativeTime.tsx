@@ -1,6 +1,5 @@
-import { useState } from 'react'
-
 import { useTranslation } from '../../i18n/useTranslation'
+import { useNow } from '../../time/useNow'
 
 export interface RelativeTimeProps {
   iso: string
@@ -10,18 +9,13 @@ export interface RelativeTimeProps {
 /**
  * Renders a semantic `<time>` element with the raw ISO timestamp in
  * `dateTime` and a locale-formatted relative label as its visible text.
- * Not a translated-text atom -- it never calls `t()`, only the relative-time
- * formatter from `useTranslation()`.
- *
- * `Date.now()` is impure and cannot be called directly during render
- * (react-hooks/purity); a lazy `useState` initializer runs it exactly once,
- * on mount, as the fallback for callers that omit `nowMs`.
+ * Without `nowMs` it follows the shared app clock. A timestamp ahead of the
+ * local clock (device or server skew) reads as "now".
  */
 export function RelativeTime({ iso, nowMs }: RelativeTimeProps) {
-  const [mountedAtMs] = useState(() => Date.now())
+  const sharedNowMs = useNow()
   const { formatRelativeTime } = useTranslation()
+  const referenceMs = Math.max(nowMs ?? sharedNowMs, Date.parse(iso))
 
-  return (
-    <time dateTime={iso}>{formatRelativeTime(iso, nowMs ?? mountedAtMs)}</time>
-  )
+  return <time dateTime={iso}>{formatRelativeTime(iso, referenceMs)}</time>
 }
