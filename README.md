@@ -50,11 +50,6 @@ the backend repository. `scripts/bootstrap-supabase.mjs` sparse-checks-out
 verifies the checkout still matches the schema contract this repo depends
 on before `supabase start` runs.
 
-The REQ-RC-8 broker test (`remote-config-broker.int.test.ts`) needs one more
-step: after `supabase start`, run `node scripts/test-broker.mjs start` to
-launch a throwaway, anonymous `eclipse-mosquitto` container on the same
-network Supabase created, which is what lets the `set-sampling-interval`
-Edge Function's `MQTT_WS_URL` (written by the bootstrap script) resolve it by
-container name. No credential is involved anywhere — the local stack signs
-its own JWTs and the broker accepts anonymous connections. Tear it down with
-`node scripts/test-broker.mjs stop`.
+These tests cover the frontend's contract with the real schema: repository
+queries, paging past PostgREST's row cap and the raw-tail merge. RLS, grants,
+scheduled jobs and the Edge Function are tested in the backend repository.

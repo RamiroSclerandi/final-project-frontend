@@ -97,10 +97,9 @@ export function ensureRequiredEmptyDirectories(backendRoot) {
 }
 
 /**
- * Points the Edge Function's MQTT_WS_URL at the throwaway test broker
- * (`scripts/test-broker.mjs`) by container name, so `supabase start`'s
- * edge-runtime container reaches it over the network they share (REQ-RC-8).
- * Never a real broker credential -- mosquitto runs with anonymous access.
+ * Gives the Edge Function a local, credential-free MQTT_WS_URL so
+ * `supabase start` can boot it. No frontend test publishes through it; the
+ * broker path is tested in the backend repository.
  */
 export function writeMqttTestEnv(backendRoot) {
   const envPath = join(backendRoot, 'supabase', 'functions', '.env')
