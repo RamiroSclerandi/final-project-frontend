@@ -19,7 +19,8 @@ export function useSetSamplingInterval() {
       deviceId: string
       samplingIntervalMs: number
     }) => setSamplingInterval(deviceId, samplingIntervalMs),
-    onSuccess: () => {
+    // A 502 still saved the request, so refresh after failures too.
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: DEVICE_CONFIGS_QUERY_KEY })
     },
   })

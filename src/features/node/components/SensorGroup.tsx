@@ -7,6 +7,7 @@ import {
 } from '../../../shared/design-system/atoms/QualityMark'
 import type { TranslationKey } from '../../../shared/i18n/dictionary'
 import { useTranslation } from '../../../shared/i18n/useTranslation'
+import { unitLabel } from '../../../shared/lib/unitLabel'
 import type { SensorChannelGroup } from '../domain/nodeReading'
 
 export interface SensorGroupProps {
@@ -115,7 +116,9 @@ export function SensorGroup({ group, nodeId }: SensorGroupProps) {
   return (
     <table role="table" className="table-stack min-w-0 w-full tabular-nums">
       <caption className="text-left text-sm text-text-muted">
-        {channelLabel(group.channel, t)} · {group.unit}
+        {[channelLabel(group.channel, t), unitLabel(group.unit)]
+          .filter(Boolean)
+          .join(' · ')}
       </caption>
       <thead>
         <tr role="row">

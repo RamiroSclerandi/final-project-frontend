@@ -1,4 +1,6 @@
-export type NodeStatus = 'online' | 'offline' | 'unknown'
+import type { NodeStatus } from '../../lib/nodeStatus'
+
+export type { NodeStatus }
 
 export interface StatusDotProps {
   status: NodeStatus
@@ -7,6 +9,7 @@ export interface StatusDotProps {
 
 const STATUS_TEXT_CLASSES: Record<NodeStatus, string> = {
   online: 'text-status-online',
+  stale: 'text-warning',
   offline: 'text-status-offline',
   unknown: 'text-status-unknown',
 }

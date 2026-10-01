@@ -8,6 +8,7 @@ export interface StatusChipProps {
 
 const STATUS_KEYS: Record<NodeStatus, TranslationKey> = {
   online: 'status.online',
+  stale: 'status.stale',
   offline: 'status.offline',
   unknown: 'status.unknown',
 }

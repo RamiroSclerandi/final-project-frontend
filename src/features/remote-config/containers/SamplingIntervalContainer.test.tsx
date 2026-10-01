@@ -80,10 +80,21 @@ describe('SamplingIntervalContainer', () => {
     expect(await screen.findByText(/^Requested 45 s ·/)).toBeInTheDocument()
   })
 
-  it('shows a safe message for the device whose request failed (502), persisting until dismissed (REQ-RC-12)', async () => {
-    repositoryMocks.fetchDeviceConfigSummaries.mockResolvedValue([
-      { deviceId: 'device-1', deviceName: 'Kitchen node', config: null },
-    ])
+  it('says a 502 was saved but not delivered, shows the saved request, and keeps the message until dismissed (REQ-RC-12)', async () => {
+    repositoryMocks.fetchDeviceConfigSummaries
+      .mockResolvedValueOnce([
+        { deviceId: 'device-1', deviceName: 'Kitchen node', config: null },
+      ])
+      .mockResolvedValue([
+        {
+          deviceId: 'device-1',
+          deviceName: 'Kitchen node',
+          config: {
+            samplingIntervalMs: 45_000,
+            requestedAt: new Date().toISOString(),
+          },
+        },
+      ])
     const { SamplingIntervalRequestError } =
       await import('../domain/setIntervalError')
     repositoryMocks.setSamplingInterval.mockRejectedValue(
@@ -99,8 +110,11 @@ describe('SamplingIntervalContainer', () => {
     fireEvent.click(screen.getByRole('button', { name: /apply/i }))
 
     await waitFor(() =>
-      expect(screen.getByRole('alert')).toHaveTextContent(/broker.*recorded/i),
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        /saved.*not notified/i,
+      ),
     )
+    expect(await screen.findByText(/requested 45 s/i)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /dismiss/i }))
 

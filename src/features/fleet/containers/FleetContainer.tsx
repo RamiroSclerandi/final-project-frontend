@@ -7,6 +7,7 @@ import { useTranslation } from '../../../shared/i18n/useTranslation'
 import { useDevices } from '../../device-management'
 import { useDeviceStatuses, useRealtimeDeviceStatuses } from '../../node-health'
 import { useLatestReadings, useRealtimeReadings } from '../../telemetry'
+import { useSamplingIntervals } from '../../remote-config'
 import { useFleetRows } from '../application/useFleetRows'
 import { FleetFilters, type FleetFilterValue } from '../components/FleetFilters'
 import { FleetHeader } from '../components/FleetHeader'
@@ -26,6 +27,7 @@ export function FleetContainer() {
   const statusesQuery = useDeviceStatuses()
   useRealtimeDeviceStatuses()
   const readingsQuery = useLatestReadings()
+  const samplingIntervalsById = useSamplingIntervals()
   const { status: connectionStatus } = useRealtimeReadings({
     onUnknownSensor: () => void devicesQuery.refetch(),
   })
@@ -39,6 +41,7 @@ export function FleetContainer() {
     devices: devicesQuery.data ?? [],
     statuses: statusesQuery.data ?? {},
     readings,
+    samplingIntervalsById,
     filter,
   })
 

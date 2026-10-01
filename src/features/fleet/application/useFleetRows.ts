@@ -12,12 +12,14 @@ import type {
 } from '../domain/fleetNode'
 import { groupReadingsByDevice } from '../domain/groupReadingsByDevice'
 import { summarizeFleet } from '../domain/summarizeFleet'
+import { useNow } from '../../../shared/time/useNow'
 import { useFleetSparklines } from './useFleetSparklines'
 
 interface FleetRowsInput {
   devices: FleetDeviceInput[]
   statuses: Record<string, FleetStatusInput>
   readings: FleetReadingInput[]
+  samplingIntervalsById: Record<string, number>
   filter: FleetFilterValue
 }
 
@@ -31,15 +33,21 @@ export function useFleetRows({
   devices,
   statuses,
   readings,
+  samplingIntervalsById,
   filter,
 }: FleetRowsInput): { rows: FleetRow[]; summary: FleetSummary } {
   const readingsByDevice = useMemo(
     () => groupReadingsByDevice(readings),
     [readings],
   )
+  const nowMs = useNow()
   const nodes = useMemo(
-    () => buildFleetNodes(devices, statuses, readingsByDevice),
-    [devices, statuses, readingsByDevice],
+    () =>
+      buildFleetNodes(devices, statuses, readingsByDevice, {
+        samplingIntervalsById,
+        nowMs,
+      }),
+    [devices, statuses, readingsByDevice, samplingIntervalsById, nowMs],
   )
   const summary = useMemo(() => summarizeFleet(nodes), [nodes])
   const filteredNodes = useMemo(

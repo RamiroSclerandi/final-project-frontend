@@ -68,7 +68,11 @@ export function SensorContainer({ deviceId, sensorId }: SensorContainerProps) {
         aggregationStale={aggregationStale}
         newestPointPartial={newestPointPartial}
       />
-      <HistoricalChart points={points} isLoading={isLoading} />
+      <HistoricalChart
+        points={points}
+        isLoading={isLoading}
+        unit={reading?.unit ?? ''}
+      />
     </section>
   )
 }

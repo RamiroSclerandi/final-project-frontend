@@ -154,4 +154,17 @@ describe('HistoricalTooltip', () => {
     )
     expect(container).toBeEmptyDOMElement()
   })
+
+  it('shows the hovered value with its unit and a local timestamp, never raw ISO', () => {
+    renderWithProviders(
+      <HistoricalTooltip
+        active
+        unit="degC"
+        payload={[{ payload: { t: '2026-09-15T11:00:00Z', value: 22.25 } }]}
+      />,
+    )
+
+    expect(screen.getByText('22.25 °C')).toBeInTheDocument()
+    expect(screen.queryByText('2026-09-15T11:00:00Z')).not.toBeInTheDocument()
+  })
 })

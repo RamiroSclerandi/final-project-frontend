@@ -62,9 +62,9 @@ export function NodeHeader({
         <SignalBars bars={bars} label={rssiLabel} />
         <Chip>
           {lastSeen ? (
-            <>
+            <span>
               {t('node.header.lastSeenLabel')} <RelativeTime iso={lastSeen} />
-            </>
+            </span>
           ) : (
             `${t('node.header.lastSeenLabel')} ${notAvailable}`
           )}

@@ -4,7 +4,7 @@ import { useTranslation } from '../../../shared/i18n/useTranslation'
 import { useDeviceConfigs } from '../application/useDeviceConfigs'
 import { useSetSamplingInterval } from '../application/useSetSamplingInterval'
 import { SamplingIntervalControl } from '../components/SamplingIntervalControl'
-import { toSafeSamplingIntervalErrorMessage } from '../domain/setIntervalError'
+import { toSafeSamplingIntervalErrorKey } from '../domain/setIntervalError'
 
 export interface SamplingIntervalContainerProps {
   deviceId: string
@@ -44,7 +44,7 @@ export function SamplingIntervalContainer({
     ? attemptedDeviceId
     : null
   const errorMessage = errorDeviceId
-    ? toSafeSamplingIntervalErrorMessage(setSamplingIntervalMutation.error)
+    ? t(toSafeSamplingIntervalErrorKey(setSamplingIntervalMutation.error))
     : null
 
   return (

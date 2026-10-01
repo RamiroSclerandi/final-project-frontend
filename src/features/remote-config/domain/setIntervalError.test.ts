@@ -2,31 +2,31 @@ import { describe, expect, it } from 'vitest'
 
 import {
   SamplingIntervalRequestError,
-  toSafeSamplingIntervalErrorMessage,
+  toSafeSamplingIntervalErrorKey,
 } from './setIntervalError'
 
-describe('toSafeSamplingIntervalErrorMessage', () => {
+describe('toSafeSamplingIntervalErrorKey', () => {
   it('reports an invalid interval for a 400 response', () => {
     expect(
-      toSafeSamplingIntervalErrorMessage(new SamplingIntervalRequestError(400)),
-    ).toMatch(/invalid/i)
+      toSafeSamplingIntervalErrorKey(new SamplingIntervalRequestError(400)),
+    ).toBe('config.error.invalidInterval')
   })
 
-  it('reports the broker as unreachable for a 502 response, noting the request was recorded', () => {
+  it('reports a 502 as saved but not delivered to the device', () => {
     expect(
-      toSafeSamplingIntervalErrorMessage(new SamplingIntervalRequestError(502)),
-    ).toMatch(/broker.*recorded/i)
+      toSafeSamplingIntervalErrorKey(new SamplingIntervalRequestError(502)),
+    ).toBe('config.error.notDelivered')
   })
 
   it('falls back to a generic message for any other status', () => {
     expect(
-      toSafeSamplingIntervalErrorMessage(new SamplingIntervalRequestError(500)),
-    ).toBe('Could not update the sampling interval. Try again.')
+      toSafeSamplingIntervalErrorKey(new SamplingIntervalRequestError(500)),
+    ).toBe('config.error.generic')
   })
 
   it('falls back to a generic message for a non-request error, never echoing it', () => {
-    expect(toSafeSamplingIntervalErrorMessage(new Error('raw db detail'))).toBe(
-      'Could not update the sampling interval. Try again.',
+    expect(toSafeSamplingIntervalErrorKey(new Error('raw db detail'))).toBe(
+      'config.error.generic',
     )
   })
 })
