@@ -5,7 +5,11 @@ import { fetchHourlyAggregate, fetchRawMeasurements } from './historyRepository'
 
 const POSTGREST_MAX_ROWS = 1000
 
-const fakeDb = vi.hoisted(() => ({ rows: [] as object[] }))
+const fakeDb = vi.hoisted(() => ({
+  rows: [] as object[],
+  count: undefined as number | null | undefined,
+  pageRequests: 0,
+}))
 
 vi.mock('../../../shared/api/supabase', () => {
   // Behaves like PostgREST: every response is capped at max_rows, `.range()`
@@ -23,9 +27,15 @@ vi.mock('../../../shared/api/supabase', () => {
       },
       then: (resolve: (value: unknown) => void) => {
         if (head) {
-          resolve({ data: null, error: null, count: fakeDb.rows.length })
+          resolve({
+            data: null,
+            error: null,
+            count:
+              fakeDb.count === undefined ? fakeDb.rows.length : fakeDb.count,
+          })
           return
         }
+        fakeDb.pageRequests += 1
         const [from, to] = window ?? [0, Infinity]
         const end = Math.min(to + 1, from + POSTGREST_MAX_ROWS)
         resolve({ data: fakeDb.rows.slice(from, end), error: null })
@@ -65,6 +75,8 @@ function rawRows(count: number) {
 describe('historyRepository', () => {
   beforeEach(() => {
     fakeDb.rows = []
+    fakeDb.count = undefined
+    fakeDb.pageRequests = 0
   })
 
   it('returns every hourly bucket of a range larger than one PostgREST page', async () => {
@@ -90,5 +102,16 @@ describe('historyRepository', () => {
     await expect(
       fetchRawMeasurements('sensor-1', 'from', 'to', { maxRows: 1000 }),
     ).rejects.toBeInstanceOf(RawRowLimitError)
+    expect(fakeDb.pageRequests).toBe(0)
+  })
+
+  it('refuses a raw range whose row count cannot be determined', async () => {
+    fakeDb.rows = rawRows(10)
+    fakeDb.count = null
+
+    await expect(
+      fetchRawMeasurements('sensor-1', 'from', 'to', { maxRows: 1000 }),
+    ).rejects.toThrow(/count/i)
+    expect(fakeDb.pageRequests).toBe(0)
   })
 })

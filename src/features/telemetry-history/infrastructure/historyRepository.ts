@@ -58,7 +58,12 @@ async function assertRawRowCount(
   if (error) {
     throw error
   }
-  if (count !== null && count > maxRows) {
+  if (count === null) {
+    throw new Error(
+      'Raw row count unavailable; cannot enforce the row limit for this range.',
+    )
+  }
+  if (count > maxRows) {
     throw new RawRowLimitError(count, maxRows)
   }
 }
