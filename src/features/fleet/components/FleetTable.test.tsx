@@ -10,7 +10,7 @@ const onlineRow: FleetRow = {
   location: 'Row 1',
   transport: 'wifi-mqtt',
   status: 'online',
-  lastSeen: '2026-09-22T10:05:00Z',
+  lastActivity: '2026-09-22T10:05:00Z',
   hasQualityAlert: true,
   headline: {
     sensorId: 'sensor-a1',
@@ -27,7 +27,7 @@ const offlineRow: FleetRow = {
   location: null,
   transport: 'lorawan',
   status: 'offline',
-  lastSeen: null,
+  lastActivity: null,
   hasQualityAlert: false,
   headline: null,
   sparkline: null,

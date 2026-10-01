@@ -39,18 +39,60 @@ export function deriveNodeStatus(
   return silentMs > staleAfterMs ? 'stale' : 'online'
 }
 
-/** The newest of the given ISO timestamps, or `null` when there is none. */
+/** The newest parseable ISO timestamp, or `null` when there is none. */
 export function latestTimestamp(
   timestamps: ReadonlyArray<string | null>,
 ): string | null {
   let latest: string | null = null
+  let latestMs = -Infinity
   for (const timestamp of timestamps) {
-    if (
-      timestamp !== null &&
-      (latest === null || Date.parse(timestamp) > Date.parse(latest))
-    ) {
+    const ms = timestamp === null ? NaN : Date.parse(timestamp)
+    if (ms > latestMs) {
       latest = timestamp
+      latestMs = ms
     }
   }
   return latest
+}
+
+/** A device's requested interval, the firmware default, or `null` before configs load. */
+export function pickSamplingInterval(
+  intervalsById: Readonly<Record<string, number>> | null,
+  deviceId: string,
+): number | null {
+  if (intervalsById === null) {
+    return null
+  }
+  return intervalsById[deviceId] ?? DEFAULT_SAMPLING_INTERVAL_MS
+}
+
+export interface ResolvedNodeStatus {
+  status: NodeStatus
+  lastActivity: string | null
+}
+
+/**
+ * Status plus last activity for one device. Activity is the newest of
+ * `last_seen` and its readings, because the worker throttles `last_seen`.
+ * A `null` interval (configs not loaded yet) never flags a node stale.
+ */
+export function resolveNodeStatus(
+  status: { online: boolean; lastSeen: string | null } | undefined,
+  readingTimestamps: ReadonlyArray<string>,
+  samplingIntervalMs: number | null,
+  nowMs: number,
+): ResolvedNodeStatus {
+  if (!status) {
+    return { status: 'unknown', lastActivity: null }
+  }
+  const lastActivity = latestTimestamp([status.lastSeen, ...readingTimestamps])
+  const judged = deriveNodeStatus(
+    {
+      online: status.online,
+      lastActivity: samplingIntervalMs === null ? null : lastActivity,
+    },
+    samplingIntervalMs ?? DEFAULT_SAMPLING_INTERVAL_MS,
+    nowMs,
+  )
+  return { status: judged, lastActivity }
 }

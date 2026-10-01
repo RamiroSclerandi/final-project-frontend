@@ -19,7 +19,7 @@ interface FleetRowsInput {
   devices: FleetDeviceInput[]
   statuses: Record<string, FleetStatusInput>
   readings: FleetReadingInput[]
-  samplingIntervalsById: Record<string, number>
+  samplingIntervalsById: Record<string, number> | null
   filter: FleetFilterValue
 }
 

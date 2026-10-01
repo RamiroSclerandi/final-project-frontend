@@ -9,7 +9,7 @@ const ONLINE_CLEAN: FleetNode = {
   location: 'Row 1',
   transport: 'wifi-mqtt',
   status: 'online',
-  lastSeen: '2026-09-22T10:00:00Z',
+  lastActivity: '2026-09-22T10:00:00Z',
   hasQualityAlert: false,
   headline: null,
 }
@@ -20,7 +20,7 @@ const OFFLINE_CLEAN: FleetNode = {
   location: 'Row 2',
   transport: 'lorawan',
   status: 'offline',
-  lastSeen: null,
+  lastActivity: null,
   hasQualityAlert: false,
   headline: null,
 }
@@ -31,7 +31,7 @@ const ONLINE_WITH_ALERT: FleetNode = {
   location: 'Lab Wing',
   transport: 'wifi-mqtt',
   status: 'online',
-  lastSeen: '2026-09-22T10:05:00Z',
+  lastActivity: '2026-09-22T10:05:00Z',
   hasQualityAlert: true,
   headline: null,
 }

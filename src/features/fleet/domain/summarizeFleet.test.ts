@@ -10,7 +10,7 @@ function node(overrides: Partial<FleetNode>): FleetNode {
     location: null,
     transport: 'wifi-mqtt',
     status: 'online',
-    lastSeen: null,
+    lastActivity: null,
     hasQualityAlert: false,
     headline: null,
     ...overrides,

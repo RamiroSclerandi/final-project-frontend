@@ -13,7 +13,7 @@ const ONLINE_NODE: FleetNode = {
   location: 'Row 1',
   transport: 'wifi-mqtt',
   status: 'online',
-  lastSeen: null,
+  lastActivity: null,
   hasQualityAlert: false,
   headline: null,
 }
@@ -24,7 +24,7 @@ const OFFLINE_NODE: FleetNode = {
   location: 'Row 2',
   transport: 'lorawan',
   status: 'offline',
-  lastSeen: null,
+  lastActivity: null,
   hasQualityAlert: false,
   headline: null,
 }

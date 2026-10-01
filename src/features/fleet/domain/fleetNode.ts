@@ -47,7 +47,7 @@ export interface FleetNode {
   location: string | null
   transport: string
   status: NodeStatus
-  lastSeen: string | null
+  lastActivity: string | null
   hasQualityAlert: boolean
   headline: FleetNodeHeadline | null
 }

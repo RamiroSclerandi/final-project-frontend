@@ -6,9 +6,8 @@ import { Skeleton } from '../../../shared/design-system/atoms/Skeleton'
 import { EmptyState } from '../../../shared/design-system/molecules/EmptyState'
 import { useTranslation } from '../../../shared/i18n/useTranslation'
 import {
-  DEFAULT_SAMPLING_INTERVAL_MS,
-  deriveNodeStatus,
-  latestTimestamp,
+  pickSamplingInterval,
+  resolveNodeStatus,
 } from '../../../shared/lib/nodeStatus'
 import { useNow } from '../../../shared/time/useNow'
 import { DeviceConfigContainer, useDevices } from '../../device-management'
@@ -101,16 +100,10 @@ export function NodeContainer({ deviceId }: NodeContainerProps) {
     )
   }
 
-  const statusInput = statusesQuery.data?.[deviceId]
-  const lastActivity = statusInput
-    ? latestTimestamp([
-        statusInput.lastSeen,
-        ...readings.map((reading) => reading.timestamp),
-      ])
-    : null
-  const status = deriveNodeStatus(
-    statusInput && { online: statusInput.online, lastActivity },
-    samplingIntervalsById[deviceId] ?? DEFAULT_SAMPLING_INTERVAL_MS,
+  const { status, lastActivity } = resolveNodeStatus(
+    statusesQuery.data?.[deviceId],
+    readings.map((reading) => reading.timestamp),
+    pickSamplingInterval(samplingIntervalsById, deviceId),
     nowMs,
   )
 
