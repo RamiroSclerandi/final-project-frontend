@@ -17,6 +17,21 @@ export function formatDateTime(locale: Locale, iso: string): string {
   }).format(new Date(iso))
 }
 
+const AXIS_TIME_OF_DAY_MAX_SPAN_MS = 2 * 86_400_000
+
+/** Chart axis tick: time of day for short spans, day/month for longer ones. */
+export function formatAxisTime(
+  locale: Locale,
+  iso: string,
+  spanMs: number,
+): string {
+  const options: Intl.DateTimeFormatOptions =
+    spanMs <= AXIS_TIME_OF_DAY_MAX_SPAN_MS
+      ? { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }
+      : { day: 'numeric', month: 'numeric' }
+  return new Intl.DateTimeFormat(locale, options).format(new Date(iso))
+}
+
 const DAY_MS = 86_400_000
 const HOUR_MS = 3_600_000
 const MINUTE_MS = 60_000

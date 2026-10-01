@@ -23,4 +23,10 @@ describe('Value', () => {
 
     expect(screen.getByText('0.95')).toBeInTheDocument()
   })
+
+  it('shows the display symbol for a stored unit code', () => {
+    renderWithProviders(<Value value={21.5} unit="degC" />)
+
+    expect(screen.getByText('21.5 °C')).toBeInTheDocument()
+  })
 })

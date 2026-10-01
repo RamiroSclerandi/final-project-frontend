@@ -1,4 +1,5 @@
 import { useTranslation } from '../../i18n/useTranslation'
+import { unitLabel } from '../../lib/unitLabel'
 
 export interface ValueProps {
   value: number
@@ -14,10 +15,11 @@ export interface ValueProps {
 export function Value({ value, unit }: ValueProps) {
   const { formatNumber } = useTranslation()
   const formatted = formatNumber(value)
+  const label = unitLabel(unit)
 
   return (
     <span className="tabular-nums">
-      {unit ? `${formatted} ${unit}` : formatted}
+      {label ? `${formatted} ${label}` : formatted}
     </span>
   )
 }

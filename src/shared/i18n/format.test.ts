@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatRelativeTime } from './format'
+import { formatAxisTime, formatRelativeTime } from './format'
 
 const NOW_MS = Date.parse('2026-09-21T12:00:00.000Z')
 
@@ -49,5 +49,17 @@ describe('formatRelativeTime', () => {
     expect(formatRelativeTime('es', isoOffsetBy(-7_200_000), NOW_MS)).toBe(
       'hace 2 horas',
     )
+  })
+})
+
+describe('formatAxisTime', () => {
+  const iso = '2026-09-15T14:30:00'
+
+  it('shows hours and minutes for a range of up to two days', () => {
+    expect(formatAxisTime('en', iso, 24 * 3_600_000)).toBe('14:30')
+  })
+
+  it('shows day and month for longer ranges', () => {
+    expect(formatAxisTime('es', iso, 7 * 86_400_000)).toBe('15/9')
   })
 })

@@ -10,7 +10,9 @@ import {
 } from 'recharts'
 
 import type { TranslationKey } from '../../../shared/i18n/dictionary'
+import { formatAxisTime } from '../../../shared/i18n/format'
 import { useTranslation } from '../../../shared/i18n/useTranslation'
+import { unitLabel } from '../../../shared/lib/unitLabel'
 import { downsampleLTTB } from '../domain/downsample'
 import type { HistoricalPoint } from '../domain/historicalPoint'
 
@@ -127,19 +129,26 @@ interface TooltipPayload {
 export interface HistoricalTooltipProps {
   active?: boolean
   payload?: TooltipPayload[]
+  unit?: string
 }
 
 /** Exported standalone so its content is unit-testable without a chart hover (D-6). */
-export function HistoricalTooltip({ active, payload }: HistoricalTooltipProps) {
-  const { t } = useTranslation()
+export function HistoricalTooltip({
+  active,
+  payload,
+  unit = '',
+}: HistoricalTooltipProps) {
+  const { t, formatDateTime, formatNumber } = useTranslation()
   const point = active ? payload?.[0]?.payload : undefined
   if (!point) {
     return null
   }
   return (
     <div className="rounded border border-border bg-surface p-2 text-xs text-text">
-      <p>{point.t}</p>
-      <p>{point.value}</p>
+      <p>{formatDateTime(point.t)}</p>
+      <p>
+        {[formatNumber(point.value), unitLabel(unit)].filter(Boolean).join(' ')}
+      </p>
       {point.sampleCount !== undefined && (
         <p>{t('chart.meanOf', { count: point.sampleCount })}</p>
       )}
@@ -150,6 +159,7 @@ export function HistoricalTooltip({ active, payload }: HistoricalTooltipProps) {
 export interface HistoricalChartProps {
   points: HistoricalPoint[]
   isLoading: boolean
+  unit?: string
 }
 
 /**
@@ -162,8 +172,17 @@ export interface HistoricalChartProps {
  * only while the global is undefined, so a stub makes it measure a
  * layout-less document, read 0x0, and render nothing at all.
  */
-export function HistoricalChart({ points, isLoading }: HistoricalChartProps) {
-  const { t } = useTranslation()
+export function HistoricalChart({
+  points,
+  isLoading,
+  unit = '',
+}: HistoricalChartProps) {
+  const { t, locale, formatNumber } = useTranslation()
+  const spanMs =
+    points.length > 1
+      ? Date.parse(points.at(-1)?.t ?? '') - Date.parse(points[0]?.t ?? '')
+      : 0
+  const label = unitLabel(unit)
   const chartData = useMemo(
     () => toChartData(downsampleLTTB(points, CHART_POINT_BUDGET), t),
     [points, t],
@@ -184,9 +203,18 @@ export function HistoricalChart({ points, isLoading }: HistoricalChartProps) {
         initialDimension={{ width: 800, height: CHART_HEIGHT }}
       >
         <ComposedChart data={chartData}>
-          <XAxis dataKey="t" tick={false} />
-          <YAxis domain={['auto', 'auto']} />
-          <Tooltip content={<HistoricalTooltip />} />
+          <XAxis
+            dataKey="t"
+            tickFormatter={(iso: string) => formatAxisTime(locale, iso, spanMs)}
+            minTickGap={32}
+          />
+          <YAxis
+            domain={['auto', 'auto']}
+            tickFormatter={(value: number) =>
+              [formatNumber(value), label].filter(Boolean).join(' ')
+            }
+          />
+          <Tooltip content={<HistoricalTooltip unit={unit} />} />
           <Area
             dataKey="range"
             stroke="none"
