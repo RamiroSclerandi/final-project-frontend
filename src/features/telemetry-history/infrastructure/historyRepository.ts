@@ -6,35 +6,82 @@ import type {
   RawMeasurementRow,
 } from '../domain/historicalPoint'
 
-// PostgREST's default page size (.supabase-backend/supabase/config.toml,
-// max_rows = 1000). A 24h raw window at 15s sampling is ~5,760 rows, well
-// past one page, so a single request would silently drop the rest.
-const RAW_PAGE_SIZE = 1000
+import { RawRowLimitError } from '../domain/rawRowLimit'
 
-/** Raw `measurements` for a range, paginated past PostgREST's row cap (D-3). */
+// PostgREST's max_rows (.supabase-backend/supabase/config.toml): any larger
+// response is silently cut, so every list query pages through `.range()`.
+const PAGE_SIZE = 1000
+
+interface PageResult<Row> {
+  data: Row[] | null
+  error: Error | null
+}
+
+async function fetchAllPages<Row>(
+  fetchPage: (from: number, to: number) => PromiseLike<PageResult<Row>>,
+): Promise<Row[]> {
+  const rows: Row[] = []
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data, error } = await fetchPage(offset, offset + PAGE_SIZE - 1)
+    if (error) {
+      throw error
+    }
+    const page = data ?? []
+    rows.push(...page)
+    if (page.length < PAGE_SIZE) {
+      return rows
+    }
+  }
+}
+
+function rawRangeQuery(
+  sensorId: string,
+  fromIso: string,
+  toIso: string,
+  head = false,
+) {
+  return supabase
+    .from('measurements')
+    .select('*', head ? { count: 'exact', head: true } : undefined)
+    .eq('sensor_id', sensorId)
+    .gte('timestamp', fromIso)
+    .lte('timestamp', toIso)
+}
+
+async function assertRawRowCount(
+  sensorId: string,
+  fromIso: string,
+  toIso: string,
+  maxRows: number,
+): Promise<void> {
+  const { count, error } = await rawRangeQuery(sensorId, fromIso, toIso, true)
+  if (error) {
+    throw error
+  }
+  if (count !== null && count > maxRows) {
+    throw new RawRowLimitError(count, maxRows)
+  }
+}
+
+/**
+ * Raw `measurements` for a range, paged past PostgREST's row cap (D-3).
+ * With `maxRows`, a larger range is refused with `RawRowLimitError` before
+ * any row is downloaded.
+ */
 export async function fetchRawMeasurements(
   sensorId: string,
   fromIso: string,
   toIso: string,
+  { maxRows }: { maxRows?: number } = {},
 ): Promise<HistoricalPoint[]> {
-  const rows: RawMeasurementRow[] = []
-  for (let offset = 0; ; offset += RAW_PAGE_SIZE) {
-    const { data, error } = await supabase
-      .from('measurements')
-      .select('*')
-      .eq('sensor_id', sensorId)
-      .gte('timestamp', fromIso)
-      .lte('timestamp', toIso)
-      .order('timestamp', { ascending: true })
-      .range(offset, offset + RAW_PAGE_SIZE - 1)
-    if (error) {
-      throw error
-    }
-    rows.push(...data)
-    if (data.length < RAW_PAGE_SIZE) {
-      break
-    }
+  if (maxRows !== undefined) {
+    await assertRawRowCount(sensorId, fromIso, toIso, maxRows)
   }
+  const rows = await fetchAllPages<RawMeasurementRow>((from, to) =>
+    rawRangeQuery(sensorId, fromIso, toIso)
+      .order('timestamp', { ascending: true })
+      .range(from, to),
+  )
   return rows.map(toRawPoint)
 }
 
@@ -44,17 +91,17 @@ async function fetchAggregate(
   fromIso: string,
   toIso: string,
 ): Promise<HistoricalPoint[]> {
-  const { data, error } = await supabase
-    .from(table)
-    .select('*')
-    .eq('sensor_id', sensorId)
-    .gte('bucket', fromIso)
-    .lte('bucket', toIso)
-    .order('bucket', { ascending: true })
-  if (error) {
-    throw error
-  }
-  return data.filter(hasCompleteBucket).map(toAggregatePoint)
+  const rows = await fetchAllPages((from, to) =>
+    supabase
+      .from(table)
+      .select('*')
+      .eq('sensor_id', sensorId)
+      .gte('bucket', fromIso)
+      .lte('bucket', toIso)
+      .order('bucket', { ascending: true })
+      .range(from, to),
+  )
+  return rows.filter(hasCompleteBucket).map(toAggregatePoint)
 }
 
 /**

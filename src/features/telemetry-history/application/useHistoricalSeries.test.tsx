@@ -3,6 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { MAX_RAW_ROWS, RawRowLimitError } from '../domain/rawRowLimit'
 import { useHistoricalSeries } from './useHistoricalSeries'
 
 const repositoryMocks = vi.hoisted(() => ({
@@ -53,6 +54,53 @@ describe('useHistoricalSeries', () => {
       SENSOR_ID,
       from.toISOString(),
       to.toISOString(),
+      { maxRows: MAX_RAW_ROWS },
+    )
+  })
+
+  it('falls back to hourly data when an auto raw range exceeds the row limit', async () => {
+    const bucket = {
+      t: '2026-09-15T11:00:00Z',
+      value: 21,
+      min: 20,
+      max: 22,
+      sampleCount: 3600,
+    }
+    repositoryMocks.fetchRawMeasurements.mockRejectedValueOnce(
+      new RawRowLimitError(86_400, MAX_RAW_ROWS),
+    )
+    repositoryMocks.fetchHourlyAggregate.mockResolvedValue([
+      bucket,
+      { ...bucket, t: '2026-09-15T12:00:00Z' },
+    ])
+    const to = new Date('2026-09-15T12:00:00Z')
+    const from = new Date(to.getTime() - 20 * HOUR_MS)
+
+    const { result } = renderHook(
+      () => useHistoricalSeries(SENSOR_ID, from, to),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.error).toBeNull()
+    expect(result.current.granularity).toBe('hourly')
+    expect(result.current.points).toContainEqual(bucket)
+  })
+
+  it('surfaces the row limit when raw data was requested explicitly', async () => {
+    repositoryMocks.fetchRawMeasurements.mockRejectedValue(
+      new RawRowLimitError(86_400, MAX_RAW_ROWS),
+    )
+    const to = new Date('2026-09-15T12:00:00Z')
+    const from = new Date(to.getTime() - 20 * HOUR_MS)
+
+    const { result } = renderHook(
+      () => useHistoricalSeries(SENSOR_ID, from, to, 'raw'),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() =>
+      expect(result.current.error).toBeInstanceOf(RawRowLimitError),
     )
   })
 

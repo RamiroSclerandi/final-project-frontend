@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { MAX_RAW_ROWS } from '../../telemetry-history/domain/rawRowLimit'
 import { useCsvExport } from './useCsvExport'
 
 const repositoryMocks = vi.hoisted(() => ({ fetchRawMeasurements: vi.fn() }))
@@ -36,6 +37,7 @@ describe('useCsvExport', () => {
       'sensor-1',
       '2026-09-14T10:00:00Z',
       '2026-09-15T10:00:00Z',
+      { maxRows: MAX_RAW_ROWS },
     )
     expect(downloadMocks.downloadCsv).toHaveBeenCalledOnce()
     expect(downloadMocks.downloadCsv.mock.calls[0]?.[0]).toContain(

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { MAX_RAW_ROWS } from '../../telemetry-history/domain/rawRowLimit'
 import { fetchRawMeasurements } from '../../telemetry-history/infrastructure/historyRepository'
 import { toExportCsv } from '../domain/exportCsv'
 import { toSafeExportErrorMessage } from '../domain/exportError'
@@ -24,7 +25,9 @@ export function useCsvExport() {
   async function exportRange(sensorId: string, fromIso: string, toIso: string) {
     setState({ isExporting: true, error: null })
     try {
-      const points = await fetchRawMeasurements(sensorId, fromIso, toIso)
+      const points = await fetchRawMeasurements(sensorId, fromIso, toIso, {
+        maxRows: MAX_RAW_ROWS,
+      })
       const csv = toExportCsv(sensorId, points)
       downloadCsv(csv, `sensor-${sensorId}_${fromIso}_${toIso}.csv`)
       setState({ isExporting: false, error: null })
