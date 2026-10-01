@@ -1,5 +1,5 @@
-import { screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { act, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 
 import { renderWithProviders } from '../../test/renderWithProviders'
 import { RelativeTime } from './RelativeTime'
@@ -16,17 +16,24 @@ describe('RelativeTime', () => {
     expect(time).toHaveAttribute('datetime', iso)
   })
 
-  it('falls back to the mount time when the caller omits nowMs', () => {
-    const iso = new Date(Date.now() - 3 * 60_000).toISOString()
-    renderWithProviders(<RelativeTime iso={iso} />)
+  it('keeps advancing while mounted when the caller omits nowMs', () => {
+    vi.useFakeTimers({ now: NOW })
+    try {
+      const iso = new Date(NOW - 60_000).toISOString()
+      renderWithProviders(<RelativeTime iso={iso} />)
 
-    expect(screen.getByText('3 minutes ago')).toBeInTheDocument()
+      act(() => vi.advanceTimersByTime(2 * 60_000))
+
+      expect(screen.getByText('3 minutes ago')).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
-  it('renders a future timestamp using the appropriate direction', () => {
-    const iso = new Date(NOW + 2 * 3_600_000).toISOString()
+  it('shows a timestamp ahead of the local clock as now', () => {
+    const iso = new Date(NOW + 2 * 60_000).toISOString()
     renderWithProviders(<RelativeTime iso={iso} nowMs={NOW} />)
 
-    expect(screen.getByText('in 2 hours')).toBeInTheDocument()
+    expect(screen.getByText('now')).toBeInTheDocument()
   })
 })

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Button } from '../../../shared/design-system/atoms/Button'
 import { TextField } from '../../../shared/design-system/atoms/TextField'
 import { useTranslation } from '../../../shared/i18n/useTranslation'
+import { useNow } from '../../../shared/time/useNow'
 import type { DeviceConfigSummary } from '../domain/deviceConfig'
 import {
   MAX_SAMPLING_INTERVAL_SECONDS,
@@ -31,7 +32,7 @@ export function SamplingIntervalControl({
   errorMessage,
 }: SamplingIntervalControlProps) {
   const { t, formatRelativeTime } = useTranslation()
-  const [mountedAtMs] = useState(() => Date.now())
+  const nowMs = useNow()
   const { deviceId, deviceName, config } = summary
   const [seconds, setSeconds] = useState(
     config
@@ -48,7 +49,7 @@ export function SamplingIntervalControl({
         {config
           ? t('config.requested', {
               seconds: samplingIntervalMsToSeconds(config.samplingIntervalMs),
-              relative: formatRelativeTime(config.requestedAt, mountedAtMs),
+              relative: formatRelativeTime(config.requestedAt, nowMs),
             })
           : t('config.notConfigured')}
       </p>

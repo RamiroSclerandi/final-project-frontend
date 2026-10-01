@@ -86,4 +86,30 @@ describe('mergeLatestReading', () => {
 
     expect(result).toBe(readings)
   })
+
+  it('ignores an update older than the cached reading (a replayed buffer record)', () => {
+    const readings = { [sensorA.sensorId]: sensorA }
+
+    const result = mergeLatestReading(readings, {
+      sensorId: sensorA.sensorId,
+      value: 99,
+      timestamp: '2026-09-14T10:59:59Z',
+      quality: 'ok',
+    })
+
+    expect(result).toBe(readings)
+  })
+
+  it('applies an update with the same timestamp as the cached reading', () => {
+    const readings = { [sensorA.sensorId]: sensorA }
+
+    const result = mergeLatestReading(readings, {
+      sensorId: sensorA.sensorId,
+      value: 12,
+      timestamp: '2026-09-14T11:00:00.000Z',
+      quality: 'ok',
+    })
+
+    expect(result[sensorA.sensorId]?.value).toBe(12)
+  })
 })

@@ -9,6 +9,10 @@ import type { MeasurementInsertRow } from '../domain/reading'
 
 const CHANNEL_NAME = 'measurements-live'
 
+// realtime-js hands back the registered channel for a known topic, and removal
+// is async: a fixed topic reuses a channel still leaving after navigation (X-3).
+const uniqueTopic = () => `${CHANNEL_NAME}-${crypto.randomUUID()}`
+
 interface SubscribeOptions {
   onInsert: (row: MeasurementInsertRow) => void
   onStatusChange: (status: RealtimeStatus) => void
@@ -26,7 +30,7 @@ export function subscribeToMeasurementInserts({
   onStatusChange,
 }: SubscribeOptions): RealtimeChannel {
   return supabase
-    .channel(CHANNEL_NAME)
+    .channel(uniqueTopic())
     .on<MeasurementInsertRow>(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'measurements' },

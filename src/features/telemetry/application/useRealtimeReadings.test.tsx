@@ -3,10 +3,7 @@ import { act, renderHook } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import {
-  LATEST_READINGS_QUERY_KEY,
-  LIVE_SERIES_QUERY_KEY,
-} from '../domain/queryKeys'
+import { LATEST_READINGS_QUERY_KEY } from '../domain/queryKeys'
 import { useRealtimeReadings } from './useRealtimeReadings'
 
 const realtimeClientMocks = vi.hoisted(() => ({
@@ -132,7 +129,7 @@ describe('useRealtimeReadings', () => {
     })
   })
 
-  it('appends the insert to the live-series ring for its sensor', () => {
+  it('keeps no cache beyond the latest readings', () => {
     const queryClient = new QueryClient()
     renderHook(() => useRealtimeReadings(), {
       wrapper: createWrapper(queryClient),
@@ -147,9 +144,32 @@ describe('useRealtimeReadings', () => {
       }),
     )
 
-    expect(queryClient.getQueryData(LIVE_SERIES_QUERY_KEY)).toEqual({
-      'sensor-a': [{ timestamp: 't1', value: 5 }],
+    expect(
+      queryClient
+        .getQueryCache()
+        .getAll()
+        .map((query) => query.queryKey),
+    ).toEqual([LATEST_READINGS_QUERY_KEY])
+  })
+
+  it('reports an unrecognised sensor once so callers can refresh what owns it', () => {
+    const queryClient = new QueryClient()
+    queryClient.setQueryData(LATEST_READINGS_QUERY_KEY, {})
+    const onUnknownSensor = vi.fn()
+    renderHook(() => useRealtimeReadings({ onUnknownSensor }), {
+      wrapper: createWrapper(queryClient),
     })
+    const row = {
+      sensor_id: 'sensor-new',
+      value: 5,
+      timestamp: 't1',
+      quality: 'ok',
+    }
+
+    act(() => onInsert(row))
+    act(() => onInsert(row))
+
+    expect(onUnknownSensor).toHaveBeenCalledTimes(1)
   })
 
   it('invalidates latest-readings only on a re-SUBSCRIBED after a real disconnect (D-2 reconnect policy)', () => {
