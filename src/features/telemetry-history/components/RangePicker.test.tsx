@@ -115,4 +115,25 @@ describe('RangePicker', () => {
       screen.getByRole('option', { name: 'Auto (Hourly)' }),
     ).toBeInTheDocument()
   })
+
+  it.each([
+    ['a cleared "from"', /from/i, ''],
+    ['a "from" after "to"', /from/i, '2026-09-16T00:00'],
+    ['a "to" before "from"', /to/i, '2026-09-13T00:00'],
+  ])('ignores %s', (_case, label, value) => {
+    const onChange = vi.fn()
+    renderWithProviders(
+      <RangePicker
+        from={new Date('2026-09-14T12:00:00Z')}
+        to={NOW}
+        onChange={onChange}
+        granularity="auto"
+        onGranularityChange={vi.fn()}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText(label), { target: { value } })
+
+    expect(onChange).not.toHaveBeenCalled()
+  })
 })
