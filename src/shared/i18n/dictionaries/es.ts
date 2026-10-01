@@ -246,6 +246,14 @@ export const es: Dictionary = {
     rangeError: 'Ingresar un valor entre {min} y {max} segundos.',
     apply: 'Aplicar',
     save: 'Guardar',
+    error: {
+      invalidInterval:
+        'Intervalo inválido. Ingresá un valor entre 1 y 300 segundos.',
+      notDelivered:
+        'El intervalo se guardó, pero el equipo no fue notificado. Aplicalo de nuevo para reintentar.',
+      generic:
+        'No se pudo actualizar el intervalo de muestreo. Intentá de nuevo.',
+    },
     device: {
       name: 'Nombre',
       location: 'Ubicación',

@@ -10,26 +10,27 @@ export class SamplingIntervalRequestError extends Error {
   }
 }
 
-const INVALID_INTERVAL_MESSAGE =
-  'Invalid interval. Enter a value between 1 and 300 seconds.'
-const BROKER_UNREACHABLE_MESSAGE =
-  'Could not reach the device broker. The request was recorded and will be retried.'
-const GENERIC_MESSAGE = 'Could not update the sampling interval. Try again.'
+export type SamplingIntervalErrorKey =
+  | 'config.error.invalidInterval'
+  | 'config.error.notDelivered'
+  | 'config.error.generic'
 
 /**
- * Maps a failed request to one safe, specific message -- the function's raw
- * error text is never echoed to the user (same pattern as device-management's
- * `toSafeUpdateErrorMessage`).
+ * Maps a failed request to one safe, specific message key -- the function's
+ * raw error text is never echoed to the user. A 502 means the request was
+ * saved but never reached the device; nothing retries it.
  */
-export function toSafeSamplingIntervalErrorMessage(error: unknown): string {
+export function toSafeSamplingIntervalErrorKey(
+  error: unknown,
+): SamplingIntervalErrorKey {
   if (!(error instanceof SamplingIntervalRequestError)) {
-    return GENERIC_MESSAGE
+    return 'config.error.generic'
   }
   if (error.status === 400) {
-    return INVALID_INTERVAL_MESSAGE
+    return 'config.error.invalidInterval'
   }
   if (error.status === 502) {
-    return BROKER_UNREACHABLE_MESSAGE
+    return 'config.error.notDelivered'
   }
-  return GENERIC_MESSAGE
+  return 'config.error.generic'
 }

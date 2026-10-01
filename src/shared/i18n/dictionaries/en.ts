@@ -248,6 +248,13 @@ export const en = {
     rangeError: 'Enter a value between {min} and {max} seconds.',
     apply: 'Apply',
     save: 'Save',
+    error: {
+      invalidInterval:
+        'Invalid interval. Enter a value between 1 and 300 seconds.',
+      notDelivered:
+        'Interval saved, but the device was not notified. Apply it again to retry.',
+      generic: 'Could not update the sampling interval. Try again.',
+    },
     device: {
       name: 'Name',
       location: 'Location',
