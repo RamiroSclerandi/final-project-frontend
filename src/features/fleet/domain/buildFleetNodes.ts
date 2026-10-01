@@ -1,7 +1,6 @@
 import {
-  DEFAULT_SAMPLING_INTERVAL_MS,
-  deriveNodeStatus,
-  latestTimestamp,
+  pickSamplingInterval,
+  resolveNodeStatus,
 } from '../../../shared/lib/nodeStatus'
 import type {
   FleetDeviceInput,
@@ -13,7 +12,8 @@ import { hasQualityAlert } from './hasQualityAlert'
 import { pickHeadlineSensor } from './pickHeadlineSensor'
 
 export interface FleetFreshness {
-  samplingIntervalsById: Record<string, number>
+  /** `null` while the configs query has not loaded. */
+  samplingIntervalsById: Record<string, number> | null
   nowMs: number
 }
 
@@ -32,22 +32,20 @@ export function buildFleetNodes(
     const status = statusesById[device.id]
     const readings = readingsByDevice[device.id] ?? []
     const headline = pickHeadlineSensor(readings)
-    const lastActivity = latestTimestamp([
-      status?.lastSeen ?? null,
-      ...readings.map((reading) => reading.timestamp),
-    ])
+    const { status: nodeStatus, lastActivity } = resolveNodeStatus(
+      status,
+      readings.map((reading) => reading.timestamp),
+      pickSamplingInterval(samplingIntervalsById, device.id),
+      nowMs,
+    )
 
     return {
       id: device.id,
       name: device.name,
       location: device.locationRef,
       transport: device.transport,
-      status: deriveNodeStatus(
-        status && { online: status.online, lastActivity },
-        samplingIntervalsById[device.id] ?? DEFAULT_SAMPLING_INTERVAL_MS,
-        nowMs,
-      ),
-      lastSeen: status ? lastActivity : null,
+      status: nodeStatus,
+      lastActivity,
       hasQualityAlert: hasQualityAlert(readings),
       headline: headline
         ? {

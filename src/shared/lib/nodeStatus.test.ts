@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { deriveNodeStatus } from './nodeStatus'
+import {
+  deriveNodeStatus,
+  latestTimestamp,
+  resolveNodeStatus,
+} from './nodeStatus'
 
 const NOW = Date.parse('2026-10-01T12:00:00Z')
 const secondsAgo = (seconds: number) =>
@@ -55,5 +59,43 @@ describe('deriveNodeStatus', () => {
     expect(
       deriveNodeStatus({ online: true, lastActivity: null }, 10_000, NOW),
     ).toBe('online')
+  })
+})
+
+describe('latestTimestamp', () => {
+  it('skips unparseable timestamps instead of letting them win', () => {
+    expect(
+      latestTimestamp(['not-a-date', secondsAgo(30), null, secondsAgo(90)]),
+    ).toBe(secondsAgo(30))
+  })
+})
+
+describe('resolveNodeStatus', () => {
+  it('judges activity by the newest of last_seen and the readings', () => {
+    expect(
+      resolveNodeStatus(
+        { online: true, lastSeen: secondsAgo(3600) },
+        [secondsAgo(10)],
+        10_000,
+        NOW,
+      ),
+    ).toEqual({ status: 'online', lastActivity: secondsAgo(10) })
+  })
+
+  it('does not flag stale while the sampling interval is still unknown', () => {
+    expect(
+      resolveNodeStatus(
+        { online: true, lastSeen: secondsAgo(3600) },
+        [],
+        null,
+        NOW,
+      ).status,
+    ).toBe('online')
+  })
+
+  it('reports no activity for a device without a status row', () => {
+    expect(resolveNodeStatus(undefined, [secondsAgo(10)], 10_000, NOW)).toEqual(
+      { status: 'unknown', lastActivity: null },
+    )
   })
 })

@@ -124,7 +124,11 @@ function FleetTableRow({ row, labels, notAvailable }: FleetTableRowProps) {
         )}
       </td>
       <td role="cell" data-label={labels.lastSeen}>
-        {row.lastSeen ? <RelativeTime iso={row.lastSeen} /> : notAvailable}
+        {row.lastActivity ? (
+          <RelativeTime iso={row.lastActivity} />
+        ) : (
+          notAvailable
+        )}
       </td>
       <td
         role="cell"

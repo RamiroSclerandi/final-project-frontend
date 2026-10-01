@@ -59,7 +59,7 @@ describe('buildFleetNodes', () => {
         location: 'Row 1',
         transport: 'wifi-mqtt',
         status: 'online',
-        lastSeen: '2026-09-22T10:05:00Z',
+        lastActivity: '2026-09-22T10:05:00Z',
         hasQualityAlert: true,
         headline: {
           sensorId: 'sensor-a1',
@@ -74,7 +74,7 @@ describe('buildFleetNodes', () => {
         location: null,
         transport: 'lorawan',
         status: 'unknown',
-        lastSeen: null,
+        lastActivity: null,
         hasQualityAlert: false,
         headline: null,
       },
@@ -115,6 +115,24 @@ describe('buildFleetNodes', () => {
       {
         samplingIntervalsById: { 'device-a': 60_000 },
         nowMs: Date.parse('2026-09-22T10:02:00Z'),
+      },
+    )
+
+    expect(node?.status).toBe('online')
+  })
+
+  it('does not flag stale while sampling intervals have not loaded', () => {
+    const statusesById: Record<string, FleetStatusInput> = {
+      'device-a': { online: true, lastSeen: '2026-09-22T09:00:00Z' },
+    }
+
+    const [node] = buildFleetNodes(
+      [deviceA],
+      statusesById,
+      {},
+      {
+        samplingIntervalsById: null,
+        nowMs: Date.parse('2026-09-22T12:00:00Z'),
       },
     )
 
