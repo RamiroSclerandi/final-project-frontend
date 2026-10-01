@@ -24,6 +24,9 @@ export interface RawMeasurementRow {
   value: number
   quality: string
   ts_source: string
+  value_min?: number | null
+  value_max?: number | null
+  sample_count?: number | null
 }
 
 /** Structural shape of a selected `mv_measurements_hourly`/`_daily` row. */
@@ -41,6 +44,9 @@ export function toRawPoint(row: RawMeasurementRow): HistoricalPoint {
     value: row.value,
     quality: normalizeQuality(row.quality),
     ...(row.ts_source === 'server' ? { tsSource: 'server' as const } : {}),
+    ...(row.value_min != null ? { min: row.value_min } : {}),
+    ...(row.value_max != null ? { max: row.value_max } : {}),
+    ...(row.sample_count != null ? { sampleCount: row.sample_count } : {}),
   }
 }
 
