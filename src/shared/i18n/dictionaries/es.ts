@@ -43,6 +43,8 @@ export const es: Dictionary = {
     notAvailable: 'No disponible',
     retry: 'Reintentar',
     dismiss: 'Descartar',
+    viewCrashedTitle: 'No se pudo cargar esta vista',
+    viewCrashedBody: 'Reintentá o volvé a la flota desde el menú.',
   },
   connection: {
     connecting: 'Conectando…',

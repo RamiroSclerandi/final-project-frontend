@@ -45,6 +45,8 @@ export const en = {
     notAvailable: 'Not available',
     retry: 'Retry',
     dismiss: 'Dismiss',
+    viewCrashedTitle: 'This view failed to load',
+    viewCrashedBody: 'Retry, or go back to the fleet from the menu.',
   },
   connection: {
     connecting: 'Connecting…',
