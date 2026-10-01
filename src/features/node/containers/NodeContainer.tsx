@@ -3,12 +3,20 @@ import { Link } from 'react-router-dom'
 
 import { Button } from '../../../shared/design-system/atoms/Button'
 import { Skeleton } from '../../../shared/design-system/atoms/Skeleton'
-import type { NodeStatus } from '../../../shared/design-system/atoms/StatusDot'
 import { EmptyState } from '../../../shared/design-system/molecules/EmptyState'
 import { useTranslation } from '../../../shared/i18n/useTranslation'
+import {
+  DEFAULT_SAMPLING_INTERVAL_MS,
+  deriveNodeStatus,
+  latestTimestamp,
+} from '../../../shared/lib/nodeStatus'
+import { useNow } from '../../../shared/time/useNow'
 import { DeviceConfigContainer, useDevices } from '../../device-management'
 import { useDeviceStatuses, useRealtimeDeviceStatuses } from '../../node-health'
-import { SamplingIntervalContainer } from '../../remote-config'
+import {
+  SamplingIntervalContainer,
+  useSamplingIntervals,
+} from '../../remote-config'
 import { useLatestReadings, useRealtimeReadings } from '../../telemetry'
 import { NodeConfigDrawer } from '../components/NodeConfigDrawer'
 import { NodeHeader } from '../components/NodeHeader'
@@ -18,18 +26,6 @@ import { pickNodeRssi } from '../domain/pickNodeRssi'
 
 export interface NodeContainerProps {
   deviceId: string
-}
-
-interface StatusInput {
-  online: boolean
-  lastSeen: string | null
-}
-
-function deriveStatus(status: StatusInput | undefined): NodeStatus {
-  if (!status) {
-    return 'unknown'
-  }
-  return status.online ? 'online' : 'offline'
 }
 
 /**
@@ -47,6 +43,8 @@ export function NodeContainer({ deviceId }: NodeContainerProps) {
   useRealtimeDeviceStatuses()
   const readingsQuery = useLatestReadings()
   useRealtimeReadings()
+  const samplingIntervalsById = useSamplingIntervals()
+  const nowMs = useNow()
 
   const readings = useMemo(
     () =>
@@ -104,14 +102,25 @@ export function NodeContainer({ deviceId }: NodeContainerProps) {
   }
 
   const statusInput = statusesQuery.data?.[deviceId]
+  const lastActivity = statusInput
+    ? latestTimestamp([
+        statusInput.lastSeen,
+        ...readings.map((reading) => reading.timestamp),
+      ])
+    : null
+  const status = deriveNodeStatus(
+    statusInput && { online: statusInput.online, lastActivity },
+    samplingIntervalsById[deviceId] ?? DEFAULT_SAMPLING_INTERVAL_MS,
+    nowMs,
+  )
 
   return (
     <div className="flex flex-col gap-4 p-4">
       <NodeHeader
         name={device.name}
         location={device.locationRef}
-        status={deriveStatus(statusInput)}
-        lastSeen={statusInput?.lastSeen ?? null}
+        status={status}
+        lastSeen={lastActivity}
         firmwareVersion={device.firmwareVersion}
         transport={device.transport}
         rssi={pickNodeRssi(readings)}

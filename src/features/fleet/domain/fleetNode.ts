@@ -4,7 +4,9 @@
  * locally rather than imported from `device-management`/`node-health`/
  * `telemetry` -- those features' real types satisfy these shapes structurally).
  */
-export type NodeStatus = 'online' | 'offline' | 'unknown'
+import type { NodeStatus } from '../../../shared/lib/nodeStatus'
+
+export type { NodeStatus }
 
 /** Matches `device-management`'s `Device` (id/name/locationRef/transport subset). */
 export interface FleetDeviceInput {

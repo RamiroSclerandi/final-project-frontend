@@ -32,6 +32,7 @@ export const en = {
   },
   status: {
     online: 'Online',
+    stale: 'No recent data',
     offline: 'Offline',
     unknown: 'Unknown',
   },

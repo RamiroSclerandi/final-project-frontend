@@ -85,4 +85,12 @@ describe('filterNodes', () => {
       filterNodes(NODES, { status: 'all', search: 'nonexistent' }),
     ).toEqual([])
   })
+
+  it('includes stale nodes in the offline filter', () => {
+    const stale: FleetNode = { ...ONLINE_CLEAN, id: 'stale', status: 'stale' }
+
+    expect(filterNodes([stale], { status: 'offline', search: '' })).toEqual([
+      stale,
+    ])
+  })
 })

@@ -30,6 +30,7 @@ export const es: Dictionary = {
   },
   status: {
     online: 'En línea',
+    stale: 'Sin datos recientes',
     offline: 'Desconectado',
     unknown: 'Desconocido',
   },

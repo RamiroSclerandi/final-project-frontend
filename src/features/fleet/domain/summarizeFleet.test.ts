@@ -42,4 +42,11 @@ describe('summarizeFleet', () => {
       qualityAlerts: 3,
     })
   })
+
+  it('counts a stale node as not online', () => {
+    const summary = summarizeFleet([node({ id: 'stale-1', status: 'stale' })])
+
+    expect(summary.online).toBe(0)
+    expect(summary.offline).toBe(1)
+  })
 })

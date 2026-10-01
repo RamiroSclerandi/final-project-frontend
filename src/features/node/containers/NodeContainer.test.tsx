@@ -28,6 +28,7 @@ vi.mock('../../remote-config', () => ({
   SamplingIntervalContainer: ({ deviceId }: { deviceId: string }) => (
     <p>Sampling interval for {deviceId}</p>
   ),
+  useSamplingIntervals: () => ({}),
 }))
 
 const DEVICE_A = {

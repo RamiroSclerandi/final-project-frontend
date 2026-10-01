@@ -19,6 +19,9 @@ vi.mock('../../telemetry', () => ({
   useLatestReadings: useLatestReadingsMock,
   useRealtimeReadings: useRealtimeReadingsMock,
 }))
+vi.mock('../../remote-config', () => ({ useSamplingIntervals: () => ({}) }))
+
+const JUST_NOW = new Date().toISOString()
 
 const DEVICE_A = {
   id: 'device-a',
@@ -143,7 +146,7 @@ describe('FleetContainer', () => {
       refetch: vi.fn(),
     })
     useDeviceStatusesMock.mockReturnValue({
-      data: { 'device-a': { online: true, lastSeen: '2026-09-22T10:05:00Z' } },
+      data: { 'device-a': { online: true, lastSeen: JUST_NOW } },
     })
     useRealtimeDeviceStatusesMock.mockReturnValue(undefined)
     useLatestReadingsMock.mockReturnValue({ data: {} })
@@ -167,7 +170,7 @@ describe('FleetContainer', () => {
     })
     useDeviceStatusesMock.mockReturnValue({
       data: {
-        'device-a': { online: true, lastSeen: '2026-09-22T10:05:00Z' },
+        'device-a': { online: true, lastSeen: JUST_NOW },
         'device-b': { online: false, lastSeen: null },
       },
       isError: false,
@@ -206,7 +209,7 @@ describe('FleetContainer', () => {
       refetch: vi.fn(),
     })
     useDeviceStatusesMock.mockReturnValue({
-      data: { 'device-a': { online: true, lastSeen: '2026-09-22T10:05:00Z' } },
+      data: { 'device-a': { online: true, lastSeen: JUST_NOW } },
       isError: false,
       refetch: vi.fn(),
     })

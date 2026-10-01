@@ -12,6 +12,9 @@ function matchesStatus(node: FleetNode, status: FleetStatusFilter): boolean {
   if (status === 'alerts') {
     return node.hasQualityAlert
   }
+  if (status === 'offline') {
+    return node.status === 'offline' || node.status === 'stale'
+  }
   return node.status === status
 }
 
