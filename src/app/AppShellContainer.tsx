@@ -8,6 +8,7 @@ import { AppNav, AppShell } from '../shared/design-system/templates/AppShell'
 import { useTheme } from '../shared/design-system/theme/useTheme'
 import { useTranslation } from '../shared/i18n/useTranslation'
 import { deriveTenants } from './tenant'
+import { RouteErrorBoundary } from './RouteErrorBoundary'
 
 // Single-tenant today (decision #411): `TenantSwitcher` never renders a
 // select with exactly one tenant, so this callback is unreachable until a
@@ -68,7 +69,9 @@ export function AppShellContainer() {
       nav={<AppNav items={navItems} ariaLabel={t('shell.nav.label')} />}
       skipLinkLabel={t('shell.skipToContent')}
     >
-      <Outlet />
+      <RouteErrorBoundary>
+        <Outlet />
+      </RouteErrorBoundary>
     </AppShell>
   )
 }

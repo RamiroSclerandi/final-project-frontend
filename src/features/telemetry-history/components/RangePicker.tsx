@@ -99,6 +99,15 @@ export function RangePicker({
     return t(GRANULARITY_LABEL_KEYS[choice])
   }
 
+  function changeCustomRange(next: { from: Date; to: Date }) {
+    const fromMs = next.from.getTime()
+    const toMs = next.to.getTime()
+    if (Number.isNaN(fromMs) || Number.isNaN(toMs) || fromMs >= toMs) {
+      return
+    }
+    onChange(next)
+  }
+
   return (
     <fieldset className="flex flex-col gap-3">
       <legend className="text-sm text-text-muted">
@@ -125,8 +134,9 @@ export function RangePicker({
             id="range-from"
             type="datetime-local"
             value={toLocalInputValue(from)}
+            max={toLocalInputValue(to)}
             onChange={(event) =>
-              onChange({ from: new Date(event.target.value), to })
+              changeCustomRange({ from: new Date(event.target.value), to })
             }
             className="min-h-11 rounded-md border border-border bg-surface px-3 text-base text-text focus:border-accent"
           />
@@ -139,8 +149,9 @@ export function RangePicker({
             id="range-to"
             type="datetime-local"
             value={toLocalInputValue(to)}
+            min={toLocalInputValue(from)}
             onChange={(event) =>
-              onChange({ from, to: new Date(event.target.value) })
+              changeCustomRange({ from, to: new Date(event.target.value) })
             }
             className="min-h-11 rounded-md border border-border bg-surface px-3 text-base text-text focus:border-accent"
           />

@@ -14,6 +14,27 @@ describe('toRawPoint', () => {
     ).toEqual({ t: '2026-09-01T00:00:00Z', value: 21.5, quality: 'ok' })
   })
 
+  it('keeps the window min/max/count of a raw row aggregated on the device', () => {
+    expect(
+      toRawPoint({
+        timestamp: '2026-09-01T00:00:00Z',
+        value: 21.5,
+        quality: 'ok',
+        ts_source: 'device',
+        value_min: 20.9,
+        value_max: 22.1,
+        sample_count: 6,
+      }),
+    ).toEqual({
+      t: '2026-09-01T00:00:00Z',
+      value: 21.5,
+      quality: 'ok',
+      min: 20.9,
+      max: 22.1,
+      sampleCount: 6,
+    })
+  })
+
   it('normalises an unrecognised quality to ok', () => {
     expect(
       toRawPoint({

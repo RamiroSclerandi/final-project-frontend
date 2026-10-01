@@ -8,6 +8,7 @@ import type {
 import { isAggregationStale } from '../domain/degradedState'
 import type { HistoricalPoint } from '../domain/historicalPoint'
 import { mergeDailyTail, mergeHourlyTail } from '../domain/mergeTail'
+import { MAX_RAW_ROWS, RawRowLimitError } from '../domain/rawRowLimit'
 import { historicalSeriesQueryKey } from '../domain/queryKeys'
 import {
   fetchDailyAggregate,
@@ -17,6 +18,7 @@ import {
 } from '../infrastructure/historyRepository'
 
 interface GranularSeries {
+  granularity: Granularity
   points: HistoricalPoint[]
   aggregationStale: boolean
 }
@@ -29,8 +31,10 @@ async function fetchGranularSeries(
   toIso: string,
 ): Promise<GranularSeries> {
   if (granularity === 'raw') {
-    const points = await fetchRawMeasurements(sensorId, fromIso, toIso)
-    return { points, aggregationStale: false }
+    const points = await fetchRawMeasurements(sensorId, fromIso, toIso, {
+      maxRows: MAX_RAW_ROWS,
+    })
+    return { granularity, points, aggregationStale: false }
   }
 
   if (granularity === 'hourly') {
@@ -43,6 +47,7 @@ async function fetchGranularSeries(
       ? await fetchRawMeasurements(sensorId, lastBucket, toIso)
       : []
     return {
+      granularity,
       points: mergeHourlyTail(aggregatePoints, rawTail),
       aggregationStale: isAggregationStale(
         lastBucket,
@@ -58,6 +63,7 @@ async function fetchGranularSeries(
   ])
   const lastBucket = aggregatePoints.at(-1)?.t ?? null
   return {
+    granularity,
     points: mergeDailyTail(aggregatePoints, latestRaw),
     aggregationStale: isAggregationStale(
       lastBucket,
@@ -106,13 +112,20 @@ export function useHistoricalSeries(
         sensorId,
         fromIso,
         toIso,
-      )
+      ).catch((error: unknown) => {
+        // Auto picked raw from the range alone; a fast sampling interval can
+        // still exceed the row limit, so degrade to hourly instead of failing.
+        if (granularityChoice === 'auto' && error instanceof RawRowLimitError) {
+          return fetchGranularSeries('hourly', sensorId, fromIso, toIso)
+        }
+        throw error
+      })
       return { ...series, queryDurationMs: performance.now() - t0 }
     },
   })
 
   return {
-    granularity,
+    granularity: query.data?.granularity ?? granularity,
     points: query.data?.points ?? [],
     isLoading: query.isLoading,
     error: query.error,
