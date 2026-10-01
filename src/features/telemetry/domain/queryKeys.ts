@@ -4,4 +4,3 @@
  * import the other and drag in its infrastructure module.
  */
 export const LATEST_READINGS_QUERY_KEY = ['latestReadings'] as const
-export const LIVE_SERIES_QUERY_KEY = ['liveSeries'] as const

@@ -26,7 +26,9 @@ export function FleetContainer() {
   const statusesQuery = useDeviceStatuses()
   useRealtimeDeviceStatuses()
   const readingsQuery = useLatestReadings()
-  const { status: connectionStatus } = useRealtimeReadings()
+  const { status: connectionStatus } = useRealtimeReadings({
+    onUnknownSensor: () => void devicesQuery.refetch(),
+  })
   const [filter, setFilter] = useState<FleetFilterValue>(DEFAULT_FILTER)
 
   const readings = useMemo(
