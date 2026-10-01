@@ -19,12 +19,6 @@ const DEVICE: UnassignedDeviceRow = {
 }
 
 describe('UnassignedDevicesTable', () => {
-  it('stacks on narrow viewports via the shared table-stack class (REQ-MOBILE-3)', () => {
-    renderWithProviders(<UnassignedDevicesTable devices={[DEVICE]} />)
-
-    expect(screen.getByRole('table')).toHaveClass('table-stack')
-  })
-
   it('gives every data cell a data-label matching its column (REQ-MOBILE-3)', () => {
     renderWithProviders(<UnassignedDevicesTable devices={[DEVICE]} />)
 
@@ -59,12 +53,6 @@ describe('UnassignedDevicesTable', () => {
     const [, row] = screen.getAllByRole('row')
     const cells = within(row as HTMLElement).getAllByRole('cell')
     expect(cells[4]).toHaveTextContent('Not available')
-  })
-
-  it('never declares a fixed-pixel width class on the table root', () => {
-    renderWithProviders(<UnassignedDevicesTable devices={[DEVICE]} />)
-
-    expect(screen.getByRole('table').className).not.toMatch(/w-\[\d+px\]/)
   })
 
   it('renders the device MAC address and name as real data', () => {

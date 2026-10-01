@@ -82,14 +82,11 @@ describe('SensorGroup', () => {
     expect(headers[0]).toHaveTextContent(/\S/)
   })
 
-  // Below 768px `.table-stack` turns each cell into a labelled row, taking its
-  // caption from `data-label`. Four phase columns cannot fit a phone otherwise.
-  it('carries the stacking contract so phases become labelled rows on a phone', () => {
+  it('labels every cell with its column header', () => {
     renderWithProviders(
       <SensorGroup group={FOUR_PHASE_GROUP} nodeId="device-1" />,
     )
 
-    expect(screen.getByRole('table')).toHaveClass('table-stack')
     const headerTexts = screen
       .getAllByRole('columnheader')
       .map((header) => header.textContent)

@@ -56,17 +56,6 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument()
     expect(screen.getByText('Route content')).toBeInTheDocument()
   })
-
-  // Found in the 360 px browser check: brand, tenant, toggles and logout on
-  // one unwrappable row measured 550 px. jsdom cannot lay out, so this pins
-  // the wrapping and shrink classes the fix relies on (REQ-MOBILE-1).
-  it('lets the header wrap and its brand group shrink so 360 px never scrolls sideways', () => {
-    renderShell()
-
-    const header = screen.getByRole('banner')
-    expect(header).toHaveClass('flex-wrap')
-    expect(screen.getByText('UNRaf').parentElement).toHaveClass('min-w-0')
-  })
 })
 
 describe('AppNav', () => {

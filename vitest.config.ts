@@ -8,6 +8,10 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
+    // One jsdom per worker instead of per file: ~3x faster, isolation kept.
+    pool: 'vmThreads',
+    // A file's first Recharts render can exceed 5 s when all workers compete for CPU.
+    testTimeout: 10_000,
     setupFiles: ['./vitest.setup.ts'],
     // `shared/api/supabase` throws at import time when these are missing, which
     // is what we want of the real app and wrong for a unit test: importing a
