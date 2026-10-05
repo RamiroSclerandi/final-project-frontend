@@ -225,6 +225,7 @@ describe('useHistoricalSeries', () => {
       SENSOR_ID,
       '2026-09-15T11:00:00.000Z',
       to.toISOString(),
+      { maxRows: MAX_RAW_ROWS },
     )
     expect(result.current.points).toEqual([
       { t: '2026-09-15T10:00:00.000Z', value: 20 },
@@ -238,6 +239,29 @@ describe('useHistoricalSeries', () => {
       },
     ])
     expect(result.current.aggregationStale).toBe(false)
+  })
+
+  it('keeps the hourly buckets and flags staleness when the raw tail exceeds the row limit', async () => {
+    const to = new Date('2026-09-15T12:00:00Z')
+    const from = new Date(to.getTime() - 7 * DAY_MS)
+    const buckets = [
+      { t: '2026-09-10T10:00:00.000Z', value: 20 },
+      { t: '2026-09-10T11:00:00.000Z', value: 21 },
+    ]
+    repositoryMocks.fetchHourlyAggregate.mockResolvedValue(buckets)
+    repositoryMocks.fetchRawMeasurements.mockRejectedValue(
+      new RawRowLimitError(90_000, MAX_RAW_ROWS),
+    )
+
+    const { result } = renderHook(
+      () => useHistoricalSeries(SENSOR_ID, from, to),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.error).toBeNull()
+    expect(result.current.points).toEqual(buckets)
+    expect(result.current.aggregationStale).toBe(true)
   })
 
   it('merges the latest reading into the daily aggregate as a partial marker (D-3)', async () => {
