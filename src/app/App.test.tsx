@@ -233,7 +233,7 @@ describe('App', () => {
     expect(screen.getByText('Node device-1')).toBeInTheDocument()
   })
 
-  it('renders the sensor detail page for /nodes/:id/sensors/:sid (ui-redesign PR-8)', () => {
+  it('renders the sensor detail page for /nodes/:id/sensors/:sid (ui-redesign PR-8)', async () => {
     useAuthMock.mockReturnValue({
       status: 'authenticated',
       session: AUTHENTICATED_SESSION,
@@ -242,7 +242,14 @@ describe('App', () => {
 
     renderAppAt('/nodes/device-1/sensors/sensor-1')
 
-    expect(screen.getByText('Sensor sensor-1 on device-1')).toBeInTheDocument()
+    // The sensor page is loaded on demand, so it appears after its chunk resolves.
+    expect(
+      await screen.findByText(
+        'Sensor sensor-1 on device-1',
+        {},
+        { timeout: 5_000 },
+      ),
+    ).toBeInTheDocument()
   })
 
   it('redirects an unknown path to / (REQ-SHELL-2)', () => {

@@ -9,7 +9,10 @@ const repositoryMocks = vi.hoisted(() => ({
   fetchRawMeasurements: vi.fn(),
 }))
 
-vi.mock('../../telemetry-history', () => repositoryMocks)
+vi.mock(
+  '../../telemetry-history/infrastructure/historyRepository',
+  () => repositoryMocks,
+)
 
 function createWrapper() {
   const queryClient = new QueryClient({
