@@ -1,14 +1,11 @@
 export type NodeStatus = 'online' | 'stale' | 'offline' | 'unknown'
 
-/** Firmware default (`DeviceConfig.cpp`) for nodes with no requested interval. */
-export const DEFAULT_SAMPLING_INTERVAL_MS = 5_000
-
 const STALE_AFTER_INTERVALS = 3
 // The worker refreshes devices.last_seen at most once a minute; a floor of two
 // refreshes keeps a node from flickering stale while Realtime is down.
 const MIN_STALE_AFTER_MS = 120_000
 // A node with no config row may run an interval set over serial that the
-// dashboard cannot see, so it gets a wide window instead of the 5 s default.
+// dashboard cannot see, so it gets a wide window instead of the firmware default.
 const UNCONFIGURED_STALE_AFTER_MS = 5 * 60_000
 
 export interface NodeStatusInput {
@@ -18,12 +15,12 @@ export interface NodeStatusInput {
 
 /**
  * Online/offline comes from the broker's Last Will; an online node silent for
- * more than three sampling intervals is `stale`, since a dropped connection
- * can take minutes to reach the broker.
+ * longer than `staleAfterMs` is `stale`, since a dropped connection can take
+ * minutes to reach the broker.
  */
 export function deriveNodeStatus(
   status: NodeStatusInput | undefined,
-  samplingIntervalMs: number,
+  staleAfterMs: number,
   nowMs: number,
 ): NodeStatus {
   if (!status) {
@@ -35,10 +32,6 @@ export function deriveNodeStatus(
   if (status.lastActivity === null) {
     return 'online'
   }
-  const staleAfterMs = Math.max(
-    STALE_AFTER_INTERVALS * samplingIntervalMs,
-    MIN_STALE_AFTER_MS,
-  )
   const silentMs = nowMs - Date.parse(status.lastActivity)
   return silentMs > staleAfterMs ? 'stale' : 'online'
 }
@@ -60,20 +53,22 @@ export function latestTimestamp(
 }
 
 /**
- * A device's requested interval, or `null` before configs load. A device with
- * no config row gets the interval whose stale window is five minutes.
+ * How long a device may stay silent before it is `stale`: three of its
+ * requested intervals (two minutes at least), five minutes without a config
+ * row, or `null` before configs load.
  */
-export function pickSamplingInterval(
+export function pickStaleAfterMs(
   intervalsById: Readonly<Record<string, number>> | null,
   deviceId: string,
 ): number | null {
   if (intervalsById === null) {
     return null
   }
-  return (
-    intervalsById[deviceId] ??
-    UNCONFIGURED_STALE_AFTER_MS / STALE_AFTER_INTERVALS
-  )
+  const intervalMs = intervalsById[deviceId]
+  if (intervalMs === undefined) {
+    return UNCONFIGURED_STALE_AFTER_MS
+  }
+  return Math.max(STALE_AFTER_INTERVALS * intervalMs, MIN_STALE_AFTER_MS)
 }
 
 export interface ResolvedNodeStatus {
@@ -84,12 +79,12 @@ export interface ResolvedNodeStatus {
 /**
  * Status plus last activity for one device. Activity is the newest of
  * `last_seen` and its readings, because the worker throttles `last_seen`.
- * A `null` interval (configs not loaded yet) never flags a node stale.
+ * A `null` window (configs not loaded yet) never flags a node stale.
  */
 export function resolveNodeStatus(
   status: { online: boolean; lastSeen: string | null } | undefined,
   readingTimestamps: ReadonlyArray<string>,
-  samplingIntervalMs: number | null,
+  staleAfterMs: number | null,
   nowMs: number,
 ): ResolvedNodeStatus {
   if (!status) {
@@ -99,9 +94,9 @@ export function resolveNodeStatus(
   const judged = deriveNodeStatus(
     {
       online: status.online,
-      lastActivity: samplingIntervalMs === null ? null : lastActivity,
+      lastActivity: staleAfterMs === null ? null : lastActivity,
     },
-    samplingIntervalMs ?? DEFAULT_SAMPLING_INTERVAL_MS,
+    staleAfterMs ?? 0,
     nowMs,
   )
   return { status: judged, lastActivity }
