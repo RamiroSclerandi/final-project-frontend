@@ -10,6 +10,25 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { App } from './App'
 
 const useAuthMock = vi.hoisted(() => vi.fn())
+const loginCrash = vi.hoisted(() => ({ shouldThrow: false }))
+
+vi.mock(
+  '../features/auth/containers/LoginContainer',
+  async (importOriginal) => {
+    const original =
+      await importOriginal<
+        typeof import('../features/auth/containers/LoginContainer')
+      >()
+    return {
+      LoginContainer: () => {
+        if (loginCrash.shouldThrow) {
+          throw new Error('login render failed')
+        }
+        return <original.LoginContainer />
+      },
+    }
+  },
+)
 
 vi.mock('../features/auth/application/AuthProvider', () => ({
   AuthProvider: ({ children }: { children: ReactNode }) => children,
@@ -168,6 +187,24 @@ describe('App', () => {
     renderAppAt('/login')
 
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
+  })
+
+  it('contains a crash on /login to a recoverable message instead of a blank page', () => {
+    useAuthMock.mockReturnValue({
+      status: 'unauthenticated',
+      session: null,
+      signIn: vi.fn(),
+    })
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    loginCrash.shouldThrow = true
+
+    try {
+      renderAppAt('/login')
+
+      expect(screen.getByText('This view failed to load')).toBeInTheDocument()
+    } finally {
+      loginCrash.shouldThrow = false
+    }
   })
 
   it('renders a reserved placeholder for /alerts (REQ-SHELL-2)', () => {

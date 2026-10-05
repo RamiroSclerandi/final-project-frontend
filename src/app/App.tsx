@@ -12,6 +12,7 @@ import { NodePage } from '../pages/NodePage'
 import { SensorPage } from '../pages/SensorPage'
 import { AppShellContainer } from './AppShellContainer'
 import { RequireSession } from './RequireSession'
+import { RouteErrorBoundary } from './RouteErrorBoundary'
 
 const queryClient = new QueryClient()
 
@@ -31,7 +32,14 @@ export function App() {
           <ThemeProvider>
             <BrowserRouter>
               <Routes>
-                <Route path="/login" element={<LoginPage />} />
+                <Route
+                  path="/login"
+                  element={
+                    <RouteErrorBoundary>
+                      <LoginPage />
+                    </RouteErrorBoundary>
+                  }
+                />
                 <Route
                   element={
                     <RequireSession>
