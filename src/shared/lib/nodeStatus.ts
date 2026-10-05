@@ -4,8 +4,12 @@ export type NodeStatus = 'online' | 'stale' | 'offline' | 'unknown'
 export const DEFAULT_SAMPLING_INTERVAL_MS = 5_000
 
 const STALE_AFTER_INTERVALS = 3
-// The worker refreshes devices.last_seen at most once a minute.
-const MIN_STALE_AFTER_MS = 60_000
+// The worker refreshes devices.last_seen at most once a minute; a floor of two
+// refreshes keeps a node from flickering stale while Realtime is down.
+const MIN_STALE_AFTER_MS = 120_000
+// A node with no config row may run an interval set over serial that the
+// dashboard cannot see, so it gets a wide window instead of the 5 s default.
+const UNCONFIGURED_STALE_AFTER_MS = 5 * 60_000
 
 export interface NodeStatusInput {
   online: boolean
@@ -55,7 +59,10 @@ export function latestTimestamp(
   return latest
 }
 
-/** A device's requested interval, the firmware default, or `null` before configs load. */
+/**
+ * A device's requested interval, or `null` before configs load. A device with
+ * no config row gets the interval whose stale window is five minutes.
+ */
 export function pickSamplingInterval(
   intervalsById: Readonly<Record<string, number>> | null,
   deviceId: string,
@@ -63,7 +70,10 @@ export function pickSamplingInterval(
   if (intervalsById === null) {
     return null
   }
-  return intervalsById[deviceId] ?? DEFAULT_SAMPLING_INTERVAL_MS
+  return (
+    intervalsById[deviceId] ??
+    UNCONFIGURED_STALE_AFTER_MS / STALE_AFTER_INTERVALS
+  )
 }
 
 export interface ResolvedNodeStatus {
