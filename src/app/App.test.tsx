@@ -10,6 +10,25 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { App } from './App'
 
 const useAuthMock = vi.hoisted(() => vi.fn())
+const loginCrash = vi.hoisted(() => ({ shouldThrow: false }))
+
+vi.mock(
+  '../features/auth/containers/LoginContainer',
+  async (importOriginal) => {
+    const original =
+      await importOriginal<
+        typeof import('../features/auth/containers/LoginContainer')
+      >()
+    return {
+      LoginContainer: () => {
+        if (loginCrash.shouldThrow) {
+          throw new Error('login render failed')
+        }
+        return <original.LoginContainer />
+      },
+    }
+  },
+)
 
 vi.mock('../features/auth/application/AuthProvider', () => ({
   AuthProvider: ({ children }: { children: ReactNode }) => children,
@@ -170,6 +189,24 @@ describe('App', () => {
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
   })
 
+  it('contains a crash on /login to a recoverable message instead of a blank page', () => {
+    useAuthMock.mockReturnValue({
+      status: 'unauthenticated',
+      session: null,
+      signIn: vi.fn(),
+    })
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    loginCrash.shouldThrow = true
+
+    try {
+      renderAppAt('/login')
+
+      expect(screen.getByText('This view failed to load')).toBeInTheDocument()
+    } finally {
+      loginCrash.shouldThrow = false
+    }
+  })
+
   it('renders a reserved placeholder for /alerts (REQ-SHELL-2)', () => {
     useAuthMock.mockReturnValue({
       status: 'authenticated',
@@ -196,7 +233,7 @@ describe('App', () => {
     expect(screen.getByText('Node device-1')).toBeInTheDocument()
   })
 
-  it('renders the sensor detail page for /nodes/:id/sensors/:sid (ui-redesign PR-8)', () => {
+  it('renders the sensor detail page for /nodes/:id/sensors/:sid (ui-redesign PR-8)', async () => {
     useAuthMock.mockReturnValue({
       status: 'authenticated',
       session: AUTHENTICATED_SESSION,
@@ -205,7 +242,14 @@ describe('App', () => {
 
     renderAppAt('/nodes/device-1/sensors/sensor-1')
 
-    expect(screen.getByText('Sensor sensor-1 on device-1')).toBeInTheDocument()
+    // The sensor page is loaded on demand, so it appears after its chunk resolves.
+    expect(
+      await screen.findByText(
+        'Sensor sensor-1 on device-1',
+        {},
+        { timeout: 5_000 },
+      ),
+    ).toBeInTheDocument()
   })
 
   it('redirects an unknown path to / (REQ-SHELL-2)', () => {

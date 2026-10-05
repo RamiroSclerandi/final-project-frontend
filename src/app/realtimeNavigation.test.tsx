@@ -116,10 +116,13 @@ vi.mock('../features/remote-config', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   useSamplingIntervals: () => ({}),
 }))
-vi.mock('../features/telemetry-history', async (importOriginal) => ({
-  ...(await importOriginal<object>()),
-  fetchRawMeasurements: () => Promise.resolve([]),
-}))
+vi.mock(
+  '../features/telemetry-history/infrastructure/historyRepository',
+  async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    fetchRawMeasurements: () => Promise.resolve([]),
+  }),
+)
 vi.mock('../features/telemetry/infrastructure/latestReadingsClient', () => ({
   fetchLatestReadings: () => Promise.resolve([LATEST_READING]),
 }))

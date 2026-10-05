@@ -1,7 +1,9 @@
 import { useQueries } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 
-import { fetchRawMeasurements } from '../../telemetry-history'
+// Concrete path, not the feature barrel: the barrel also exports the sensor
+// view, which would pull Recharts into the fleet bundle.
+import { fetchRawMeasurements } from '../../telemetry-history/infrastructure/historyRepository'
 import { fleetSparklineQueryKey } from '../domain/queryKeys'
 import { toSparklineValues } from '../domain/toSparklineValues'
 
