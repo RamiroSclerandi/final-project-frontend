@@ -106,6 +106,23 @@ describe('NodeContainer', () => {
     )
   })
 
+  it('refetches devices when a live reading names a sensor the cache does not know', () => {
+    const refetchDevices = vi.fn()
+    useDevicesMock.mockReturnValue({
+      data: [DEVICE_A],
+      isPending: false,
+      isError: false,
+      refetch: refetchDevices,
+    })
+    mockHealthyDefaults()
+
+    renderWithProviders(<NodeContainer deviceId="device-a" />)
+    const [options] = useRealtimeReadingsMock.mock.lastCall ?? []
+    options?.onUnknownSensor?.()
+
+    expect(refetchDevices).toHaveBeenCalledOnce()
+  })
+
   it('renders the node header once the device resolves', () => {
     useDevicesMock.mockReturnValue({
       data: [DEVICE_A],

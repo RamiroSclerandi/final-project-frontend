@@ -41,7 +41,7 @@ export function NodeContainer({ deviceId }: NodeContainerProps) {
   const statusesQuery = useDeviceStatuses()
   useRealtimeDeviceStatuses()
   const readingsQuery = useLatestReadings()
-  useRealtimeReadings()
+  useRealtimeReadings({ onUnknownSensor: () => void devicesQuery.refetch() })
   const samplingIntervalsById = useSamplingIntervals()
   const nowMs = useNow()
 
