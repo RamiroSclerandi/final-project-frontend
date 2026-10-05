@@ -1,5 +1,5 @@
 import {
-  pickSamplingInterval,
+  pickStaleAfterMs,
   resolveNodeStatus,
 } from '../../../shared/lib/nodeStatus'
 import type {
@@ -35,7 +35,7 @@ export function buildFleetNodes(
     const { status: nodeStatus, lastActivity } = resolveNodeStatus(
       status,
       readings.map((reading) => reading.timestamp),
-      pickSamplingInterval(samplingIntervalsById, device.id),
+      pickStaleAfterMs(samplingIntervalsById, device.id),
       nowMs,
     )
 

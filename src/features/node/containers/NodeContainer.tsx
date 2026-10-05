@@ -6,7 +6,7 @@ import { Skeleton } from '../../../shared/design-system/atoms/Skeleton'
 import { EmptyState } from '../../../shared/design-system/molecules/EmptyState'
 import { useTranslation } from '../../../shared/i18n/useTranslation'
 import {
-  pickSamplingInterval,
+  pickStaleAfterMs,
   resolveNodeStatus,
 } from '../../../shared/lib/nodeStatus'
 import { useNow } from '../../../shared/time/useNow'
@@ -103,7 +103,7 @@ export function NodeContainer({ deviceId }: NodeContainerProps) {
   const { status, lastActivity } = resolveNodeStatus(
     statusesQuery.data?.[deviceId],
     readings.map((reading) => reading.timestamp),
-    pickSamplingInterval(samplingIntervalsById, deviceId),
+    pickStaleAfterMs(samplingIntervalsById, deviceId),
     nowMs,
   )
 
