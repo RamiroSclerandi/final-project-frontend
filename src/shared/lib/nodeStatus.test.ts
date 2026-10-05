@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   deriveNodeStatus,
   latestTimestamp,
+  pickSamplingInterval,
   resolveNodeStatus,
 } from './nodeStatus'
 
@@ -28,8 +29,8 @@ describe('deriveNodeStatus', () => {
   it('stays online while activity is within three sampling intervals', () => {
     expect(
       deriveNodeStatus(
-        { online: true, lastActivity: secondsAgo(80) },
-        30_000,
+        { online: true, lastActivity: secondsAgo(170) },
+        60_000,
         NOW,
       ),
     ).toBe('online')
@@ -38,21 +39,31 @@ describe('deriveNodeStatus', () => {
   it('is stale once an online device is silent for over three sampling intervals', () => {
     expect(
       deriveNodeStatus(
-        { online: true, lastActivity: secondsAgo(91) },
-        30_000,
+        { online: true, lastActivity: secondsAgo(181) },
+        60_000,
         NOW,
       ),
     ).toBe('stale')
   })
 
-  it('never flags stale before one minute, whatever the sampling interval', () => {
+  it('never flags stale before two minutes, whatever the sampling interval', () => {
     expect(
       deriveNodeStatus(
-        { online: true, lastActivity: secondsAgo(59) },
+        { online: true, lastActivity: secondsAgo(119) },
         1_000,
         NOW,
       ),
     ).toBe('online')
+  })
+
+  it('flags a fast-sampling device stale after two minutes of silence', () => {
+    expect(
+      deriveNodeStatus(
+        { online: true, lastActivity: secondsAgo(121) },
+        1_000,
+        NOW,
+      ),
+    ).toBe('stale')
   })
 
   it('stays online when there is no activity timestamp to judge by', () => {
@@ -91,6 +102,27 @@ describe('resolveNodeStatus', () => {
         NOW,
       ).status,
     ).toBe('online')
+  })
+
+  it('waits five minutes before flagging a device without a config row', () => {
+    const interval = pickSamplingInterval({}, 'device-a')
+    const status = { online: true, lastSeen: null }
+
+    const afterFourMinutes = resolveNodeStatus(
+      status,
+      [secondsAgo(240)],
+      interval,
+      NOW,
+    ).status
+    const afterSixMinutes = resolveNodeStatus(
+      status,
+      [secondsAgo(360)],
+      interval,
+      NOW,
+    ).status
+
+    expect(afterFourMinutes).toBe('online')
+    expect(afterSixMinutes).toBe('stale')
   })
 
   it('reports no activity for a device without a status row', () => {
