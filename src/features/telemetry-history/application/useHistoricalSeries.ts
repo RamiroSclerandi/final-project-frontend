@@ -23,6 +23,28 @@ interface GranularSeries {
   aggregationStale: boolean
 }
 
+/**
+ * Raw rows after the newest hourly bucket, or `null` when they exceed the row
+ * limit: that only happens when the matview stopped refreshing, so the caller
+ * shows the buckets it has and flags them stale instead of downloading the gap.
+ */
+async function fetchRawTail(
+  sensorId: string,
+  lastBucketIso: string,
+  toIso: string,
+): Promise<HistoricalPoint[] | null> {
+  try {
+    return await fetchRawMeasurements(sensorId, lastBucketIso, toIso, {
+      maxRows: MAX_RAW_ROWS,
+    })
+  } catch (error) {
+    if (error instanceof RawRowLimitError) {
+      return null
+    }
+    throw error
+  }
+}
+
 /** Runs the query for the picked granularity and merges the raw tail (D-3). */
 async function fetchGranularSeries(
   granularity: Granularity,
@@ -44,8 +66,11 @@ async function fetchGranularSeries(
     ])
     const lastBucket = aggregatePoints.at(-1)?.t ?? null
     const rawTail = lastBucket
-      ? await fetchRawMeasurements(sensorId, lastBucket, toIso)
+      ? await fetchRawTail(sensorId, lastBucket, toIso)
       : []
+    if (rawTail === null) {
+      return { granularity, points: aggregatePoints, aggregationStale: true }
+    }
     return {
       granularity,
       points: mergeHourlyTail(aggregatePoints, rawTail),
