@@ -1,5 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { renderHook, waitFor } from '@testing-library/react'
+import {
+  QueryClient,
+  QueryClientProvider,
+  focusManager,
+} from '@tanstack/react-query'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -635,5 +639,24 @@ describe('useHistoricalSeries', () => {
     })
     expect(repositoryMocks.fetchRawMeasurements).not.toHaveBeenCalled()
     expect(repositoryMocks.fetchSensorSeries).not.toHaveBeenCalled()
+  })
+
+  it('does not reload on its own when the window regains focus: the live series keeps it current (F-10)', async () => {
+    const to = new Date('2026-09-15T12:00:00Z')
+    const from = new Date(to.getTime() - HOUR_MS)
+    const { result } = renderHook(
+      () => useHistoricalSeries(SENSOR_ID, from, to),
+      { wrapper: createWrapper() },
+    )
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    act(() => {
+      focusManager.setFocused(false)
+      focusManager.setFocused(true)
+    })
+    await act(() => Promise.resolve())
+    focusManager.setFocused(undefined)
+
+    expect(repositoryMocks.fetchRawMeasurements).toHaveBeenCalledOnce()
   })
 })

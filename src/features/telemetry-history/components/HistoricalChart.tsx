@@ -157,7 +157,7 @@ export function HistoricalTooltip({
 }
 
 export interface HistoricalChartProps {
-  points: HistoricalPoint[]
+  points: readonly HistoricalPoint[]
   isLoading: boolean
   unit?: string
 }

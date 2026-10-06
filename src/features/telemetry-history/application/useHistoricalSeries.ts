@@ -142,6 +142,8 @@ interface HistoricalSeriesResult {
   error: Error | null
   queryDurationMs: number | null
   aggregationStale: boolean
+  /** Reloads the series, e.g. when the live layer cannot backfill a gap. */
+  refetch: () => void
 }
 
 /**
@@ -167,6 +169,12 @@ export function useHistoricalSeries(
 
   const query = useQuery({
     queryKey: historicalSeriesQueryKey(sensorId, fromIso, toIso, granularity),
+    // The live series keeps a loaded range current (F-10); a background
+    // reload would bring back the range as first loaded and drop the live
+    // readings on top of it, so reloads only happen on request.
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     queryFn: async () => {
       const t0 = performance.now()
       const series = await fetchGranularSeries(
@@ -193,5 +201,6 @@ export function useHistoricalSeries(
     error: query.error,
     queryDurationMs: query.data?.queryDurationMs ?? null,
     aggregationStale: query.data?.aggregationStale ?? false,
+    refetch: () => void query.refetch(),
   }
 }
