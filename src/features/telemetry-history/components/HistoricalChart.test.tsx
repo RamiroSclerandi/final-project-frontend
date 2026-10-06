@@ -16,6 +16,15 @@ const basePoints: HistoricalPoint[] = [
   { t: '2026-09-15T11:30:00Z', value: 19, quality: 'ok', tsSource: 'server' },
 ]
 
+/** X coordinates of the line's vertices, in drawing order. */
+function linePathXs(container: HTMLElement): number[] {
+  const d =
+    container.querySelector('.recharts-line-curve')?.getAttribute('d') ?? ''
+  return Array.from(d.matchAll(/[ML]\s*(-?[\d.]+)/g), (match) =>
+    Number(match[1]),
+  )
+}
+
 describe('HistoricalChart', () => {
   it('shows a loading message', () => {
     renderWithProviders(<HistoricalChart points={[]} isLoading />)
@@ -80,6 +89,42 @@ describe('HistoricalChart', () => {
     ).map((el) => el.textContent)
     expect(yAxisTicks.length).toBeGreaterThan(0)
     expect(yAxisTicks).not.toContain('0')
+  })
+
+  it('places points by time, so a data gap keeps its real width', () => {
+    const points: HistoricalPoint[] = [
+      { t: '2026-09-15T09:00:00Z', value: 20, quality: 'ok' },
+      { t: '2026-09-15T09:10:00Z', value: 21, quality: 'ok' },
+      { t: '2026-09-15T10:30:00Z', value: 22, quality: 'ok' },
+    ]
+    const { container } = renderWithProviders(
+      <HistoricalChart points={points} isLoading={false} />,
+    )
+    const xs = linePathXs(container)
+    expect(xs).toHaveLength(3)
+    // 10 of 90 minutes: a category axis would put the middle point halfway.
+    const [x0 = NaN, x1 = NaN, x2 = NaN] = xs
+    expect((x1 - x0) / (x2 - x0)).toBeCloseTo(10 / 90, 2)
+  })
+
+  it('spans the requested window even where it holds no data', () => {
+    const points: HistoricalPoint[] = [
+      { t: '2026-09-15T10:00:00Z', value: 20, quality: 'ok' },
+      { t: '2026-09-15T11:00:00Z', value: 21, quality: 'ok' },
+    ]
+    const domain: [number, number] = [
+      Date.parse('2026-09-15T09:00:00Z'),
+      Date.parse('2026-09-15T11:00:00Z'),
+    ]
+    const { container } = renderWithProviders(
+      <HistoricalChart points={points} isLoading={false} domain={domain} />,
+    )
+    const [first = NaN, last = NaN] = linePathXs(container)
+    const axisLine = container.querySelector('.recharts-xAxis line')
+    const axisStart = Number(axisLine?.getAttribute('x1'))
+    const axisEnd = Number(axisLine?.getAttribute('x2'))
+    expect((first - axisStart) / (axisEnd - axisStart)).toBeCloseTo(0.5, 2)
+    expect(last).toBeCloseTo(axisEnd, 0)
   })
 
   it('renders a 5,000-point raw series without throwing (REQ-HS-4)', () => {

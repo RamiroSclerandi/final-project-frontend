@@ -129,6 +129,7 @@ export function SensorContainer({ deviceId, sensorId }: SensorContainerProps) {
         points={points}
         isLoading={isLoading}
         unit={reading?.unit ?? ''}
+        domain={[shownRange.from.getTime(), shownRange.to.getTime()]}
       />
     </section>
   )

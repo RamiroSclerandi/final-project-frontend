@@ -34,6 +34,7 @@ type TranslateFn = ReturnType<typeof useTranslation>['t']
 
 interface ChartDatum {
   t: string
+  ts: number
   value: number
   range?: [number, number]
   sampleCount?: number
@@ -61,6 +62,7 @@ function toChartData(points: HistoricalPoint[], t: TranslateFn): ChartDatum[] {
     const reasons = markedReasons(point)
     return {
       t: point.t,
+      ts: Date.parse(point.t),
       value: point.value,
       range:
         point.min !== undefined && point.max !== undefined
@@ -160,6 +162,8 @@ export interface HistoricalChartProps {
   points: readonly HistoricalPoint[]
   isLoading: boolean
   unit?: string
+  /** Epoch-ms window the X axis spans; defaults to the data's own extent. */
+  domain?: readonly [number, number]
 }
 
 /**
@@ -176,10 +180,12 @@ export function HistoricalChart({
   points,
   isLoading,
   unit = '',
+  domain,
 }: HistoricalChartProps) {
   const { t, locale, formatNumber } = useTranslation()
-  const spanMs =
-    points.length > 1
+  const spanMs = domain
+    ? domain[1] - domain[0]
+    : points.length > 1
       ? Date.parse(points.at(-1)?.t ?? '') - Date.parse(points[0]?.t ?? '')
       : 0
   const label = unitLabel(unit)
@@ -203,9 +209,16 @@ export function HistoricalChart({
         initialDimension={{ width: 800, height: CHART_HEIGHT }}
       >
         <ComposedChart data={chartData}>
+          {/* A time scale keeps gaps at their real width; a category axis collapses them. */}
           <XAxis
-            dataKey="t"
-            tickFormatter={(iso: string) => formatAxisTime(locale, iso, spanMs)}
+            dataKey="ts"
+            type="number"
+            scale="time"
+            domain={domain ? [...domain] : ['dataMin', 'dataMax']}
+            allowDataOverflow
+            tickFormatter={(ms: number) =>
+              formatAxisTime(locale, new Date(ms).toISOString(), spanMs)
+            }
             minTickGap={32}
           />
           <YAxis
