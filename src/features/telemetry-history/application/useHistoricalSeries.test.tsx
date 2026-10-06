@@ -11,6 +11,7 @@ const repositoryMocks = vi.hoisted(() => ({
   fetchHourlyAggregate: vi.fn(),
   fetchDailyAggregate: vi.fn(),
   fetchLatestMeasurement: vi.fn(),
+  fetchSensorSeries: vi.fn(),
 }))
 
 vi.mock('../infrastructure/historyRepository', () => repositoryMocks)
@@ -35,6 +36,7 @@ beforeEach(() => {
   repositoryMocks.fetchHourlyAggregate.mockReset().mockResolvedValue([])
   repositoryMocks.fetchDailyAggregate.mockReset().mockResolvedValue([])
   repositoryMocks.fetchLatestMeasurement.mockReset().mockResolvedValue(null)
+  repositoryMocks.fetchSensorSeries.mockReset().mockResolvedValue([])
 })
 
 describe('useHistoricalSeries', () => {
@@ -74,7 +76,7 @@ describe('useHistoricalSeries', () => {
       { ...bucket, t: '2026-09-15T12:00:00Z' },
     ])
     const to = new Date('2026-09-15T12:00:00Z')
-    const from = new Date(to.getTime() - 20 * HOUR_MS)
+    const from = new Date(to.getTime() - HOUR_MS)
 
     const { result } = renderHook(
       () => useHistoricalSeries(SENSOR_ID, from, to),
@@ -381,24 +383,10 @@ describe('useHistoricalSeries', () => {
     expect(result.current.aggregationStale).toBe(false)
   })
 
-  it('buckets raw rows by minute for a 24-hour range, without touching the hourly matview', async () => {
+  it('reads per-minute buckets from the series function for a 24-hour range', async () => {
     const to = new Date('2026-09-15T12:00:00Z')
     const from = new Date(to.getTime() - DAY_MS)
-    repositoryMocks.fetchRawMeasurements.mockResolvedValue([
-      { t: '2026-09-15T11:58:10Z', value: 20, quality: 'ok' },
-      { t: '2026-09-15T11:58:40Z', value: 22, quality: 'ok' },
-      { t: '2026-09-15T11:59:10Z', value: 25, quality: 'ok' },
-    ])
-
-    const { result } = renderHook(
-      () => useHistoricalSeries(SENSOR_ID, from, to),
-      { wrapper: createWrapper() },
-    )
-
-    await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(result.current.granularity).toBe('minute')
-    expect(repositoryMocks.fetchHourlyAggregate).not.toHaveBeenCalled()
-    expect(result.current.points).toEqual([
+    const buckets = [
       {
         t: '2026-09-15T11:58:00.000Z',
         value: 21,
@@ -413,15 +401,39 @@ describe('useHistoricalSeries', () => {
         max: 25,
         sampleCount: 1,
       },
-    ])
+    ]
+    repositoryMocks.fetchSensorSeries.mockResolvedValue(buckets)
+
+    const { result } = renderHook(
+      () => useHistoricalSeries(SENSOR_ID, from, to),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.granularity).toBe('minute')
+    expect(result.current.points).toEqual(buckets)
+    expect(repositoryMocks.fetchSensorSeries).toHaveBeenCalledWith(
+      SENSOR_ID,
+      from.toISOString(),
+      to.toISOString(),
+      'minute',
+    )
+    expect(repositoryMocks.fetchRawMeasurements).not.toHaveBeenCalled()
+    expect(repositoryMocks.fetchHourlyAggregate).not.toHaveBeenCalled()
   })
 
   it('shows data for a 24-hour range while the hourly matview is still empty', async () => {
     const to = new Date('2026-09-15T12:00:00Z')
     const from = new Date(to.getTime() - DAY_MS)
     repositoryMocks.fetchHourlyAggregate.mockResolvedValue([])
-    repositoryMocks.fetchRawMeasurements.mockResolvedValue([
-      { t: '2026-09-15T11:59:10Z', value: 25, quality: 'ok' },
+    repositoryMocks.fetchSensorSeries.mockResolvedValue([
+      {
+        t: '2026-09-15T11:59:00.000Z',
+        value: 25,
+        min: 25,
+        max: 25,
+        sampleCount: 1,
+      },
     ])
 
     const { result } = renderHook(
@@ -433,38 +445,12 @@ describe('useHistoricalSeries', () => {
     expect(result.current.points).toHaveLength(1)
   })
 
-  it('falls back to hourly data when an auto minute range exceeds the raw row limit', async () => {
-    const bucket = { t: '2026-09-15T11:00:00.000Z', value: 21 }
-    repositoryMocks.fetchRawMeasurements.mockRejectedValueOnce(
-      new RawRowLimitError(86_400, MAX_RAW_ROWS),
-    )
-    repositoryMocks.fetchHourlyAggregate.mockResolvedValue([
-      { t: '2026-09-15T10:00:00.000Z', value: 20 },
-      bucket,
-    ])
-    const to = new Date('2026-09-15T12:00:00Z')
-    const from = new Date(to.getTime() - DAY_MS)
-
-    const { result } = renderHook(
-      () => useHistoricalSeries(SENSOR_ID, from, to),
-      { wrapper: createWrapper() },
-    )
-
-    await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(result.current.error).toBeNull()
-    expect(result.current.granularity).toBe('hourly')
-    expect(result.current.points[0]).toEqual({
-      t: '2026-09-15T10:00:00.000Z',
-      value: 20,
-    })
-  })
-
-  it('surfaces the row limit when minute data was requested explicitly', async () => {
-    repositoryMocks.fetchRawMeasurements.mockRejectedValue(
-      new RawRowLimitError(86_400, MAX_RAW_ROWS),
+  it('surfaces a series request the server rejects', async () => {
+    repositoryMocks.fetchSensorSeries.mockRejectedValue(
+      new Error("get_sensor_series: range too wide for p_bucket 'minute'"),
     )
     const to = new Date('2026-09-15T12:00:00Z')
-    const from = new Date(to.getTime() - DAY_MS)
+    const from = new Date(to.getTime() - 30 * DAY_MS)
 
     const { result } = renderHook(
       () => useHistoricalSeries(SENSOR_ID, from, to, 'minute'),
@@ -472,8 +458,9 @@ describe('useHistoricalSeries', () => {
     )
 
     await waitFor(() =>
-      expect(result.current.error).toBeInstanceOf(RawRowLimitError),
+      expect(result.current.error?.message).toMatch(/range too wide/),
     )
+    expect(result.current.points).toEqual([])
   })
 
   it('fills an hourly range from raw rows when the matview has no bucket yet', async () => {

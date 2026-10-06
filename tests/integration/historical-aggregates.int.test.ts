@@ -355,4 +355,48 @@ describe('historical-series: matview access and aggregate latency (REQ-HS-2, REQ
     const merged = pages.flatMap((page) => page.data ?? [])
     expect(merged).toHaveLength(RAW_ROW_COUNT)
   })
+
+  it('pages the per-minute series function past the PostgREST row cap (F-13)', async () => {
+    const paginationStart = new Date(
+      rangeEnd.getTime() - RAW_ROW_COUNT * MINUTE_MS,
+    )
+    const seriesPage = (from: number, to: number) =>
+      authenticatedClient
+        .rpc('get_sensor_series', {
+          p_sensor_id: createdPaginationSensorId as string,
+          p_from: paginationStart.toISOString(),
+          p_to: rangeEnd.toISOString(),
+          p_bucket: 'minute',
+        })
+        .range(from, to)
+
+    // Same paging as historyRepository.ts's fetchSensorSeries.
+    const pages = await Promise.all([
+      seriesPage(0, RAW_PAGE_SIZE - 1),
+      seriesPage(RAW_PAGE_SIZE, 2 * RAW_PAGE_SIZE - 1),
+    ])
+    for (const page of pages) {
+      expect(page.error).toBeNull()
+    }
+    const buckets = pages
+      .flatMap((page) => page.data ?? [])
+      .map(toAggregatePoint)
+
+    // One seeded row per minute in a half-open range: one bucket each.
+    expect(buckets).toHaveLength(RAW_ROW_COUNT)
+    expect(buckets.every((bucket) => bucket.sampleCount === 1)).toBe(true)
+    expect(Date.parse(buckets[0]?.t ?? '')).toBe(paginationStart.getTime())
+  })
+
+  it('refuses the series function to anonymous callers (F-13)', async () => {
+    const { data, error } = await anonClient.rpc('get_sensor_series', {
+      p_sensor_id: createdPaginationSensorId as string,
+      p_from: rangeStart.toISOString(),
+      p_to: rangeEnd.toISOString(),
+      p_bucket: 'hour',
+    })
+
+    expect(data).toBeNull()
+    expect(error).not.toBeNull()
+  })
 })

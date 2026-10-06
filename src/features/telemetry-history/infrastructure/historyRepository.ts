@@ -151,6 +151,34 @@ export function fetchDailyAggregate(
   return fetchAggregate('mv_measurements_daily', sensorId, fromIso, toIso)
 }
 
+/** Bucket widths `get_sensor_series` accepts (its server-side allowlist). */
+export type SeriesBucket = 'minute' | 'hour' | 'day'
+
+/**
+ * On-demand buckets of one sensor's `quality = 'ok'` readings in the
+ * half-open range [from, to) (F-13). Paged like every list query: a 24-hour
+ * minute series is 1440 rows, past PostgREST's cap. The server rejects an
+ * unknown bucket, an inverted range or one too wide for the bucket.
+ */
+export async function fetchSensorSeries(
+  sensorId: string,
+  fromIso: string,
+  toIso: string,
+  bucket: SeriesBucket,
+): Promise<HistoricalPoint[]> {
+  const rows = await fetchAllPages<AggregateBucketRow>((from, to) =>
+    supabase
+      .rpc('get_sensor_series', {
+        p_sensor_id: sensorId,
+        p_from: fromIso,
+        p_to: toIso,
+        p_bucket: bucket,
+      })
+      .range(from, to),
+  )
+  return rows.map(toAggregatePoint)
+}
+
 /**
  * The single newest raw reading for a sensor -- the daily tail-merge marker
  * (D-3), instead of a full day of raw rows for one point.

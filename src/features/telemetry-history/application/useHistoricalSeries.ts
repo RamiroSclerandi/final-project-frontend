@@ -7,11 +7,7 @@ import type {
 } from '../domain/chooseGranularity'
 import { isAggregationStale } from '../domain/degradedState'
 import type { HistoricalPoint } from '../domain/historicalPoint'
-import {
-  bucketRawByMinute,
-  mergeDailyTail,
-  mergeHourlyTail,
-} from '../domain/mergeTail'
+import { mergeDailyTail, mergeHourlyTail } from '../domain/mergeTail'
 import { MAX_RAW_ROWS, RawRowLimitError } from '../domain/rawRowLimit'
 import { historicalSeriesQueryKey } from '../domain/queryKeys'
 import {
@@ -19,6 +15,7 @@ import {
   fetchHourlyAggregate,
   fetchLatestMeasurement,
   fetchRawMeasurements,
+  fetchSensorSeries,
 } from '../infrastructure/historyRepository'
 
 interface GranularSeries {
@@ -94,12 +91,17 @@ async function fetchGranularSeries(
   fromIso: string,
   toIso: string,
 ): Promise<GranularSeries> {
-  if (granularity === 'raw' || granularity === 'minute') {
-    const rawPoints = await fetchRawMeasurements(sensorId, fromIso, toIso, {
+  if (granularity === 'raw') {
+    const points = await fetchRawMeasurements(sensorId, fromIso, toIso, {
       maxRows: MAX_RAW_ROWS,
     })
-    const points =
-      granularity === 'raw' ? rawPoints : bucketRawByMinute(rawPoints)
+    return { granularity, points, aggregationStale: false }
+  }
+
+  if (granularity === 'minute') {
+    // Grouped server-side straight from measurements: no matview lag and no
+    // raw row limit, whatever the sampling interval (F-13).
+    const points = await fetchSensorSeries(sensorId, fromIso, toIso, 'minute')
     return { granularity, points, aggregationStale: false }
   }
 
@@ -163,8 +165,8 @@ export function useHistoricalSeries(
         fromIso,
         toIso,
       ).catch((error: unknown) => {
-        // Auto picked raw or minute from the range alone; a fast sampling
-        // interval can still exceed the row limit, so degrade to hourly.
+        // Auto picked raw from the range alone; a fast sampling interval can
+        // still exceed the row limit, so degrade to hourly instead of failing.
         if (granularityChoice === 'auto' && error instanceof RawRowLimitError) {
           return fetchGranularSeries('hourly', sensorId, fromIso, toIso)
         }

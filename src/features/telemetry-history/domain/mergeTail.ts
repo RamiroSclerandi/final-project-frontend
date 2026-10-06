@@ -1,7 +1,6 @@
 import type { HistoricalPoint } from './historicalPoint'
 
-const MINUTE_MS = 60 * 1000
-const HOUR_MS = 60 * MINUTE_MS
+const HOUR_MS = 60 * 60 * 1000
 
 function bucketStart(t: string, bucketMs: number): number {
   return Math.floor(new Date(t).getTime() / bucketMs) * bucketMs
@@ -36,17 +35,6 @@ function bucketRawPoints(
       max: Math.max(...values),
       sampleCount: values.length,
     }))
-}
-
-/**
- * Per-minute buckets recomputed from raw rows, the minute source until an
- * on-demand server aggregate exists (F-13). UTC and local minutes coincide,
- * so the epoch-aligned bucket matches `date_trunc('minute', ...)`.
- */
-export function bucketRawByMinute(
-  rawPoints: HistoricalPoint[],
-): HistoricalPoint[] {
-  return bucketRawPoints(rawPoints, MINUTE_MS)
 }
 
 /** Hourly buckets recomputed from raw rows; every one is flagged `partial` (D-3). */
