@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { HistoricalPoint } from '../domain/historicalPoint'
 import type { LiveMeasurementRow, SeriesWindow } from '../domain/liveSeries'
 import { MAX_RAW_ROWS, RawRowLimitError } from '../domain/rawRowLimit'
-import { useLiveSeries } from './useLiveSeries'
+import { LIVE_QUEUE_CAP, useLiveSeries } from './useLiveSeries'
 
 interface FakeSubscription {
   sensorId: string
@@ -270,4 +270,86 @@ describe('useLiveSeries', () => {
       topic: 'fake-1',
     })
   })
+
+  it('asks for a fresh load when the reconnect backfill fails for any other reason', async () => {
+    repository.fetchRawMeasurements.mockRejectedValue(new Error('network down'))
+    const onBaseStale = vi.fn()
+    renderHook(() =>
+      useLiveSeries({
+        sensorId: SENSOR_ID,
+        granularity: 'raw',
+        basePoints: rawBase,
+        isBaseReady: true,
+        window: LAST_HOUR,
+        onBaseStale,
+      }),
+    )
+
+    act(() => latestSubscription().onStatusChange('live'))
+    act(() => latestSubscription().onStatusChange('down'))
+    act(() => latestSubscription().onStatusChange('live'))
+
+    await waitFor(() => expect(onBaseStale).toHaveBeenCalledOnce())
+  })
+
+  it('backfills a drop that happened while the newest bucket was still being reconciled', async () => {
+    let resolveSeed: (points: HistoricalPoint[]) => void = () => {}
+    repository.fetchRawMeasurements
+      .mockReturnValueOnce(
+        new Promise<HistoricalPoint[]>((resolve) => {
+          resolveSeed = resolve
+        }),
+      )
+      .mockResolvedValue([])
+    renderHook(() =>
+      useLiveSeries({
+        sensorId: SENSOR_ID,
+        granularity: 'minute',
+        basePoints: minuteBase,
+        isBaseReady: true,
+        window: SIX_HOURS,
+        onBaseStale: vi.fn(),
+      }),
+    )
+
+    act(() => latestSubscription().onStatusChange('live'))
+    act(() => latestSubscription().onStatusChange('down'))
+    act(() => latestSubscription().onStatusChange('live'))
+    await act(async () => {
+      resolveSeed([])
+      await Promise.resolve()
+    })
+
+    await waitFor(() =>
+      expect(repository.fetchRawMeasurements).toHaveBeenCalledTimes(2),
+    )
+  })
+
+  it(`keeps only the newest ${LIVE_QUEUE_CAP} readings queued while the series cannot load`, () => {
+    const { result, rerender } = renderHook(
+      ({ isBaseReady }: { isBaseReady: boolean }) =>
+        useLiveSeries({
+          sensorId: SENSOR_ID,
+          granularity: 'raw',
+          basePoints: rawBase,
+          isBaseReady,
+          window: LAST_HOUR,
+          onBaseStale: vi.fn(),
+        }),
+      { initialProps: { isBaseReady: false } },
+    )
+    const start = NOW - HOUR_MS / 2
+
+    act(() => {
+      for (let id = 10; id < 10 + LIVE_QUEUE_CAP + 1; id += 1) {
+        latestSubscription().onInsert(
+          row(id, new Date(start + id).toISOString(), id),
+        )
+      }
+    })
+    rerender({ isBaseReady: true })
+
+    expect(result.current.points).toHaveLength(1 + LIVE_QUEUE_CAP)
+    expect(result.current.points.some((point) => point.id === 10)).toBe(false)
+  }, 30_000)
 })

@@ -14,12 +14,15 @@ import {
   seedLiveSeries,
   toLiveReading,
 } from '../domain/liveSeries'
-import { MAX_RAW_ROWS, RawRowLimitError } from '../domain/rawRowLimit'
+import { MAX_RAW_ROWS } from '../domain/rawRowLimit'
 import { fetchRawMeasurements } from '../infrastructure/historyRepository'
 import {
   subscribeToSensorInserts,
   unsubscribeFromSensorInserts,
 } from '../infrastructure/liveMeasurementsClient'
+
+/** Readings held while a series loads or reconciles; the oldest go first. */
+export const LIVE_QUEUE_CAP = 10_000
 
 interface LiveSeriesOptions {
   sensorId: string
@@ -67,6 +70,8 @@ export function useLiveSeries({
   const overlayRef = useRef<SeededSeries | null>(null)
   const queueRef = useRef<LiveReading[]>([])
   const isSyncingRef = useRef(true)
+  // A drop that ended while a reconcile was in flight still needs its gap.
+  const isBackfillPendingRef = useRef(false)
   // Bumped on every load and unmount, so a stale reconcile never lands.
   const generationRef = useRef(0)
 
@@ -83,43 +88,62 @@ export function useLiveSeries({
 
   const replayQueue = useEffectEvent(() => {
     isSyncingRef.current = false
-    if (queueRef.current.length === 0) {
-      return
+    if (queueRef.current.length > 0) {
+      const nowMs = Date.now()
+      let state = currentState()
+      for (const reading of queueRef.current) {
+        state = applyReading(state, reading, granularity, window, nowMs)
+      }
+      queueRef.current = []
+      commit(state)
     }
-    const nowMs = Date.now()
-    let state = currentState()
-    for (const reading of queueRef.current) {
-      state = applyReading(state, reading, granularity, window, nowMs)
-    }
-    queueRef.current = []
-    commit(state)
+  })
+
+  /** Where a backfill starts: the bucket of the last point, or the window. */
+  const gapStartMs = useEffectEvent((): number => {
+    const last = currentState().points.at(-1)
+    return last
+      ? bucketStartMs(Date.parse(last.t), granularity)
+      : windowStartMs(window, Date.now())
   })
 
   const reconcileFrom = useEffectEvent(
-    async (fromMs: number, onTooWide: 'reload' | 'keep') => {
+    async (initialFromMs: number, initialOnFailure: 'reload' | 'keep') => {
       const generation = generationRef.current
-      isSyncingRef.current = true
-      try {
-        const rawPoints = await fetchRawMeasurements(
-          sensorId,
-          new Date(fromMs).toISOString(),
-          new Date().toISOString(),
-          { maxRows: MAX_RAW_ROWS },
-        )
-        if (generation !== generationRef.current) {
+      let fromMs = initialFromMs
+      let onFailure = initialOnFailure
+      for (;;) {
+        isSyncingRef.current = true
+        try {
+          const rawPoints = await fetchRawMeasurements(
+            sensorId,
+            new Date(fromMs).toISOString(),
+            new Date().toISOString(),
+            { maxRows: MAX_RAW_ROWS },
+          )
+          if (generation !== generationRef.current) {
+            return
+          }
+          commit(resyncFrom(currentState(), fromMs, rawPoints, granularity))
+        } catch {
+          if (generation !== generationRef.current) {
+            return
+          }
+          // A failed backfill would leave a silent hole: reload instead. A
+          // failed seed only risks counting a reading twice in the newest
+          // bucket (e.g. a full day of raw rows at 1 s is over the limit).
+          if (onFailure === 'reload') {
+            onBaseStale()
+          }
+        }
+        replayQueue()
+        if (!isBackfillPendingRef.current) {
           return
         }
-        commit(resyncFrom(currentState(), fromMs, rawPoints, granularity))
-      } catch (error) {
-        if (generation !== generationRef.current) {
-          return
-        }
-        if (error instanceof RawRowLimitError && onTooWide === 'reload') {
-          onBaseStale()
-        }
+        isBackfillPendingRef.current = false
+        fromMs = gapStartMs()
+        onFailure = 'reload'
       }
-      // A failed reconcile keeps the series as it is and stays live.
-      replayQueue()
     },
   )
 
@@ -132,6 +156,10 @@ export function useLiveSeries({
     ) {
       // Raw points already carry their ids: replay what queued during the load.
       replayQueue()
+      if (isBackfillPendingRef.current) {
+        isBackfillPendingRef.current = false
+        void reconcileFrom(gapStartMs(), 'reload')
+      }
       return
     }
     // The newest bucket's readings carry no ids; refetch them raw so a live
@@ -156,6 +184,9 @@ export function useLiveSeries({
   const receive = useEffectEvent((reading: LiveReading) => {
     if (isSyncingRef.current) {
       queueRef.current.push(reading)
+      if (queueRef.current.length > LIVE_QUEUE_CAP) {
+        queueRef.current.shift()
+      }
       return
     }
     commit(
@@ -165,14 +196,10 @@ export function useLiveSeries({
 
   const backfill = useEffectEvent(() => {
     if (isSyncingRef.current) {
+      isBackfillPendingRef.current = true
       return
     }
-    const last = currentState().points.at(-1)
-    const nowMs = Date.now()
-    const fromMs = last
-      ? bucketStartMs(Date.parse(last.t), granularity)
-      : windowStartMs(window, nowMs)
-    void reconcileFrom(fromMs, 'reload')
+    void reconcileFrom(gapStartMs(), 'reload')
   })
 
   useEffect(() => {
