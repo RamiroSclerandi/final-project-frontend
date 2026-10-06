@@ -189,5 +189,62 @@
     .table-stack td[data-hidden-stacked] {
       display: none;
     }
+
+    /* Compact card variant: name + status on line 1, location on line 2
+       (the node cell is `display: contents` so its children join the grid),
+       then label-over-value pairs in two columns. */
+    .table-stack--cards tbody {
+      display: grid;
+      gap: calc(var(--spacing) * 3);
+    }
+
+    .table-stack--cards tr {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: center;
+      gap: calc(var(--spacing) * 3) calc(var(--spacing) * 4);
+      padding: calc(var(--spacing) * 4);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+    }
+
+    .table-stack--cards td {
+      display: block;
+      min-width: 0;
+    }
+
+    .table-stack--cards td::before {
+      display: block;
+      margin-bottom: calc(var(--spacing) * 0.5);
+      font-family: var(--font-mono);
+      font-size: var(--text-2xs);
+      font-weight: 400;
+      letter-spacing: var(--tracking-label);
+      text-transform: uppercase;
+    }
+
+    .table-stack--cards td[data-card-title] {
+      display: contents;
+    }
+
+    .table-stack--cards td[data-card-title] > p {
+      grid-column: 1 / -1;
+    }
+
+    .table-stack--cards td[data-card-status] {
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: end;
+      width: fit-content;
+    }
+
+    .table-stack--cards td[data-card-title]::before,
+    .table-stack--cards td[data-card-status]::before {
+      display: none;
+    }
+
+    .table-stack--cards td:empty {
+      display: none;
+    }
   }
 }

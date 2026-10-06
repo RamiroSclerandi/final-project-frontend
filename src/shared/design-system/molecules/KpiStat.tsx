@@ -3,16 +3,19 @@ import type { ReactNode } from 'react'
 export interface KpiStatProps {
   label: string
   value: ReactNode
+  /** Decorative status glyph shown before the number. */
+  indicator?: ReactNode
 }
 
-/** A single labeled metric card (fleet/node counts). Purely presentational. */
-export function KpiStat({ label, value }: KpiStatProps) {
+/** A compact inline stat (fleet/node counts): glyph, mono number, muted label. Purely presentational. */
+export function KpiStat({ label, value, indicator }: KpiStatProps) {
   return (
-    <div className="flex flex-col gap-1 rounded-lg border border-border bg-surface p-4">
-      <span className="text-sm text-text-muted">{label}</span>
-      <span className="text-xl font-semibold tabular-nums text-text">
+    <div className="flex items-center gap-1.5">
+      {indicator}
+      <span className="font-mono text-sm font-medium tabular-nums text-text">
         {value}
       </span>
+      <span className="text-xs text-text-muted">{label}</span>
     </div>
   )
 }
