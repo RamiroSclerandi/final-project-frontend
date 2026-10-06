@@ -22,7 +22,9 @@ describe('LoginForm', () => {
       <LoginForm onSubmit={vi.fn()} isSubmitting={false} errorMessage={null} />,
     )
 
-    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { level: 1, name: /fleet monitor/i }),
+    ).toBeInTheDocument()
   })
 
   it('calls onSubmit with the entered email and password', () => {

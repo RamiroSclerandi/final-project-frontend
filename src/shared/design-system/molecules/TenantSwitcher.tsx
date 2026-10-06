@@ -29,7 +29,8 @@ export function TenantSwitcher({
 }: TenantSwitcherProps) {
   if (tenants.length === 1) {
     return (
-      <span className="min-w-0 truncate font-mono text-xs text-text-muted">
+      // Only the static single-tenant label hides below md; a real switcher stays reachable on mobile.
+      <span className="hidden min-w-0 truncate font-mono text-xs text-text-muted md:inline-block">
         <VisuallyHidden>{label}</VisuallyHidden>
         {current.name}
       </span>

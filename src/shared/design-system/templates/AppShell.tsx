@@ -32,10 +32,10 @@ export function AppShell({
       >
         {skipLinkLabel}
       </a>
-      <header className="flex min-h-14 items-center justify-between gap-2 border-b border-border bg-surface px-4 md:min-h-12 md:gap-4">
+      <header className="flex min-h-14 flex-wrap items-center justify-between gap-2 border-b border-border bg-surface px-4 md:min-h-12 md:gap-4">
         <div className="flex min-w-0 items-center gap-3">
           {brand}
-          <div className="hidden min-w-0 md:block">{tenantSwitcher}</div>
+          {tenantSwitcher}
         </div>
         <div className="flex shrink-0 items-center gap-1">{topBarActions}</div>
       </header>
