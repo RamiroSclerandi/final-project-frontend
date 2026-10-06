@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import { StrictMode, type ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { App } from './App'
@@ -13,6 +13,7 @@ const realtimeFake = vi.hoisted(() => {
   interface FakeChannel {
     handlers: InsertHandler[]
     isLeaving: boolean
+    statusCallback?: (status: string) => void
     on: (
       type: string,
       filter: { table?: string },
@@ -30,6 +31,7 @@ const realtimeFake = vi.hoisted(() => {
         return channel
       },
       subscribe: (callback) => {
+        channel.statusCallback = callback
         if (!channel.isLeaving) callback?.('SUBSCRIBED')
         return channel
       },
@@ -47,6 +49,9 @@ const realtimeFake = vi.hoisted(() => {
       },
       removeChannel: (channel: FakeChannel) => {
         channel.isLeaving = true
+        // The leave completes later and reports CLOSED to the subscribe
+        // callback, after any channel subscribed in the meantime (H-4).
+        queueMicrotask(() => channel.statusCallback?.('CLOSED'))
         return new Promise(() => {})
       },
     },
@@ -148,5 +153,26 @@ describe('Realtime across route changes', () => {
     })
 
     expect(await screen.findByText(/23\.4/)).toBeInTheDocument()
+  })
+
+  it('shows the header as live after a clean load and after Fleet -> Node -> Fleet (H-4)', async () => {
+    window.history.pushState({}, '', '/')
+    render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    )
+    await screen.findByText(/21\.5/)
+    await act(() => Promise.resolve())
+    expect(screen.getByText('Live')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('link', { name: DEVICE.name }))
+    await screen.findByRole('heading', { level: 1, name: DEVICE.name })
+    const nav = screen.getByRole('navigation')
+    fireEvent.click(within(nav).getByRole('link', { name: 'Fleet' }))
+    await screen.findByRole('link', { name: DEVICE.name })
+    await act(() => Promise.resolve())
+
+    expect(screen.getByText('Live')).toBeInTheDocument()
   })
 })

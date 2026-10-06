@@ -239,4 +239,32 @@ describe('useRealtimeReadings', () => {
 
     expect(invalidateSpy).toHaveBeenCalledTimes(1)
   })
+
+  it("keeps the new channel's status when the removed channel reports CLOSED afterwards (H-4)", () => {
+    const statusCallbacks: ((status: string) => void)[] = []
+    realtimeClientMocks.subscribeToMeasurementInserts.mockImplementation(
+      ({
+        onStatusChange: statusChange,
+      }: {
+        onStatusChange: typeof onStatusChange
+      }) => {
+        statusCallbacks.push(statusChange)
+        return { name: `fake-channel-${statusCallbacks.length}` }
+      },
+    )
+    const queryClient = new QueryClient()
+    const { result } = renderHook(() => useRealtimeReadings(), {
+      wrapper: createWrapper(queryClient),
+      reactStrictMode: true,
+    })
+    const [removedChannelStatus, currentChannelStatus] = statusCallbacks
+    if (!removedChannelStatus || !currentChannelStatus) {
+      throw new Error('StrictMode should have subscribed twice')
+    }
+
+    act(() => currentChannelStatus('live'))
+    act(() => removedChannelStatus('down'))
+
+    expect(result.current.status).toBe('live')
+  })
 })
