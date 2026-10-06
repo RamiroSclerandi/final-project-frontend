@@ -35,8 +35,15 @@ export function useRealtimeReadings({
   const pendingUnknownRef = useRef<ReadonlySet<string>>(new Set())
 
   useEffect(() => {
+    // H-4: a removed channel still reports CLOSED once its async leave ends,
+    // possibly after this component's next channel is live (StrictMode
+    // remount keeps state). Only the channel of the current run may speak.
+    let isCurrentChannel = true
     const channel = subscribeToMeasurementInserts({
       onInsert: (row) => {
+        if (!isCurrentChannel) {
+          return
+        }
         const update = routeMeasurement(row)
         const known = new Set(
           Object.keys(
@@ -75,6 +82,9 @@ export function useRealtimeReadings({
         )
       },
       onStatusChange: (nextStatus) => {
+        if (!isCurrentChannel) {
+          return
+        }
         // Re-SUBSCRIBED after a real disconnect: repair only current values
         // (D-2 reconnect policy).
         if (nextStatus === 'live' && everLiveRef.current) {
@@ -89,7 +99,10 @@ export function useRealtimeReadings({
       },
     })
 
-    return () => unsubscribeFromMeasurements(channel)
+    return () => {
+      isCurrentChannel = false
+      unsubscribeFromMeasurements(channel)
+    }
   }, [queryClient])
 
   return { status }
