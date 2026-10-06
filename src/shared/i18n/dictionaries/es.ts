@@ -19,6 +19,8 @@ export const es: Dictionary = {
       label: 'Idioma',
       es: 'Español',
       en: 'English',
+      esShort: 'ES',
+      enShort: 'EN',
     },
     theme: {
       toggle: 'Cambiar tema',

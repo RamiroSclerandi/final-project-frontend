@@ -30,6 +30,8 @@ const tokenPairs: [string, string, number][] = [
   ['text-muted', 'sunken', 4.5],
   ['text-muted', 'surface-raised', 4.5],
   ['border-strong', 'surface', 3],
+  ['border-strong', 'sunken', 3],
+  ['accent', 'surface-raised', 4.5],
   ['status-online', 'status-online-soft', 4.5],
   ['danger', 'danger-soft', 4.5],
   ['warning', 'warning-soft', 4.5],

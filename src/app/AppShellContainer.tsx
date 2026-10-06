@@ -55,12 +55,12 @@ export function AppShellContainer() {
       brand={
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-label text-text"
+          className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-label text-text max-md:min-h-11 max-md:min-w-11 max-md:justify-center"
         >
           <span className="text-accent">
             <TelemetryIcon />
           </span>
-          {t('shell.brand')}
+          <span className="max-md:sr-only">{t('shell.brand')}</span>
         </Link>
       }
       tenantSwitcher={

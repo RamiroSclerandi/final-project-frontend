@@ -120,7 +120,7 @@ function UnassignedDeviceRowItem({
   return (
     <tr
       role="row"
-      className="bg-surface hover:bg-surface-raised md:h-10 md:border-b md:border-border md:bg-transparent md:last:border-b-0 md:hover:bg-surface-raised"
+      className="bg-surface hover:bg-surface-raised md:h-10 md:border-b md:border-border md:bg-transparent md:last:border-b-0"
     >
       <td
         role="cell"

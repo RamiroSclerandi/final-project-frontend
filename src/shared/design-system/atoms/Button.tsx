@@ -13,10 +13,12 @@ export interface ButtonProps {
 // Explicit variant classes (composition-patterns: variants over boolean
 // modes) instead of an `isPrimary`/`isDanger` boolean pair.
 const BUTTON_VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary: 'bg-accent text-bg hover:opacity-90',
+  primary:
+    'bg-accent text-bg hover:opacity-90 disabled:bg-sunken disabled:text-text-faint disabled:ring-1 disabled:ring-border disabled:ring-inset disabled:hover:opacity-100',
   secondary:
     'border border-border-strong bg-sunken text-text hover:bg-surface-raised',
-  danger: 'bg-danger text-bg hover:opacity-90',
+  danger:
+    'bg-danger text-bg hover:opacity-90 disabled:bg-sunken disabled:text-text-faint disabled:ring-1 disabled:ring-border disabled:ring-inset disabled:hover:opacity-100',
 }
 
 /** A 44px touch-target button (36px from `md:`) with an explicit visual variant. */

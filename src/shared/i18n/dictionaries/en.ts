@@ -21,6 +21,8 @@ export const en = {
       label: 'Language',
       es: 'Español',
       en: 'English',
+      esShort: 'ES',
+      enShort: 'EN',
     },
     theme: {
       toggle: 'Toggle theme',
