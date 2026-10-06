@@ -65,13 +65,27 @@ export function SensorContainer({ deviceId, sensorId }: SensorContainerProps) {
         : { kind: 'relative', rangeMs: range.rangeMs },
     [range],
   )
+  // A preset is re-anchored to now, so the reload covers the gap the live
+  // series could not backfill; a fixed range reloads in place.
+  function reloadBase() {
+    if (range.rangeMs === undefined) {
+      series.refetch()
+      return
+    }
+    const to = new Date()
+    setRange({
+      from: new Date(to.getTime() - range.rangeMs),
+      to,
+      rangeMs: range.rangeMs,
+    })
+  }
   const { points } = useLiveSeries({
     sensorId,
     granularity: series.granularity,
     basePoints: series.points,
     isBaseReady: !series.isLoading && series.error === null,
     window,
-    onBaseStale: series.refetch,
+    onBaseStale: reloadBase,
   })
   const { exportRange, isExporting, error: exportError } = useCsvExport()
   const newestPointPartial = points.at(-1)?.partial ?? false

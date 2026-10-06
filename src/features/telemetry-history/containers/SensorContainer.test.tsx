@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react'
+import { act, fireEvent, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { renderWithProviders } from '../../../shared/test/renderWithProviders'
@@ -289,5 +289,47 @@ describe('SensorContainer', () => {
     )
 
     expect(screen.getByRole('status')).toHaveTextContent(/provisional/i)
+  })
+
+  it('re-anchors a preset window to now when the live series asks for a fresh load (F-10)', () => {
+    renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
+    const later = new Date(NOW.getTime() + 10 * 60 * 1000)
+    vi.setSystemTime(later)
+
+    act(() => {
+      const options = useLiveSeriesMock.mock.lastCall?.[0] as {
+        onBaseStale: () => void
+      }
+      options.onBaseStale()
+    })
+
+    expect(useHistoricalSeriesMock).toHaveBeenLastCalledWith(
+      SENSOR_ID,
+      new Date(later.getTime() - 60 * 60 * 1000),
+      later,
+      'auto',
+    )
+  })
+
+  it('reloads a fixed range in place when the live series asks for a fresh load (F-10)', () => {
+    const refetch = vi.fn()
+    useHistoricalSeriesMock.mockReturnValue({ ...baseResult(), refetch })
+    renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
+    fireEvent.change(screen.getByLabelText(/from/i), {
+      target: { value: '2026-09-10T00:00' },
+    })
+
+    act(() => {
+      const options = useLiveSeriesMock.mock.lastCall?.[0] as {
+        onBaseStale: () => void
+      }
+      options.onBaseStale()
+    })
+
+    expect(refetch).toHaveBeenCalledOnce()
   })
 })
