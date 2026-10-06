@@ -194,6 +194,10 @@ export const es: Dictionary = {
     empty: 'No hay datos para este rango.',
     markedPoint: 'punto de datos marcado ({reasons})',
     meanOf: 'media de {count} muestras',
+    legend: {
+      value: 'Valor',
+      range: 'Rango mín/máx',
+    },
     marker: {
       outOfRange: 'fuera de rango',
       suspect: 'sospechoso',
@@ -207,6 +211,7 @@ export const es: Dictionary = {
     },
     header: {
       unknownLabel: 'Sensor',
+      currentValue: 'Valor actual',
     },
     range: {
       label: 'Rango',

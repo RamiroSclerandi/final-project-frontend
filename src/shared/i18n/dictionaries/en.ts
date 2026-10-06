@@ -196,6 +196,10 @@ export const en = {
     empty: 'No data for this range.',
     markedPoint: 'marked data point ({reasons})',
     meanOf: 'mean of {count} samples',
+    legend: {
+      value: 'Value',
+      range: 'Min/max range',
+    },
     marker: {
       outOfRange: 'out of range',
       suspect: 'suspect',
@@ -209,6 +213,7 @@ export const en = {
     },
     header: {
       unknownLabel: 'Sensor',
+      currentValue: 'Current value',
     },
     range: {
       label: 'Range',

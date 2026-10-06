@@ -16,13 +16,14 @@ const basePoints: HistoricalPoint[] = [
   { t: '2026-09-15T11:30:00Z', value: 19, quality: 'ok', tsSource: 'server' },
 ]
 
-/** X coordinates of the line's vertices, in drawing order. */
+/** X coordinates of the line's vertices (each segment's endpoint), in drawing order. */
 function linePathXs(container: HTMLElement): number[] {
   const d =
     container.querySelector('.recharts-line-curve')?.getAttribute('d') ?? ''
-  return Array.from(d.matchAll(/[ML]\s*(-?[\d.]+)/g), (match) =>
-    Number(match[1]),
-  )
+  return Array.from(d.matchAll(/[MLC]([^MLC]*)/g), (match) => {
+    const numbers = (match[1] ?? '').split(/[\s,]+/).filter(Boolean)
+    return Number(numbers.at(-2))
+  })
 }
 
 describe('HistoricalChart', () => {
@@ -71,6 +72,20 @@ describe('HistoricalChart', () => {
         /clock unsynced/i.test(el.getAttribute('aria-label') ?? ''),
       ),
     ).toBe(true)
+  })
+
+  it('drops a point whose timestamp does not parse and still draws the rest', () => {
+    const points: HistoricalPoint[] = [
+      { t: '2026-09-15T09:00:00Z', value: 20, quality: 'ok' },
+      { t: 'not-a-date', value: 99, quality: 'ok' },
+      { t: '2026-09-15T10:00:00Z', value: 21, quality: 'ok' },
+      { t: '2026-09-15T11:00:00Z', value: 22, quality: 'ok' },
+    ]
+    const { container } = renderWithProviders(
+      <HistoricalChart points={points} isLoading={false} />,
+    )
+    expect(container.querySelector('svg')).not.toBeNull()
+    expect(linePathXs(container)).toHaveLength(3)
   })
 
   it('does not start the Y axis at zero when values sit well above it', () => {
@@ -127,6 +142,32 @@ describe('HistoricalChart', () => {
     expect(last).toBeCloseTo(axisEnd, 0)
   })
 
+  it('spaces the time ticks evenly across the window, not at data points', () => {
+    const points: HistoricalPoint[] = [
+      { t: '2026-09-15T09:00:00Z', value: 20, quality: 'ok' },
+      { t: '2026-09-15T09:05:00Z', value: 21, quality: 'ok' },
+      { t: '2026-09-15T11:00:00Z', value: 22, quality: 'ok' },
+    ]
+    const domain: [number, number] = [
+      Date.parse('2026-09-15T09:00:00Z'),
+      Date.parse('2026-09-15T11:00:00Z'),
+    ]
+    const { container } = renderWithProviders(
+      <HistoricalChart points={points} isLoading={false} domain={domain} />,
+    )
+    const tickXs = Array.from(
+      container.querySelectorAll(
+        '.recharts-xAxis .recharts-cartesian-axis-tick-line',
+      ),
+      (line) => Number(line.getAttribute('x1')),
+    )
+    expect(tickXs.length).toBeGreaterThanOrEqual(4)
+    const gaps = tickXs.slice(1).map((x, index) => x - (tickXs[index] ?? NaN))
+    for (const gap of gaps) {
+      expect(gap).toBeCloseTo(gaps[0] ?? NaN, 0)
+    }
+  })
+
   it('renders a 5,000-point raw series without throwing (REQ-HS-4)', () => {
     const points: HistoricalPoint[] = Array.from({ length: 5000 }, (_, i) => ({
       t: new Date(Date.UTC(2026, 8, 15) + i * 15_000).toISOString(),
@@ -163,7 +204,7 @@ describe('HistoricalChart', () => {
     const linePath = container.querySelector('.recharts-line-curve')
     expect(linePath).not.toBeNull()
     const segmentCount =
-      (linePath?.getAttribute('d') ?? '').split('L').length - 1
+      (linePath?.getAttribute('d') ?? '').split(/[LC]/).length - 1
     expect(segmentCount).toBeLessThanOrEqual(CHART_POINT_BUDGET)
   })
 })

@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
 
 import { QualityMark } from '../../../shared/design-system/atoms/QualityMark'
-import { Value } from '../../../shared/design-system/atoms/Value'
 import type { TranslationKey } from '../../../shared/i18n/dictionary'
 import { useTranslation } from '../../../shared/i18n/useTranslation'
+import { unitLabel } from '../../../shared/lib/unitLabel'
 
 type ReadingQuality = 'ok' | 'out_of_range' | 'suspect'
 
@@ -33,16 +33,16 @@ const QUALITY_LABEL_KEYS = {
  * the former `HistoryTitleContainer` (REMOVED, ui-redesign PR-8).
  */
 export function SensorHeader({ deviceId, reading }: SensorHeaderProps) {
-  const { t } = useTranslation()
+  const { t, formatNumber } = useTranslation()
   const label = reading
     ? (reading.sensorLabel ?? reading.channel)
     : t('sensor.header.unknownLabel')
 
   return (
-    <header className="flex flex-col gap-2">
+    <header className="flex flex-col gap-3 rounded-md border border-border bg-surface p-4">
       <nav
         aria-label={t('sensor.breadcrumb.label')}
-        className="text-sm text-text-muted"
+        className="text-xs text-text-muted"
       >
         <Link to="/" className="hover:text-text">
           {t('fleet.title')}
@@ -54,16 +54,30 @@ export function SensorHeader({ deviceId, reading }: SensorHeaderProps) {
         {' › '}
         <span className="text-text">{label}</span>
       </nav>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <h1 className="text-lg font-semibold text-text">{label}</h1>
         {reading && (
-          <>
-            <Value value={reading.value} unit={reading.unit} />
-            <QualityMark
-              quality={reading.quality}
-              label={t(QUALITY_LABEL_KEYS[reading.quality])}
-            />
-          </>
+          <div className="flex flex-col gap-1">
+            <span className="text-2xs font-medium tracking-label text-text-muted uppercase">
+              {t('sensor.header.currentValue')}
+            </span>
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="font-mono text-xl tabular-nums text-text">
+                {formatNumber(reading.value)}
+                {unitLabel(reading.unit) && (
+                  <span className="ml-1 text-sm text-text-muted">
+                    {unitLabel(reading.unit)}
+                  </span>
+                )}
+              </span>
+              <span className="text-sm text-text">
+                <QualityMark
+                  quality={reading.quality}
+                  label={t(QUALITY_LABEL_KEYS[reading.quality])}
+                />
+              </span>
+            </div>
+          </div>
         )}
       </div>
     </header>

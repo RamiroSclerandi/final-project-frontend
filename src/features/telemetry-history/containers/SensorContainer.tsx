@@ -101,36 +101,40 @@ export function SensorContainer({ deviceId, sensorId }: SensorContainerProps) {
   return (
     <section className="flex flex-col gap-4">
       <SensorHeader deviceId={deviceId} reading={reading} />
-      <RangePicker
-        from={shownRange.from}
-        to={shownRange.to}
-        activeRangeMs={range.rangeMs}
-        onChange={setRange}
-        granularity={granularityChoice}
-        onGranularityChange={setGranularityChoice}
-      />
-      <ChartLegend />
-      <ExportButton
-        onExport={() =>
-          exportRange(
-            sensorId,
-            shownRange.from.toISOString(),
-            shownRange.to.toISOString(),
-          )
-        }
-        isExporting={isExporting}
-        error={exportError}
-      />
+      <div className="flex flex-col gap-3 rounded-md border border-border bg-surface p-3 md:flex-row md:flex-wrap md:items-end md:justify-between md:p-4">
+        <RangePicker
+          from={shownRange.from}
+          to={shownRange.to}
+          activeRangeMs={range.rangeMs}
+          onChange={setRange}
+          granularity={granularityChoice}
+          onGranularityChange={setGranularityChoice}
+        />
+        <ExportButton
+          onExport={() =>
+            exportRange(
+              sensorId,
+              shownRange.from.toISOString(),
+              shownRange.to.toISOString(),
+            )
+          }
+          isExporting={isExporting}
+          error={exportError}
+        />
+      </div>
       <DegradedStateBanner
         aggregationStale={aggregationStale}
         newestPointPartial={newestPointPartial}
       />
-      <HistoricalChart
-        points={points}
-        isLoading={isLoading}
-        unit={reading?.unit ?? ''}
-        domain={[shownRange.from.getTime(), shownRange.to.getTime()]}
-      />
+      <div className="flex min-w-0 flex-col gap-3 rounded-md border border-border bg-surface p-3 md:p-4">
+        <ChartLegend />
+        <HistoricalChart
+          points={points}
+          isLoading={isLoading}
+          unit={reading?.unit ?? ''}
+          domain={[shownRange.from.getTime(), shownRange.to.getTime()]}
+        />
+      </div>
     </section>
   )
 }
