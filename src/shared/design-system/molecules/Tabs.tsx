@@ -101,7 +101,7 @@ Tabs.Item = function TabsItem({ value, children }: TabsValueProps) {
       aria-controls={`${idPrefix}-panel-${value}`}
       tabIndex={isSelected ? 0 : -1}
       onClick={() => select(value)}
-      className={`min-h-11 px-4 text-sm font-medium ${isSelected ? 'border-b-2 border-accent text-text' : 'text-text-muted'}`}
+      className={`-mb-px min-h-11 border-b-2 px-4 text-xs font-medium uppercase tracking-label md:min-h-9 ${isSelected ? 'border-accent text-accent' : 'border-transparent text-text-muted hover:text-text'}`}
     >
       {children}
     </button>

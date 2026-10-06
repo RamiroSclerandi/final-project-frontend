@@ -107,3 +107,21 @@ export function UnsetIcon({ className }: IconProps) {
     </IconFrame>
   )
 }
+
+/** Inbox: an empty tray, for empty states. */
+export function InboxIcon({ className }: IconProps) {
+  return (
+    <IconFrame className={className}>
+      <path d="M1.5 9.5 3.5 3h9l2 6.5V13h-13zM1.5 9.5H5l1 1.5h4l1-1.5h3.5" />
+    </IconFrame>
+  )
+}
+
+/** Warning: a triangle with an exclamation mark. */
+export function WarningIcon({ className }: IconProps) {
+  return (
+    <IconFrame className={className}>
+      <path d="M8 2 14.5 13.5h-13zM8 6.5v3M8 11.5v.01" />
+    </IconFrame>
+  )
+}
