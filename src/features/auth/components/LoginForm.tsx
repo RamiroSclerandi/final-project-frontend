@@ -35,12 +35,12 @@ export function LoginForm({
 
   return (
     <div className="flex w-full max-w-sm flex-col gap-6 rounded-md border border-border bg-surface p-6">
-      <div className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-label text-text">
+      <h1 className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-label text-text">
         <span className="text-accent">
           <TelemetryIcon className="h-5 w-5" />
         </span>
         {t('shell.brand')}
-      </div>
+      </h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <TextField
           id="login-email"

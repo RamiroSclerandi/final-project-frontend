@@ -63,6 +63,7 @@
   --success: #4ade80;
   --info: #7cc4ff;
   --info-soft: #0e2238;
+  --scrim: #05080fb3;
 }
 
 [data-theme='light'] {
@@ -92,6 +93,8 @@
   --success: #137a3a;
   --info: #1d4ed8;
   --info-soft: #e6eefc;
+  /* A dark veil in both themes: a light wash reads as faded, not as a modal backdrop. */
+  --scrim: #12182666;
 }
 
 @theme inline {
@@ -121,6 +124,7 @@
   --color-success: var(--success);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
+  --color-scrim: var(--scrim);
 }
 
 @layer base {

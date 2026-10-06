@@ -55,7 +55,7 @@ export function NodeConfigDrawer({
       ref={dialogRef}
       onClose={handleClose}
       aria-labelledby={titleId}
-      className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none flex-col overflow-hidden bg-surface p-0 text-text open:flex backdrop:bg-bg/70 md:left-auto md:w-120 md:max-w-120 md:border-l md:border-border"
+      className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none flex-col overflow-hidden bg-surface p-0 text-text open:flex backdrop:bg-scrim md:left-auto md:w-120 md:max-w-120 md:border-l md:border-border"
     >
       <header className="flex items-start justify-between gap-2 border-b border-border p-4">
         <div className="flex min-w-0 flex-col gap-1">
