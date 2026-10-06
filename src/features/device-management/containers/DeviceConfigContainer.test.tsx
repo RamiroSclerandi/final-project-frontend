@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { renderWithProviders } from '../../../shared/test/renderWithProviders'
@@ -280,6 +280,68 @@ describe('DeviceConfigContainer', () => {
     ).toBeTruthy()
   })
 
+  it('re-enables Save once every in-flight update has resolved', async () => {
+    const device = deferred()
+    const sensor = deferred()
+    mockDeviceWithSensor()
+    useUpdateDeviceMock.mockReturnValue(
+      idleMutation(vi.fn().mockReturnValue(device.promise)),
+    )
+    useUpdateSensorMock.mockReturnValue(
+      idleMutation(vi.fn().mockReturnValue(sensor.promise)),
+    )
+
+    renderWithProviders(<DeviceConfigContainer deviceId="device-1" />)
+
+    fireEvent.change(screen.getByLabelText(/name/i), {
+      target: { value: 'Renamed node' },
+    })
+    fireEvent.change(screen.getByLabelText(/label/i), {
+      target: { value: 'Freezer temp' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled()
+
+    device.resolve()
+    await Promise.resolve()
+    sensor.resolve()
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /save/i })).toBeEnabled(),
+    )
+  })
+
+  it('re-enables Save once all updates settle when one rejects and another resolves', async () => {
+    const device = deferred()
+    const sensor = deferred()
+    mockDeviceWithSensor()
+    useUpdateDeviceMock.mockReturnValue(
+      idleMutation(vi.fn().mockReturnValue(device.promise)),
+    )
+    useUpdateSensorMock.mockReturnValue(
+      idleMutation(vi.fn().mockReturnValue(sensor.promise)),
+    )
+
+    renderWithProviders(<DeviceConfigContainer deviceId="device-1" />)
+
+    fireEvent.change(screen.getByLabelText(/name/i), {
+      target: { value: 'Renamed node' },
+    })
+    fireEvent.change(screen.getByLabelText(/label/i), {
+      target: { value: 'Freezer temp' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled()
+
+    device.reject(new Error('boom'))
+    sensor.resolve()
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /save/i })).toBeEnabled(),
+    )
+  })
+
   it('closes through onCancel when Cancel is clicked', () => {
     const onCancel = vi.fn()
     mockDeviceWithSensor()
@@ -294,6 +356,16 @@ describe('DeviceConfigContainer', () => {
     expect(onCancel).toHaveBeenCalledOnce()
   })
 })
+
+function deferred() {
+  let resolve!: () => void
+  let reject!: (reason: unknown) => void
+  const promise = new Promise<void>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+  return { promise, resolve, reject }
+}
 
 function getSensorLabelInputs(): [HTMLElement, HTMLElement] {
   const [first, second] = screen.getAllByLabelText(/label/i)

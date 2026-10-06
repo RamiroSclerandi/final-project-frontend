@@ -67,7 +67,6 @@ export const en = {
     },
     column: {
       node: 'Node',
-      location: 'Location',
       status: 'Status',
       headline: 'Latest value',
       lastSeen: 'Last seen',

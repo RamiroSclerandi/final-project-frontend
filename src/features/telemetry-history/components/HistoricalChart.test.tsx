@@ -27,6 +27,32 @@ function linePathXs(container: HTMLElement): number[] {
 }
 
 describe('HistoricalChart', () => {
+  describe('plain dots for sparse series', () => {
+    const unmarked = (count: number): HistoricalPoint[] =>
+      Array.from({ length: count }, (_, index) => ({
+        t: `2026-09-15T0${index + 1}:00:00Z`,
+        value: 20 + index,
+        quality: 'ok' as const,
+      }))
+    const plainDots = (container: HTMLElement) =>
+      container.querySelectorAll('.recharts-line-dots circle:not([role="img"])')
+
+    it('draws a plain dot per point when a series has only 2 unmarked points', () => {
+      const { container } = renderWithProviders(
+        <HistoricalChart points={unmarked(2)} isLoading={false} />,
+      )
+      expect(plainDots(container)).toHaveLength(2)
+      expect(screen.queryAllByRole('img')).toHaveLength(0)
+    })
+
+    it('draws no plain dots once a series has 3 or more unmarked points', () => {
+      const { container } = renderWithProviders(
+        <HistoricalChart points={unmarked(3)} isLoading={false} />,
+      )
+      expect(plainDots(container)).toHaveLength(0)
+    })
+  })
+
   it('shows a loading message', () => {
     renderWithProviders(<HistoricalChart points={[]} isLoading />)
     expect(screen.getByText(/loading chart/i)).toBeInTheDocument()

@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 
 export interface AppShellProps {
   brand: ReactNode
+  /** Rendered as-is: the slot owns its own responsive visibility and must stay reachable on mobile when interactive. */
   tenantSwitcher: ReactNode
   topBarActions: ReactNode
   nav: ReactNode

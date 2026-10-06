@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { renderWithProviders } from '../../../shared/test/renderWithProviders'
@@ -74,5 +74,31 @@ describe('NodeHeader', () => {
     renderWithProviders(<NodeHeader {...BASE_PROPS} rssi={null} />)
 
     expect(screen.getByText('Unknown')).toBeInTheDocument()
+  })
+
+  it('shows the firmware and transport labels next to their values', () => {
+    renderWithProviders(
+      <NodeHeader
+        {...BASE_PROPS}
+        firmwareVersion="2.4.1"
+        transport="lorawan"
+      />,
+    )
+
+    expect(screen.getByText('Firmware')).toBeInTheDocument()
+    expect(screen.getByText('2.4.1')).toBeInTheDocument()
+    expect(screen.getByText('Transport')).toBeInTheDocument()
+    expect(screen.getByText('lorawan')).toBeInTheDocument()
+  })
+
+  it('calls onOpenConfig when Configure is clicked', () => {
+    const onOpenConfig = vi.fn()
+    renderWithProviders(
+      <NodeHeader {...BASE_PROPS} onOpenConfig={onOpenConfig} />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Configure' }))
+
+    expect(onOpenConfig).toHaveBeenCalledOnce()
   })
 })

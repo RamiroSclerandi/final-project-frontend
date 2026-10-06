@@ -65,7 +65,6 @@ export const es: Dictionary = {
     },
     column: {
       node: 'Nodo',
-      location: 'Ubicación',
       status: 'Estado',
       headline: 'Último valor',
       lastSeen: 'Visto por última vez',

@@ -20,6 +20,9 @@ export interface TenantSwitcherProps {
  * listbox role); more than one renders a real `<select>`. Presentational
  * only -- wiring (deriving `tenants`/`current` from the session) lands in
  * PR-3's `AppShellContainer`.
+ *
+ * Slot contract: AppShell renders this as-is, so the switcher owns its own
+ * responsive visibility and must stay reachable on mobile when interactive.
  */
 export function TenantSwitcher({
   tenants,
