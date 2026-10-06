@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { MAX_RAW_ROWS, RawRowLimitError } from '../domain/rawRowLimit'
+import { SeriesRangeLimitError } from '../domain/seriesRangeLimit'
 import { useHistoricalSeries } from './useHistoricalSeries'
 
 const repositoryMocks = vi.hoisted(() => ({
@@ -450,7 +451,7 @@ describe('useHistoricalSeries', () => {
       new Error("get_sensor_series: range too wide for p_bucket 'minute'"),
     )
     const to = new Date('2026-09-15T12:00:00Z')
-    const from = new Date(to.getTime() - 30 * DAY_MS)
+    const from = new Date(to.getTime() - DAY_MS)
 
     const { result } = renderHook(
       () => useHistoricalSeries(SENSOR_ID, from, to, 'minute'),
@@ -571,5 +572,68 @@ describe('useHistoricalSeries', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false))
     expect(result.current.points).toEqual([])
     expect(result.current.aggregationStale).toBe(true)
+  })
+
+  it('refuses a minute override wider than 7 days without calling the series function', async () => {
+    const to = new Date('2026-09-15T12:00:00Z')
+    const from = new Date(to.getTime() - 30 * DAY_MS)
+
+    const { result } = renderHook(
+      () => useHistoricalSeries(SENSOR_ID, from, to, 'minute'),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() =>
+      expect(result.current.error).toBeInstanceOf(SeriesRangeLimitError),
+    )
+    expect(repositoryMocks.fetchSensorSeries).not.toHaveBeenCalled()
+  })
+
+  it('accepts a minute override of exactly 7 days, the function limit', async () => {
+    const to = new Date('2026-09-15T12:00:00Z')
+    const from = new Date(to.getTime() - 7 * DAY_MS)
+
+    const { result } = renderHook(
+      () => useHistoricalSeries(SENSOR_ID, from, to, 'minute'),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.error).toBeNull()
+    expect(repositoryMocks.fetchSensorSeries).toHaveBeenCalledWith(
+      SENSOR_ID,
+      from.toISOString(),
+      to.toISOString(),
+      'minute',
+    )
+  })
+
+  it('builds the daily tail from the latest reading, never from raw rows or the series function', async () => {
+    const to = new Date('2026-09-15T12:00:00Z')
+    const from = new Date(to.getTime() - 365 * DAY_MS)
+    repositoryMocks.fetchDailyAggregate.mockResolvedValue([
+      { t: '2026-09-14T03:00:00.000Z', value: 21 },
+      { t: '2026-09-15T03:00:00.000Z', value: 22 },
+    ])
+    repositoryMocks.fetchLatestMeasurement.mockResolvedValue({
+      t: '2026-09-15T11:59:00Z',
+      value: 23,
+      quality: 'ok',
+    })
+
+    const { result } = renderHook(
+      () => useHistoricalSeries(SENSOR_ID, from, to),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.points.at(-1)).toEqual({
+      t: '2026-09-15T11:59:00Z',
+      value: 23,
+      quality: 'ok',
+      partial: true,
+    })
+    expect(repositoryMocks.fetchRawMeasurements).not.toHaveBeenCalled()
+    expect(repositoryMocks.fetchSensorSeries).not.toHaveBeenCalled()
   })
 })

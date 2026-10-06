@@ -11,6 +11,10 @@ import { mergeDailyTail, mergeHourlyTail } from '../domain/mergeTail'
 import { MAX_RAW_ROWS, RawRowLimitError } from '../domain/rawRowLimit'
 import { historicalSeriesQueryKey } from '../domain/queryKeys'
 import {
+  MAX_MINUTE_SERIES_RANGE_MS,
+  SeriesRangeLimitError,
+} from '../domain/seriesRangeLimit'
+import {
   fetchDailyAggregate,
   fetchHourlyAggregate,
   fetchLatestMeasurement,
@@ -99,6 +103,12 @@ async function fetchGranularSeries(
   }
 
   if (granularity === 'minute') {
+    // Auto never asks for minute past 24 h; only a manual override kept
+    // across a range change can, and the server would answer 400.
+    const rangeMs = Date.parse(toIso) - Date.parse(fromIso)
+    if (rangeMs > MAX_MINUTE_SERIES_RANGE_MS) {
+      throw new SeriesRangeLimitError(rangeMs)
+    }
     // Grouped server-side straight from measurements: no matview lag and no
     // raw row limit, whatever the sampling interval (F-13).
     const points = await fetchSensorSeries(sensorId, fromIso, toIso, 'minute')

@@ -46,4 +46,20 @@ describe('chooseGranularity', () => {
     expect(chooseGranularity(7 * DAY_MS)).toBe('hourly')
     expect(chooseGranularity(120 * DAY_MS)).toBe('daily')
   })
+
+  it("never resolves minute past get_sensor_series' 7-day minute limit", () => {
+    const widerThanSevenDays = [
+      7 * DAY_MS + 1,
+      8 * DAY_MS,
+      15 * DAY_MS,
+      30 * DAY_MS,
+      90 * DAY_MS,
+      180 * DAY_MS,
+      365 * DAY_MS,
+    ]
+
+    for (const rangeMs of widerThanSevenDays) {
+      expect(chooseGranularity(rangeMs)).not.toBe('minute')
+    }
+  })
 })
