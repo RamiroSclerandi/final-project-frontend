@@ -100,12 +100,14 @@ export type Database = {
           battery_level: number | null
           boot: number | null
           id: number
+          lost: number | null
           metadata: Json | null
           quality: string
           rssi: number | null
           sample_count: number | null
           sensor_id: string
           seq: number | null
+          store_drop: number | null
           timestamp: string
           ts_source: string
           value: number
@@ -116,12 +118,14 @@ export type Database = {
           battery_level?: number | null
           boot?: number | null
           id?: never
+          lost?: number | null
           metadata?: Json | null
           quality?: string
           rssi?: number | null
           sample_count?: number | null
           sensor_id: string
           seq?: number | null
+          store_drop?: number | null
           timestamp: string
           ts_source?: string
           value: number
@@ -132,12 +136,14 @@ export type Database = {
           battery_level?: number | null
           boot?: number | null
           id?: never
+          lost?: number | null
           metadata?: Json | null
           quality?: string
           rssi?: number | null
           sample_count?: number | null
           sensor_id?: string
           seq?: number | null
+          store_drop?: number | null
           timestamp?: string
           ts_source?: string
           value?: number
@@ -160,6 +166,7 @@ export type Database = {
           error: string | null
           id: number
           payload: Json
+          payload_md5: string | null
           processed: boolean
           received_at: string
           source: string
@@ -170,6 +177,7 @@ export type Database = {
           error?: string | null
           id?: never
           payload: Json
+          payload_md5?: string | null
           processed?: boolean
           received_at?: string
           source: string
@@ -180,6 +188,7 @@ export type Database = {
           error?: string | null
           id?: never
           payload?: Json
+          payload_md5?: string | null
           processed?: boolean
           received_at?: string
           source?: string
@@ -341,7 +350,7 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      purge_raw_messages: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never
