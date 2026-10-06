@@ -61,6 +61,18 @@ describe('toRawPoint', () => {
       tsSource: 'server',
     })
   })
+
+  it('keeps the measurements id of a raw row so live readings can be deduplicated (F-10)', () => {
+    expect(
+      toRawPoint({
+        id: 42,
+        timestamp: '2026-09-15T11:00:00Z',
+        value: 21,
+        quality: 'ok',
+        ts_source: 'device',
+      }),
+    ).toEqual({ id: 42, t: '2026-09-15T11:00:00Z', value: 21, quality: 'ok' })
+  })
 })
 
 describe('toAggregatePoint', () => {

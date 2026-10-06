@@ -6,6 +6,8 @@ import { normalizeQuality } from './quality'
  * `quality`, aggregate points carry `min`/`max`/`sampleCount`.
  */
 export interface HistoricalPoint {
+  /** `measurements.id` of a raw point; lets the live series deduplicate (F-10). */
+  id?: number
   t: string
   value: number
   min?: number
@@ -20,6 +22,7 @@ export interface HistoricalPoint {
 
 /** Structural shape of a selected raw `measurements` row. */
 export interface RawMeasurementRow {
+  id?: number
   timestamp: string
   value: number
   quality: string
@@ -40,6 +43,7 @@ export interface AggregateBucketRow {
 
 export function toRawPoint(row: RawMeasurementRow): HistoricalPoint {
   return {
+    ...(row.id != null ? { id: row.id } : {}),
     t: row.timestamp,
     value: row.value,
     quality: normalizeQuality(row.quality),
