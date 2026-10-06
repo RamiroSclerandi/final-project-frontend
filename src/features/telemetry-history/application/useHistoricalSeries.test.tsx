@@ -521,6 +521,7 @@ describe('useHistoricalSeries', () => {
         partial: true,
       },
     ])
+    expect(result.current.aggregationStale).toBe(true)
   })
 
   it('shows the latest reading when the matview is empty and the raw range exceeds the row limit', async () => {
@@ -560,5 +561,28 @@ describe('useHistoricalSeries', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false))
     expect(result.current.error).toBeNull()
     expect(result.current.points).toEqual([])
+  })
+
+  it('never shows a latest-reading marker that falls outside the selected range', async () => {
+    const from = new Date('2026-05-01T00:00:00Z')
+    const to = new Date('2026-06-15T00:00:00Z')
+    repositoryMocks.fetchHourlyAggregate.mockResolvedValue([])
+    repositoryMocks.fetchLatestMeasurement.mockResolvedValue({
+      t: '2026-09-15T11:40:00Z',
+      value: 24,
+      quality: 'ok',
+    })
+    repositoryMocks.fetchRawMeasurements.mockRejectedValue(
+      new RawRowLimitError(90_000, MAX_RAW_ROWS),
+    )
+
+    const { result } = renderHook(
+      () => useHistoricalSeries(SENSOR_ID, from, to),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.points).toEqual([])
+    expect(result.current.aggregationStale).toBe(true)
   })
 })

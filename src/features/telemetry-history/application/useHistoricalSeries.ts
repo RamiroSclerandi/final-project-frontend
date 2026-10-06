@@ -77,7 +77,12 @@ async function fetchHourlySeries(
       aggregationStale,
     }
   }
-  const latestMarker = latestRaw ? [{ ...latestRaw, partial: true }] : []
+  // The latest reading is not range-bound; a past range must not show it.
+  const latestMs = latestRaw ? Date.parse(latestRaw.t) : Number.NaN
+  const isLatestInRange =
+    latestMs >= Date.parse(fromIso) && latestMs <= Date.parse(toIso)
+  const latestMarker =
+    latestRaw && isLatestInRange ? [{ ...latestRaw, partial: true }] : []
   const points = lastBucket ? aggregatePoints : latestMarker
   return { granularity: 'hourly', points, aggregationStale: true }
 }
