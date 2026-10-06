@@ -21,14 +21,17 @@ export function SelectField({
 }: SelectFieldProps) {
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-sm font-medium text-text">
+      <label
+        htmlFor={id}
+        className="text-xs font-medium uppercase tracking-label text-text-muted"
+      >
         {label}
       </label>
       <select
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 rounded-md border border-border bg-surface px-3 text-base text-text focus:border-accent"
+        className="min-h-11 rounded-md border border-border-strong bg-sunken px-3 text-base text-text focus:border-accent md:min-h-9 md:text-sm"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

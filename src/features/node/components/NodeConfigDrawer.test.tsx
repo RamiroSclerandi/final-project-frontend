@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -82,5 +82,22 @@ describe('NodeConfigDrawer', () => {
     )
 
     expect(screen.getByText('Section content')).toBeInTheDocument()
+  })
+
+  it('shows the read-only device identifier as a subtitle under the title', () => {
+    renderWithProviders(
+      <NodeConfigDrawer
+        open
+        onClose={vi.fn()}
+        title="Configure Greenhouse A"
+        subtitle="AABBCCDDEEFF"
+      >
+        <p>Section content</p>
+      </NodeConfigDrawer>,
+    )
+
+    expect(
+      within(screen.getByRole('dialog')).getByText('AABBCCDDEEFF'),
+    ).toBeInTheDocument()
   })
 })

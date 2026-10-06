@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Button } from '../../../shared/design-system/atoms/Button'
@@ -37,6 +37,8 @@ export interface NodeContainerProps {
 export function NodeContainer({ deviceId }: NodeContainerProps) {
   const { t } = useTranslation()
   const [isConfigOpen, setIsConfigOpen] = useState(false)
+  // Bumped on every open so the drawer's forms remount: closing by X or Escape discards drafts too.
+  const [configSession, setConfigSession] = useState(0)
   const devicesQuery = useDevices()
   const statusesQuery = useDeviceStatuses()
   useRealtimeDeviceStatuses()
@@ -117,12 +119,15 @@ export function NodeContainer({ deviceId }: NodeContainerProps) {
         firmwareVersion={device.firmwareVersion}
         transport={device.transport}
         rssi={pickNodeRssi(readings)}
-        onOpenConfig={() => setIsConfigOpen(true)}
+        onOpenConfig={() => {
+          setConfigSession((session) => session + 1)
+          setIsConfigOpen(true)
+        }}
       />
       {groups.length === 0 ? (
         <EmptyState title={t('node.empty.title')} body={t('node.empty.body')} />
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
           {groups.map((group) => (
             <SensorGroup key={group.channel} group={group} nodeId={deviceId} />
           ))}
@@ -132,9 +137,15 @@ export function NodeContainer({ deviceId }: NodeContainerProps) {
         open={isConfigOpen}
         onClose={() => setIsConfigOpen(false)}
         title={t('node.config.title', { name: device.name })}
+        subtitle={device.macAddress}
       >
-        <DeviceConfigContainer deviceId={deviceId} />
-        <SamplingIntervalContainer deviceId={deviceId} />
+        <Fragment key={configSession}>
+          <SamplingIntervalContainer deviceId={deviceId} />
+          <DeviceConfigContainer
+            deviceId={deviceId}
+            onCancel={() => setIsConfigOpen(false)}
+          />
+        </Fragment>
       </NodeConfigDrawer>
     </div>
   )

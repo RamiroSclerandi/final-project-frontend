@@ -39,7 +39,7 @@ describe('FleetTable', () => {
 
     expect(screen.getByRole('table')).toBeInTheDocument()
     const headers = screen.getAllByRole('columnheader')
-    expect(headers).toHaveLength(7)
+    expect(headers).toHaveLength(6)
     for (const header of headers) {
       expect(header).toHaveAttribute('scope', 'col')
     }
@@ -61,7 +61,7 @@ describe('FleetTable', () => {
 
     const [, row] = screen.getAllByRole('row')
     const cells = within(row as HTMLElement).getAllByRole('cell')
-    expect(cells).toHaveLength(7)
+    expect(cells).toHaveLength(6)
     for (const cell of cells) {
       expect(cell.getAttribute('data-label')).toBeTruthy()
     }

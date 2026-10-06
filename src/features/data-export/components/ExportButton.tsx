@@ -16,7 +16,7 @@ export function ExportButton({
   const { t } = useTranslation()
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col items-end gap-1 md:ml-auto">
       <Button variant="secondary" onClick={onExport} disabled={isExporting}>
         {isExporting
           ? t('sensor.export.inProgress')

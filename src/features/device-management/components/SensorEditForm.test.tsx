@@ -14,13 +14,12 @@ const sensor: SensorSummary = {
 }
 
 describe('SensorEditForm', () => {
-  it('submits label and pin_connection only (REQ-DM-3)', () => {
-    const onSave = vi.fn()
+  it('reports label and pin_connection only (REQ-DM-3)', () => {
+    const onChange = vi.fn()
     renderWithProviders(
       <SensorEditForm
         sensor={sensor}
-        onSave={onSave}
-        isSaving={false}
+        onChange={onChange}
         errorMessage={null}
       />,
     )
@@ -31,29 +30,26 @@ describe('SensorEditForm', () => {
     fireEvent.change(screen.getByLabelText(/pin/i), {
       target: { value: 'GPIO7' },
     })
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
 
-    expect(onSave).toHaveBeenCalledWith({
+    expect(onChange).toHaveBeenLastCalledWith({
       label: 'Freezer temp',
       pin_connection: 'GPIO7',
     })
   })
 
-  it('sends null for a cleared label instead of an empty string', () => {
-    const onSave = vi.fn()
+  it('reports null for a cleared label instead of an empty string', () => {
+    const onChange = vi.fn()
     renderWithProviders(
       <SensorEditForm
         sensor={sensor}
-        onSave={onSave}
-        isSaving={false}
+        onChange={onChange}
         errorMessage={null}
       />,
     )
 
     fireEvent.change(screen.getByLabelText(/label/i), { target: { value: '' } })
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
 
-    expect(onSave).toHaveBeenCalledWith(
+    expect(onChange).toHaveBeenLastCalledWith(
       expect.objectContaining({ label: null }),
     )
   })

@@ -1,6 +1,12 @@
 import { Link, Navigate, Outlet } from 'react-router-dom'
 
 import { LogoutButtonContainer, useAuth } from '../features/auth'
+import {
+  AdminIcon,
+  AlertsIcon,
+  FleetIcon,
+  TelemetryIcon,
+} from '../shared/design-system/atoms/icons'
 import { LocaleToggle } from '../shared/design-system/molecules/LocaleToggle'
 import { TenantSwitcher } from '../shared/design-system/molecules/TenantSwitcher'
 import { ThemeToggle } from '../shared/design-system/molecules/ThemeToggle'
@@ -35,9 +41,9 @@ export function AppShellContainer() {
   }
 
   const navItems = [
-    { to: '/', label: t('shell.nav.fleet') },
-    { to: '/alerts', label: t('shell.nav.alerts') },
-    { to: '/admin', label: t('shell.nav.admin') },
+    { to: '/', label: t('shell.nav.fleet'), icon: <FleetIcon /> },
+    { to: '/alerts', label: t('shell.nav.alerts'), icon: <AlertsIcon /> },
+    { to: '/admin', label: t('shell.nav.admin'), icon: <AdminIcon /> },
   ]
 
   function toggleTheme() {
@@ -47,8 +53,14 @@ export function AppShellContainer() {
   return (
     <AppShell
       brand={
-        <Link to="/" className="text-base font-semibold text-text">
-          {t('shell.brand')}
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-label text-text max-md:min-h-11 max-md:min-w-11 max-md:justify-center"
+        >
+          <span className="text-accent">
+            <TelemetryIcon />
+          </span>
+          <span className="max-md:sr-only">{t('shell.brand')}</span>
         </Link>
       }
       tenantSwitcher={

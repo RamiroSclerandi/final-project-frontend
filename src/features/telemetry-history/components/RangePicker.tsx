@@ -85,6 +85,11 @@ function isGranularityChoice(value: string): value is GranularityChoice {
   return (GRANULARITY_OPTIONS as readonly string[]).includes(value)
 }
 
+const FIELD_LABEL_CLASSES =
+  'text-xs font-medium tracking-label text-text-muted uppercase'
+const FIELD_CLASSES =
+  'min-h-11 rounded-md border border-border-strong bg-sunken px-3 font-mono text-base text-text focus:border-accent md:min-h-9 md:text-sm'
+
 export interface RangePickerProps {
   from: Date
   to: Date
@@ -142,26 +147,24 @@ export function RangePicker({
   }
 
   return (
-    <fieldset className="flex flex-col gap-3">
-      <legend className="text-sm text-text-muted">
-        {t('sensor.range.label')}
-      </legend>
-      <div className="flex flex-wrap gap-2">
+    <fieldset className="flex min-w-0 flex-col gap-3 md:flex-row md:flex-wrap md:items-end md:gap-4">
+      <legend className="sr-only">{t('sensor.range.label')}</legend>
+      <div className="grid grid-cols-4 gap-1.5 md:inline-flex md:flex-wrap md:gap-0">
         {PRESET_ORDER.map((preset) => (
           <button
             key={preset}
             type="button"
             aria-pressed={PRESET_MS[preset] === activeRangeMs}
-            className="min-h-11 rounded-md border border-border px-3 text-sm text-text hover:bg-surface-raised aria-pressed:border-accent aria-pressed:bg-surface-raised aria-pressed:font-medium"
+            className="min-h-11 rounded-md border border-border-strong bg-surface px-2 font-mono text-xs tracking-label whitespace-nowrap text-text-muted uppercase hover:bg-surface-raised aria-pressed:z-10 aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent md:-ml-px md:min-h-9 md:rounded-none md:px-3 md:first:ml-0 md:first:rounded-l-md md:last:rounded-r-md"
             onClick={() => selectPreset(PRESET_MS[preset])}
           >
             {t(PRESET_LABEL_KEYS[preset])}
           </button>
         ))}
       </div>
-      <div className="flex flex-wrap items-end gap-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:gap-2">
         <div className="flex flex-col gap-1">
-          <label htmlFor="range-from" className="text-sm font-medium text-text">
+          <label htmlFor="range-from" className={FIELD_LABEL_CLASSES}>
             {t('sensor.range.from')}
           </label>
           <input
@@ -172,11 +175,11 @@ export function RangePicker({
             onChange={(event) =>
               changeCustomRange({ from: new Date(event.target.value), to })
             }
-            className="min-h-11 rounded-md border border-border bg-surface px-3 text-base text-text focus:border-accent"
+            className={FIELD_CLASSES}
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label htmlFor="range-to" className="text-sm font-medium text-text">
+          <label htmlFor="range-to" className={FIELD_LABEL_CLASSES}>
             {t('sensor.range.to')}
           </label>
           {activeRangeMs === undefined ? (
@@ -188,7 +191,7 @@ export function RangePicker({
               onChange={(event) =>
                 changeCustomRange({ from, to: new Date(event.target.value) })
               }
-              className="min-h-11 rounded-md border border-border bg-surface px-3 text-base text-text focus:border-accent"
+              className={FIELD_CLASSES}
             />
           ) : (
             // A live preset has no fixed end; picking it starts a fixed search.
@@ -196,7 +199,7 @@ export function RangePicker({
               id="range-to"
               type="button"
               onClick={() => onChange({ from, to: new Date() })}
-              className="min-h-11 rounded-md border border-border bg-surface px-3 text-left text-base text-text focus:border-accent"
+              className={`${FIELD_CLASSES} text-left`}
             >
               {t('sensor.range.live')}
             </button>

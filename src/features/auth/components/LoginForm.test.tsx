@@ -17,6 +17,16 @@ describe('LoginForm', () => {
     expect(screen.queryByRole('link')).not.toBeInTheDocument()
   })
 
+  it('names the page with a level-one heading', () => {
+    renderWithProviders(
+      <LoginForm onSubmit={vi.fn()} isSubmitting={false} errorMessage={null} />,
+    )
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: /fleet monitor/i }),
+    ).toBeInTheDocument()
+  })
+
   it('calls onSubmit with the entered email and password', () => {
     const onSubmit = vi.fn()
 

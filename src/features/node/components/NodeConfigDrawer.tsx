@@ -7,6 +7,7 @@ export interface NodeConfigDrawerProps {
   open: boolean
   onClose: () => void
   title: string
+  subtitle?: string
   children: ReactNode
 }
 
@@ -21,6 +22,7 @@ export function NodeConfigDrawer({
   open,
   onClose,
   title,
+  subtitle,
   children,
 }: NodeConfigDrawerProps) {
   const { t } = useTranslation()
@@ -47,17 +49,25 @@ export function NodeConfigDrawer({
     ;(openerRef.current as HTMLElement | null)?.focus()
   }
 
+  // `open:flex` (not `flex`) keeps the UA `display: none` of a closed dialog.
   return (
     <dialog
       ref={dialogRef}
       onClose={handleClose}
       aria-labelledby={titleId}
-      className="m-0 h-dvh max-h-none w-full max-w-none bg-surface p-4 text-text md:inset-y-0 md:right-0 md:left-auto md:h-auto md:w-96 md:max-w-96"
+      className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none flex-col overflow-hidden bg-surface p-0 text-text open:flex backdrop:bg-scrim md:left-auto md:w-120 md:max-w-120 md:border-l md:border-border"
     >
-      <div className="flex items-center justify-between gap-2">
-        <h2 id={titleId} className="text-lg font-semibold">
-          {title}
-        </h2>
+      <header className="flex items-start justify-between gap-2 border-b border-border p-4">
+        <div className="flex min-w-0 flex-col gap-1">
+          <h2 id={titleId} className="text-lg font-semibold">
+            {title}
+          </h2>
+          {subtitle && (
+            <p className="truncate font-mono text-xs tabular-nums text-text-muted">
+              {subtitle}
+            </p>
+          )}
+        </div>
         <IconButton
           label={t('common.dismiss')}
           onClick={() => dialogRef.current?.close()}
@@ -72,8 +82,10 @@ export function NodeConfigDrawer({
             />
           </svg>
         </IconButton>
+      </header>
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pt-4 pb-4 has-[>form]:pb-0">
+        {children}
       </div>
-      <div className="mt-4 flex flex-col gap-6">{children}</div>
     </dialog>
   )
 }

@@ -21,6 +21,8 @@ export const en = {
       label: 'Language',
       es: 'Español',
       en: 'English',
+      esShort: 'ES',
+      enShort: 'EN',
     },
     theme: {
       toggle: 'Toggle theme',
@@ -65,7 +67,6 @@ export const en = {
     },
     column: {
       node: 'Node',
-      location: 'Location',
       status: 'Status',
       headline: 'Latest value',
       lastSeen: 'Last seen',
@@ -100,7 +101,10 @@ export const en = {
     },
   },
   node: {
+    viewHistory: 'View history',
     header: {
+      firmwareLabel: 'Firmware',
+      transportLabel: 'Transport',
       configure: 'Configure',
       firmware: 'Firmware: {version}',
       transport: 'Transport: {transport}',
@@ -196,6 +200,10 @@ export const en = {
     empty: 'No data for this range.',
     markedPoint: 'marked data point ({reasons})',
     meanOf: 'mean of {count} samples',
+    legend: {
+      value: 'Value',
+      range: 'Min/max range',
+    },
     marker: {
       outOfRange: 'out of range',
       suspect: 'suspect',
@@ -209,6 +217,7 @@ export const en = {
     },
     header: {
       unknownLabel: 'Sensor',
+      currentValue: 'Current value',
     },
     range: {
       label: 'Range',
@@ -255,6 +264,13 @@ export const en = {
     rangeError: 'Enter a value between {min} and {max} seconds.',
     apply: 'Apply',
     save: 'Save',
+    cancel: 'Cancel',
+    secondsUnit: 's',
+    section: {
+      sampling: 'Sampling interval',
+      identification: 'Identification and transport',
+      sensors: 'Sensors',
+    },
     error: {
       invalidInterval:
         'Invalid interval. Enter a value between 1 and 300 seconds.',

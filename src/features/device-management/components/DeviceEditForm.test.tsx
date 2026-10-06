@@ -18,26 +18,12 @@ const device: Device = {
 }
 
 describe('DeviceEditForm', () => {
-  it('shows the read-only mac address alongside the editable fields', () => {
+  it('reports an allowlisted update with the edited values, never mac_address (REQ-DM-4)', () => {
+    const onChange = vi.fn()
     renderWithProviders(
       <DeviceEditForm
         device={device}
-        onSave={vi.fn()}
-        isSaving={false}
-        errorMessage={null}
-      />,
-    )
-
-    expect(screen.getByText('AABBCCDDEEFF')).toBeInTheDocument()
-  })
-
-  it('submits an allowlisted update with the edited values, never mac_address (REQ-DM-4)', () => {
-    const onSave = vi.fn()
-    renderWithProviders(
-      <DeviceEditForm
-        device={device}
-        onSave={onSave}
-        isSaving={false}
+        onChange={onChange}
         errorMessage={null}
       />,
     )
@@ -52,28 +38,44 @@ describe('DeviceEditForm', () => {
       target: { value: 'lorawan' },
     })
     fireEvent.click(screen.getByLabelText(/provisioned/i))
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
 
-    expect(onSave).toHaveBeenCalledWith({
+    expect(onChange).toHaveBeenLastCalledWith({
       name: 'Renamed node',
       location_ref: 'Garage',
       transport: 'lorawan',
       provisioned: false,
     })
-    expect(onSave.mock.calls[0]?.[0]).not.toHaveProperty('mac_address')
+    expect(onChange.mock.lastCall?.[0]).not.toHaveProperty('mac_address')
   })
 
-  it('disables the submit button while saving and shows the error message', () => {
+  it('reports null for a cleared location instead of an empty string', () => {
+    const onChange = vi.fn()
     renderWithProviders(
       <DeviceEditForm
         device={device}
-        onSave={vi.fn()}
-        isSaving={true}
+        onChange={onChange}
+        errorMessage={null}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText(/location/i), {
+      target: { value: '' },
+    })
+
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ location_ref: null }),
+    )
+  })
+
+  it('shows the error message', () => {
+    renderWithProviders(
+      <DeviceEditForm
+        device={device}
+        onChange={vi.fn()}
         errorMessage="Could not save changes. Try again."
       />,
     )
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled()
     expect(screen.getByRole('alert')).toHaveTextContent(/could not save/i)
   })
 })

@@ -20,6 +20,9 @@ export interface TenantSwitcherProps {
  * listbox role); more than one renders a real `<select>`. Presentational
  * only -- wiring (deriving `tenants`/`current` from the session) lands in
  * PR-3's `AppShellContainer`.
+ *
+ * Slot contract: AppShell renders this as-is, so the switcher owns its own
+ * responsive visibility and must stay reachable on mobile when interactive.
  */
 export function TenantSwitcher({
   tenants,
@@ -29,7 +32,8 @@ export function TenantSwitcher({
 }: TenantSwitcherProps) {
   if (tenants.length === 1) {
     return (
-      <span className="min-w-0 truncate text-sm text-text">
+      // Only the static single-tenant label hides below md; a real switcher stays reachable on mobile.
+      <span className="hidden min-w-0 truncate font-mono text-xs text-text-muted md:inline-block">
         <VisuallyHidden>{label}</VisuallyHidden>
         {current.name}
       </span>
@@ -37,12 +41,12 @@ export function TenantSwitcher({
   }
 
   return (
-    <label className="flex items-center gap-2 text-sm text-text">
+    <label className="flex items-center gap-2 text-xs uppercase tracking-label text-text-muted">
       {label}
       <select
         value={current.id}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 rounded-md border border-border bg-surface px-2 text-text"
+        className="min-h-11 rounded-md border border-border-strong bg-sunken px-2 text-base normal-case tracking-normal text-text md:min-h-9 md:text-sm"
       >
         {tenants.map((tenant) => (
           <option key={tenant.id} value={tenant.id}>

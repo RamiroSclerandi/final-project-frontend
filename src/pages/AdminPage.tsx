@@ -25,7 +25,9 @@ export function AdminPage() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-xl font-semibold text-text">{t('admin.title')}</h1>
+      <header className="border-b border-border pb-3">
+        <h1 className="text-lg font-semibold text-text">{t('admin.title')}</h1>
+      </header>
       <Tabs defaultValue={UNASSIGNED_TAB} label={t('admin.tabs.label')}>
         <Tabs.List>
           <Tabs.Item value={UNASSIGNED_TAB}>

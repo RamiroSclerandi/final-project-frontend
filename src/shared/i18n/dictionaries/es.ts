@@ -19,6 +19,8 @@ export const es: Dictionary = {
       label: 'Idioma',
       es: 'Español',
       en: 'English',
+      esShort: 'ES',
+      enShort: 'EN',
     },
     theme: {
       toggle: 'Cambiar tema',
@@ -63,7 +65,6 @@ export const es: Dictionary = {
     },
     column: {
       node: 'Nodo',
-      location: 'Ubicación',
       status: 'Estado',
       headline: 'Último valor',
       lastSeen: 'Visto por última vez',
@@ -98,7 +99,10 @@ export const es: Dictionary = {
     },
   },
   node: {
+    viewHistory: 'Ver historial',
     header: {
+      firmwareLabel: 'Firmware',
+      transportLabel: 'Transporte',
       configure: 'Configurar',
       firmware: 'Firmware: {version}',
       transport: 'Transporte: {transport}',
@@ -194,6 +198,10 @@ export const es: Dictionary = {
     empty: 'No hay datos para este rango.',
     markedPoint: 'punto de datos marcado ({reasons})',
     meanOf: 'media de {count} muestras',
+    legend: {
+      value: 'Valor',
+      range: 'Rango mín/máx',
+    },
     marker: {
       outOfRange: 'fuera de rango',
       suspect: 'sospechoso',
@@ -207,6 +215,7 @@ export const es: Dictionary = {
     },
     header: {
       unknownLabel: 'Sensor',
+      currentValue: 'Valor actual',
     },
     range: {
       label: 'Rango',
@@ -253,6 +262,13 @@ export const es: Dictionary = {
     rangeError: 'Ingresar un valor entre {min} y {max} segundos.',
     apply: 'Aplicar',
     save: 'Guardar',
+    cancel: 'Cancelar',
+    secondsUnit: 's',
+    section: {
+      sampling: 'Intervalo de muestreo',
+      identification: 'Identificación y transporte',
+      sensors: 'Sensores',
+    },
     error: {
       invalidInterval:
         'Intervalo inválido. Ingresá un valor entre 1 y 300 segundos.',

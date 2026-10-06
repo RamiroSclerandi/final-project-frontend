@@ -13,7 +13,10 @@ const useRealtimeReadingsMock = vi.hoisted(() => vi.fn())
 vi.mock('../../device-management', () => ({
   useDevices: useDevicesMock,
   DeviceConfigContainer: ({ deviceId }: { deviceId: string }) => (
-    <p>Device config for {deviceId}</p>
+    <>
+      <p>Device config for {deviceId}</p>
+      <input aria-label="Draft name" defaultValue="Greenhouse A" />
+    </>
   ),
 }))
 vi.mock('../../node-health', () => ({
@@ -225,8 +228,29 @@ describe('NodeContainer', () => {
 
     expect(dialog).toHaveAttribute('open')
     expect(screen.getByText('Device config for device-a')).toBeInTheDocument()
+    expect(screen.getByText('AABBCCDDEEFF')).toBeInTheDocument()
     expect(
       screen.getByText('Sampling interval for device-a'),
     ).toBeInTheDocument()
+  })
+
+  it('discards unsaved drawer edits when it is closed without Cancel', () => {
+    useDevicesMock.mockReturnValue({
+      data: [DEVICE_A],
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+    mockHealthyDefaults()
+    renderWithProviders(<NodeContainer deviceId="device-a" />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Configure' }))
+    fireEvent.change(screen.getByLabelText('Draft name'), {
+      target: { value: 'Unsaved edit' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Configure' }))
+
+    expect(screen.getByLabelText('Draft name')).toHaveValue('Greenhouse A')
   })
 })

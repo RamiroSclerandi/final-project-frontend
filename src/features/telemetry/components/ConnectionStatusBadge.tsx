@@ -9,6 +9,13 @@ const LABEL_KEYS: Record<RealtimeStatus, TranslationKey> = {
   down: 'connection.down',
 }
 
+const DOT_CLASSES: Record<RealtimeStatus, string> = {
+  live: 'text-status-online',
+  connecting: 'text-warning',
+  reconnecting: 'text-warning',
+  down: 'text-danger',
+}
+
 export interface ConnectionStatusBadgeProps {
   status: RealtimeStatus
 }
@@ -16,13 +23,19 @@ export interface ConnectionStatusBadgeProps {
 /** Minimal, always-visible indicator of the realtime channel's health (D-2/D-7). */
 export function ConnectionStatusBadge({ status }: ConnectionStatusBadgeProps) {
   const { t } = useTranslation()
-  const isDegraded = status !== 'live'
   return (
     <p
       role="status"
-      className={isDegraded ? 'text-sm text-warning' : 'text-sm text-success'}
+      className="inline-flex items-center gap-1.5 text-xs text-text-muted"
     >
-      {t(LABEL_KEYS[status])}
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 8 8"
+        className={`h-2 w-2 ${DOT_CLASSES[status]}`}
+      >
+        <circle cx="4" cy="4" r="4" fill="currentColor" />
+      </svg>
+      <span>{t(LABEL_KEYS[status])}</span>
     </p>
   )
 }

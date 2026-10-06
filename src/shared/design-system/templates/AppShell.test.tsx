@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
+import { TenantSwitcher } from '../molecules/TenantSwitcher'
 import { AppNav, AppShell } from './AppShell'
 
 function renderShell() {
@@ -55,6 +56,41 @@ describe('AppShell', () => {
     expect(screen.getByText('UNRaf')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument()
     expect(screen.getByText('Route content')).toBeInTheDocument()
+  })
+})
+
+describe('AppShell tenantSwitcher slot', () => {
+  it('keeps a multi-tenant switcher reachable and operable by role', () => {
+    const onChange = vi.fn()
+    const campus = { id: 'tenant-1', name: 'Campus' }
+    const lab = { id: 'tenant-2', name: 'Lab' }
+    render(
+      <MemoryRouter>
+        <AppShell
+          brand={<span>Fleet Monitor</span>}
+          tenantSwitcher={
+            <TenantSwitcher
+              tenants={[campus, lab]}
+              current={campus}
+              onChange={onChange}
+              label="Client"
+            />
+          }
+          topBarActions={null}
+          nav={<nav aria-label="Main navigation">nav stub</nav>}
+          skipLinkLabel="Skip to content"
+        >
+          <p>Route content</p>
+        </AppShell>
+      </MemoryRouter>,
+    )
+
+    const select = screen.getByRole('combobox', { name: 'Client' })
+    expect(select).toBeInTheDocument()
+
+    fireEvent.change(select, { target: { value: 'tenant-2' } })
+
+    expect(onChange).toHaveBeenCalledWith('tenant-2')
   })
 })
 

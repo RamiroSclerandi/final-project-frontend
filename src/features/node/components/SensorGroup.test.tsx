@@ -159,4 +159,17 @@ describe('SensorGroup', () => {
 
     expect(screen.getByRole('columnheader')).toHaveTextContent('Weird sensor')
   })
+
+  it('renders a sensor row with its value, unit, quality text and a history link named by the value', () => {
+    renderWithProviders(
+      <SensorGroup group={SINGLE_UNLABELED_GROUP} nodeId="device-1" />,
+    )
+
+    const link = screen.getByRole('link', { name: /55\.5/ })
+    expect(link).toHaveAttribute('href', '/nodes/device-1/sensors/humidity-1')
+    expect(link).toHaveTextContent('55.5')
+    expect(link).toHaveTextContent('%')
+    expect(link).toHaveTextContent('OK')
+    expect(link).toHaveTextContent('View history')
+  })
 })

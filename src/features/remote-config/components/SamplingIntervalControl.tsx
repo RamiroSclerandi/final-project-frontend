@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { Button } from '../../../shared/design-system/atoms/Button'
-import { TextField } from '../../../shared/design-system/atoms/TextField'
+import { ClockIcon, UnsetIcon } from '../../../shared/design-system/atoms/icons'
 import { useTranslation } from '../../../shared/i18n/useTranslation'
 import { useNow } from '../../../shared/time/useNow'
 import type { DeviceConfigSummary } from '../domain/deviceConfig'
@@ -23,7 +23,8 @@ export interface SamplingIntervalControlProps {
 /**
  * One device's sampling-interval control (REQ-RC-2, REQ-RC-3, REQ-CFG-3,
  * REQ-RC-11). Requested-only display -- the firmware never reports an
- * applied value back, so no "applied" text is ever rendered.
+ * applied value back, so no "applied" text is ever rendered. It keeps its
+ * own Apply because the interval is a remote command with its own lifecycle.
  */
 export function SamplingIntervalControl({
   summary,
@@ -33,7 +34,8 @@ export function SamplingIntervalControl({
 }: SamplingIntervalControlProps) {
   const { t, formatRelativeTime } = useTranslation()
   const nowMs = useNow()
-  const { deviceId, deviceName, config } = summary
+  const { deviceId, config } = summary
+  const inputId = `sampling-interval-${deviceId}`
   const [seconds, setSeconds] = useState(
     config
       ? String(samplingIntervalMsToSeconds(config.samplingIntervalMs))
@@ -43,42 +45,63 @@ export function SamplingIntervalControl({
   const isValid = seconds !== '' && isSamplingIntervalMsInRange(ms)
 
   return (
-    <div className="flex flex-wrap items-end gap-3">
-      <p className="w-full font-medium text-text">{deviceName}</p>
-      <p className="w-full text-sm text-text-muted">
-        {config
-          ? t('config.requested', {
-              seconds: samplingIntervalMsToSeconds(config.samplingIntervalMs),
-              relative: formatRelativeTime(config.requestedAt, nowMs),
-            })
-          : t('config.notConfigured')}
-      </p>
-      <TextField
-        id={`sampling-interval-${deviceId}`}
-        label={t('config.samplingIntervalLabel')}
-        type="number"
-        value={seconds}
-        onChange={setSeconds}
-      />
+    <div className="flex flex-col gap-3">
+      <label
+        htmlFor={inputId}
+        className="text-xs font-medium uppercase tracking-label text-text-muted"
+      >
+        {t('config.samplingIntervalLabel')}
+      </label>
+      <div className="flex items-center gap-3">
+        <div className="flex items-baseline gap-2">
+          <input
+            id={inputId}
+            type="number"
+            inputMode="numeric"
+            value={seconds}
+            onChange={(event) => setSeconds(event.target.value)}
+            className="min-h-14 w-32 rounded-md border border-border-strong bg-sunken px-3 font-mono text-xl tabular-nums text-text focus:border-accent"
+          />
+          <span className="font-mono text-lg text-text-muted">
+            {t('config.secondsUnit')}
+          </span>
+        </div>
+        <span className="ml-auto">
+          <Button
+            variant="primary"
+            disabled={!isValid || isSaving}
+            onClick={() => onApply(ms)}
+          >
+            {t('config.apply')}
+          </Button>
+        </span>
+      </div>
+      {config ? (
+        <p className="flex items-center gap-2 font-mono text-sm tabular-nums text-warning">
+          <ClockIcon className="h-4 w-4 shrink-0" />
+          {t('config.requested', {
+            seconds: samplingIntervalMsToSeconds(config.samplingIntervalMs),
+            relative: formatRelativeTime(config.requestedAt, nowMs),
+          })}
+        </p>
+      ) : (
+        <p className="flex items-center gap-2 text-sm text-status-unknown">
+          <UnsetIcon className="h-4 w-4 shrink-0" />
+          {t('config.notConfigured')}
+        </p>
+      )}
       {!isValid && seconds !== '' ? (
-        <p role="alert" className="w-full text-sm text-warning">
+        <p role="alert" className="text-sm text-warning">
           {t('config.rangeError', {
             min: MIN_SAMPLING_INTERVAL_SECONDS,
             max: MAX_SAMPLING_INTERVAL_SECONDS,
           })}
         </p>
       ) : errorMessage ? (
-        <p role="alert" className="w-full text-sm text-danger">
+        <p role="alert" className="text-sm text-danger">
           {errorMessage}
         </p>
       ) : null}
-      <Button
-        variant="primary"
-        disabled={!isValid || isSaving}
-        onClick={() => onApply(ms)}
-      >
-        {t('config.apply')}
-      </Button>
     </div>
   )
 }

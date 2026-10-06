@@ -19,7 +19,6 @@ export interface FleetTableProps {
 
 interface FleetColumnLabels {
   node: string
-  location: string
   status: string
   headline: string
   lastSeen: string
@@ -37,7 +36,6 @@ export function FleetTable({ rows }: FleetTableProps) {
   const { t } = useTranslation()
   const labels: FleetColumnLabels = {
     node: t('fleet.column.node'),
-    location: t('fleet.column.location'),
     status: t('fleet.column.status'),
     headline: t('fleet.column.headline'),
     lastSeen: t('fleet.column.lastSeen'),
@@ -46,50 +44,64 @@ export function FleetTable({ rows }: FleetTableProps) {
   }
 
   return (
-    <table role="table" className="table-stack w-full min-w-0 tabular-nums">
-      <thead>
-        <tr role="row">
-          <th role="columnheader" scope="col">
-            {labels.node}
-          </th>
-          <th role="columnheader" scope="col">
-            {labels.location}
-          </th>
-          <th role="columnheader" scope="col">
-            {labels.status}
-          </th>
-          <th role="columnheader" scope="col">
-            {labels.headline}
-          </th>
-          <th role="columnheader" scope="col">
-            {labels.lastSeen}
-          </th>
-          <th
-            role="columnheader"
-            scope="col"
-            className="hidden xl:table-cell"
-            data-hidden-stacked
-          >
-            {labels.trend}
-          </th>
-          <th role="columnheader" scope="col">
-            {labels.alerts}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <FleetTableRow
-            key={row.id}
-            row={row}
-            labels={labels}
-            notAvailable={t('common.notAvailable')}
-          />
-        ))}
-      </tbody>
-    </table>
+    <div className="md:overflow-hidden md:rounded-md md:border md:border-border md:bg-surface">
+      <table
+        role="table"
+        className="table-stack table-stack--cards w-full min-w-0 text-base md:text-sm"
+      >
+        <thead>
+          <tr role="row" className="bg-sunken">
+            <th role="columnheader" scope="col" className={TH_CLASS}>
+              {labels.status}
+            </th>
+            <th role="columnheader" scope="col" className={TH_CLASS}>
+              {labels.node}
+            </th>
+            <th
+              role="columnheader"
+              scope="col"
+              className={`${TH_CLASS} md:text-right`}
+            >
+              {labels.headline}
+            </th>
+            <th
+              role="columnheader"
+              scope="col"
+              className={`${TH_CLASS} md:text-right`}
+            >
+              {labels.lastSeen}
+            </th>
+            <th
+              role="columnheader"
+              scope="col"
+              className={`${TH_CLASS} hidden lg:table-cell lg:w-48`}
+              data-hidden-stacked
+            >
+              {labels.trend}
+            </th>
+            <th role="columnheader" scope="col" className={TH_CLASS}>
+              {labels.alerts}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <FleetTableRow
+              key={row.id}
+              row={row}
+              labels={labels}
+              notAvailable={t('common.notAvailable')}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
+
+const TH_CLASS =
+  'px-3 py-2 text-left text-2xs font-medium uppercase tracking-label text-text-muted'
+const TD_CLASS = 'md:px-3 md:py-1.5 md:align-middle'
 
 interface FleetTableRowProps {
   row: FleetRow
@@ -101,29 +113,50 @@ function FleetTableRow({ row, labels, notAvailable }: FleetTableRowProps) {
   const { t } = useTranslation()
 
   return (
-    <tr role="row">
-      <td role="cell" data-label={labels.node}>
+    <tr
+      role="row"
+      className="bg-surface hover:bg-surface-raised md:h-10 md:border-b md:border-border md:bg-transparent md:last:border-b-0 md:hover:bg-surface-raised"
+    >
+      <td
+        role="cell"
+        data-label={labels.status}
+        data-card-status
+        className={TD_CLASS}
+      >
+        <StatusChip status={row.status} />
+      </td>
+      <td
+        role="cell"
+        data-label={labels.node}
+        data-card-title
+        className={TD_CLASS}
+      >
         <Link
           to={`/nodes/${row.id}`}
-          className="inline-flex min-h-11 items-center text-accent"
+          className="inline-flex min-h-11 items-center font-medium text-accent hover:underline md:min-h-0"
         >
           {row.name}
         </Link>
+        <p className="text-sm text-text-muted md:text-xs">
+          {row.location ?? notAvailable}
+        </p>
       </td>
-      <td role="cell" data-label={labels.location}>
-        {row.location ?? notAvailable}
-      </td>
-      <td role="cell" data-label={labels.status}>
-        <StatusChip status={row.status} />
-      </td>
-      <td role="cell" data-label={labels.headline}>
+      <td
+        role="cell"
+        data-label={labels.headline}
+        className={`${TD_CLASS} font-mono tabular-nums md:text-right`}
+      >
         {row.headline ? (
           <Value value={row.headline.value} unit={row.headline.unit} />
         ) : (
           notAvailable
         )}
       </td>
-      <td role="cell" data-label={labels.lastSeen}>
+      <td
+        role="cell"
+        data-label={labels.lastSeen}
+        className={`${TD_CLASS} font-mono tabular-nums text-text-muted md:text-xs md:text-right`}
+      >
         {row.lastActivity ? (
           <RelativeTime iso={row.lastActivity} />
         ) : (
@@ -133,14 +166,14 @@ function FleetTableRow({ row, labels, notAvailable }: FleetTableRowProps) {
       <td
         role="cell"
         data-label={labels.trend}
-        className="hidden xl:table-cell"
+        className={`${TD_CLASS} hidden lg:table-cell`}
         data-hidden-stacked
       >
         {row.sparkline ? (
           <Sparkline values={row.sparkline} label={labels.trend} />
         ) : null}
       </td>
-      <td role="cell" data-label={labels.alerts}>
+      <td role="cell" data-label={labels.alerts} className={TD_CLASS}>
         {row.hasQualityAlert ? (
           <Chip>{t('fleet.kpi.qualityAlerts')}</Chip>
         ) : null}

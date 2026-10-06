@@ -13,7 +13,7 @@ export function Skeleton({ lines }: SkeletonProps) {
       {Array.from({ length: lines }, (_, index) => (
         <span
           key={index}
-          className="h-4 animate-pulse rounded bg-surface-raised"
+          className="h-4 animate-pulse rounded-sm bg-surface-raised"
         />
       ))}
     </div>
