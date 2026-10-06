@@ -90,6 +90,8 @@ export interface RangePickerProps {
   to: Date
   /** `rangeMs` is set for a preset: a window that keeps sliding to now. */
   onChange: (range: { from: Date; to: Date; rangeMs?: number }) => void
+  /** Width of the live preset in use; unset for a fixed date range. */
+  activeRangeMs?: number
   granularity: GranularityChoice
   onGranularityChange: (granularity: GranularityChoice) => void
 }
@@ -109,6 +111,7 @@ export function RangePicker({
   from,
   to,
   onChange,
+  activeRangeMs,
   granularity,
   onGranularityChange,
 }: RangePickerProps) {
@@ -148,7 +151,8 @@ export function RangePicker({
           <button
             key={preset}
             type="button"
-            className="min-h-11 rounded-md border border-border px-3 text-sm text-text hover:bg-surface-raised"
+            aria-pressed={PRESET_MS[preset] === activeRangeMs}
+            className="min-h-11 rounded-md border border-border px-3 text-sm text-text hover:bg-surface-raised aria-pressed:border-accent aria-pressed:bg-surface-raised aria-pressed:font-medium"
             onClick={() => selectPreset(PRESET_MS[preset])}
           >
             {t(PRESET_LABEL_KEYS[preset])}
@@ -175,16 +179,28 @@ export function RangePicker({
           <label htmlFor="range-to" className="text-sm font-medium text-text">
             {t('sensor.range.to')}
           </label>
-          <input
-            id="range-to"
-            type="datetime-local"
-            value={toLocalInputValue(to)}
-            min={toLocalInputValue(from)}
-            onChange={(event) =>
-              changeCustomRange({ from, to: new Date(event.target.value) })
-            }
-            className="min-h-11 rounded-md border border-border bg-surface px-3 text-base text-text focus:border-accent"
-          />
+          {activeRangeMs === undefined ? (
+            <input
+              id="range-to"
+              type="datetime-local"
+              value={toLocalInputValue(to)}
+              min={toLocalInputValue(from)}
+              onChange={(event) =>
+                changeCustomRange({ from, to: new Date(event.target.value) })
+              }
+              className="min-h-11 rounded-md border border-border bg-surface px-3 text-base text-text focus:border-accent"
+            />
+          ) : (
+            // A live preset has no fixed end; picking it starts a fixed search.
+            <button
+              id="range-to"
+              type="button"
+              onClick={() => onChange({ from, to: new Date() })}
+              className="min-h-11 rounded-md border border-border bg-surface px-3 text-left text-base text-text focus:border-accent"
+            >
+              {t('sensor.range.live')}
+            </button>
+          )}
         </div>
       </div>
       <SelectField

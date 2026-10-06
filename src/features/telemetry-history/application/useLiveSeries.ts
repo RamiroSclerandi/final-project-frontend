@@ -38,6 +38,8 @@ interface LiveSeriesOptions {
 interface SeededSeries {
   base: HistoricalPoint[]
   state: LiveSeriesState
+  /** Wall time of the last live change, for a window display that slides. */
+  updatedAtMs: number
 }
 
 function acceptsLiveReadings(window: SeriesWindow, nowMs: number): boolean {
@@ -63,7 +65,10 @@ export function useLiveSeries({
   isBaseReady,
   window,
   onBaseStale,
-}: LiveSeriesOptions): { points: readonly HistoricalPoint[] } {
+}: LiveSeriesOptions): {
+  points: readonly HistoricalPoint[]
+  updatedAtMs: number | null
+} {
   const baseState = useMemo(() => seedLiveSeries(basePoints), [basePoints])
   // Live changes on top of the current base; a new base discards them.
   const [overlay, setOverlay] = useState<SeededSeries | null>(null)
@@ -81,7 +86,7 @@ export function useLiveSeries({
   })
 
   const commit = useEffectEvent((state: LiveSeriesState) => {
-    const next = { base: basePoints, state }
+    const next = { base: basePoints, state, updatedAtMs: Date.now() }
     overlayRef.current = next
     setOverlay(next)
   })
@@ -239,6 +244,9 @@ export function useLiveSeries({
     }
   }, [sensorId, window])
 
-  const state = overlay?.base === basePoints ? overlay.state : baseState
-  return { points: state.points }
+  const isCurrentOverlay = overlay?.base === basePoints
+  return {
+    points: isCurrentOverlay ? overlay.state.points : baseState.points,
+    updatedAtMs: isCurrentOverlay ? overlay.updatedAtMs : null,
+  }
 }

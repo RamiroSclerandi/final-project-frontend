@@ -189,4 +189,68 @@ describe('RangePicker', () => {
       screen.getByRole('option', { name: 'Per minute' }),
     ).toBeInTheDocument()
   })
+
+  it('marks the active preset, and only that one', () => {
+    renderWithProviders(
+      <RangePicker
+        from={new Date(NOW.getTime() - 60 * 60 * 1000)}
+        to={NOW}
+        activeRangeMs={60 * 60 * 1000}
+        onChange={vi.fn()}
+        granularity="auto"
+        onGranularityChange={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: '1 hour' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByRole('button', { name: '6 hours' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+  })
+
+  it('marks no preset for a custom date range', () => {
+    renderWithProviders(
+      <RangePicker
+        from={new Date('2026-09-14T12:00:00Z')}
+        to={NOW}
+        onChange={vi.fn()}
+        granularity="auto"
+        onGranularityChange={vi.fn()}
+      />,
+    )
+
+    const presets = screen
+      .getAllByRole('button')
+      .filter((button) => button.hasAttribute('aria-pressed'))
+    expect(presets).toHaveLength(11)
+    for (const button of presets) {
+      expect(button).toHaveAttribute('aria-pressed', 'false')
+    }
+  })
+
+  it('shows "to" as now while a preset is live, and fixes the range when it is picked', () => {
+    const onChange = vi.fn()
+    const from = new Date(NOW.getTime() - 60 * 60 * 1000)
+    renderWithProviders(
+      <RangePicker
+        from={from}
+        to={NOW}
+        activeRangeMs={60 * 60 * 1000}
+        onChange={onChange}
+        granularity="auto"
+        onGranularityChange={vi.fn()}
+      />,
+    )
+
+    const toControl = screen.getByLabelText(/^to$/i)
+    expect(toControl).toHaveTextContent('Now (live)')
+
+    fireEvent.click(toControl)
+
+    expect(onChange).toHaveBeenCalledWith({ from, to: NOW })
+  })
 })

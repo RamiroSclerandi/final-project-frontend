@@ -63,6 +63,7 @@ beforeEach(() => {
     .mockImplementation(
       ({ basePoints }: { basePoints: HistoricalPoint[] }) => ({
         points: basePoints,
+        updatedAtMs: null,
       }),
     )
 })
@@ -282,6 +283,7 @@ describe('SensorContainer', () => {
         { t: '2026-09-15T11:00:00Z', value: 21, quality: 'ok' },
         { t: '2026-09-15T11:59:00Z', value: 22, quality: 'ok', partial: true },
       ],
+      updatedAtMs: null,
     })
 
     renderWithProviders(
@@ -331,5 +333,24 @@ describe('SensorContainer', () => {
     })
 
     expect(refetch).toHaveBeenCalledOnce()
+  })
+
+  it('moves "from" with each live reading while a preset is live', () => {
+    const updatedAtMs = NOW.getTime() + 3 * 60 * 1000
+    useLiveSeriesMock.mockReturnValue({ points: [], updatedAtMs })
+
+    renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
+
+    const expected = new Date(updatedAtMs - 60 * 60 * 1000)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    expect(screen.getByLabelText(/from/i)).toHaveValue(
+      `${expected.getFullYear()}-${pad(expected.getMonth() + 1)}-${pad(expected.getDate())}T${pad(expected.getHours())}:${pad(expected.getMinutes())}`,
+    )
+    expect(screen.getByRole('button', { name: '1 hour' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
   })
 })
