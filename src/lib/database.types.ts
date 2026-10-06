@@ -350,6 +350,21 @@ export type Database = {
       }
     }
     Functions: {
+      get_sensor_series: {
+        Args: {
+          p_bucket: string
+          p_from: string
+          p_sensor_id: string
+          p_to: string
+        }
+        Returns: {
+          avg_value: number
+          bucket: string
+          max_value: number
+          min_value: number
+          sample_count: number
+        }[]
+      }
       purge_raw_messages: { Args: never; Returns: number }
     }
     Enums: {
