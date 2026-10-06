@@ -88,7 +88,8 @@ function isGranularityChoice(value: string): value is GranularityChoice {
 export interface RangePickerProps {
   from: Date
   to: Date
-  onChange: (range: { from: Date; to: Date }) => void
+  /** `rangeMs` is set for a preset: a window that keeps sliding to now. */
+  onChange: (range: { from: Date; to: Date; rangeMs?: number }) => void
   granularity: GranularityChoice
   onGranularityChange: (granularity: GranularityChoice) => void
 }
@@ -116,7 +117,7 @@ export function RangePicker({
 
   function selectPreset(ms: number) {
     const now = new Date()
-    onChange({ from: new Date(now.getTime() - ms), to: now })
+    onChange({ from: new Date(now.getTime() - ms), to: now, rangeMs: ms })
   }
 
   function granularityLabel(choice: GranularityChoice): string {

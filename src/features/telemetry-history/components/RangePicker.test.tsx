@@ -33,6 +33,7 @@ describe('RangePicker', () => {
     expect(onChange).toHaveBeenCalledWith({
       from: new Date('2026-09-14T12:00:00Z'),
       to: NOW,
+      rangeMs: 24 * 60 * 60 * 1000,
     })
   })
 
@@ -166,6 +167,7 @@ describe('RangePicker', () => {
     expect(onChange).toHaveBeenCalledWith({
       from: new Date(NOW.getTime() - rangeMs),
       to: NOW,
+      rangeMs,
     })
   })
 

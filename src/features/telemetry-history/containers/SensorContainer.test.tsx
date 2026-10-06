@@ -8,9 +8,13 @@ import { SensorContainer } from './SensorContainer'
 const useHistoricalSeriesMock = vi.hoisted(() => vi.fn())
 const useCsvExportMock = vi.hoisted(() => vi.fn())
 const useLatestReadingsMock = vi.hoisted(() => vi.fn())
+const useLiveSeriesMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../application/useHistoricalSeries', () => ({
   useHistoricalSeries: useHistoricalSeriesMock,
+}))
+vi.mock('../application/useLiveSeries', () => ({
+  useLiveSeries: useLiveSeriesMock,
 }))
 vi.mock('../../data-export', () => ({
   useCsvExport: useCsvExportMock,
@@ -42,6 +46,7 @@ function baseResult(points: HistoricalPoint[] = []) {
     error: null,
     queryDurationMs: 10,
     aggregationStale: false,
+    refetch: vi.fn(),
   }
 }
 
@@ -53,6 +58,13 @@ beforeEach(() => {
     .mockReset()
     .mockReturnValue({ exportRange: vi.fn(), isExporting: false, error: null })
   useLatestReadingsMock.mockReset().mockReturnValue({ data: undefined })
+  useLiveSeriesMock
+    .mockReset()
+    .mockImplementation(
+      ({ basePoints }: { basePoints: HistoricalPoint[] }) => ({
+        points: basePoints,
+      }),
+    )
 })
 
 afterEach(() => {
@@ -225,5 +237,57 @@ describe('SensorContainer', () => {
       'href',
       `/nodes/${DEVICE_ID}`,
     )
+  })
+
+  it('keeps the default last hour live as a window sliding to now (F-10)', () => {
+    renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
+
+    expect(useLiveSeriesMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        sensorId: SENSOR_ID,
+        isBaseReady: true,
+        window: { kind: 'relative', rangeMs: 60 * 60 * 1000 },
+      }),
+    )
+  })
+
+  it('treats a custom date range as fixed (F-10)', () => {
+    renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
+
+    fireEvent.change(screen.getByLabelText(/from/i), {
+      target: { value: '2026-09-10T00:00' },
+    })
+
+    expect(useLiveSeriesMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        window: {
+          kind: 'fixed',
+          fromMs: new Date('2026-09-10T00:00').getTime(),
+          toMs: NOW.getTime(),
+        },
+      }),
+    )
+  })
+
+  it('draws the live series rather than the loaded one (F-10)', () => {
+    useHistoricalSeriesMock.mockReturnValue(
+      baseResult([{ t: '2026-09-15T11:00:00Z', value: 21, quality: 'ok' }]),
+    )
+    useLiveSeriesMock.mockReturnValue({
+      points: [
+        { t: '2026-09-15T11:00:00Z', value: 21, quality: 'ok' },
+        { t: '2026-09-15T11:59:00Z', value: 22, quality: 'ok', partial: true },
+      ],
+    })
+
+    renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
+
+    expect(screen.getByRole('status')).toHaveTextContent(/provisional/i)
   })
 })

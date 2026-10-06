@@ -1,21 +1,34 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { ExportButton, useCsvExport } from '../../data-export'
 import { useLatestReadings } from '../../telemetry'
 import { useHistoricalSeries } from '../application/useHistoricalSeries'
+import { useLiveSeries } from '../application/useLiveSeries'
 import { ChartLegend } from '../components/ChartLegend'
 import { DegradedStateBanner } from '../components/DegradedStateBanner'
 import { HistoricalChart } from '../components/HistoricalChart'
 import { RangePicker } from '../components/RangePicker'
 import { SensorHeader } from '../components/SensorHeader'
 import type { GranularityChoice } from '../domain/chooseGranularity'
+import type { SeriesWindow } from '../domain/liveSeries'
 
 // F-12: the last hour is raw data, so a fresh capture draws without waiting on any matview refresh.
 const DEFAULT_RANGE_MS = 60 * 60 * 1000
 
-function defaultRange() {
+interface SelectedRange {
+  from: Date
+  to: Date
+  /** Set for a preset, whose window keeps sliding to now (F-10). */
+  rangeMs?: number
+}
+
+function defaultRange(): SelectedRange {
   const to = new Date()
-  return { from: new Date(to.getTime() - DEFAULT_RANGE_MS), to }
+  return {
+    from: new Date(to.getTime() - DEFAULT_RANGE_MS),
+    to,
+    rangeMs: DEFAULT_RANGE_MS,
+  }
 }
 
 export interface SensorContainerProps {
@@ -34,12 +47,32 @@ export function SensorContainer({ deviceId, sensorId }: SensorContainerProps) {
     useState<GranularityChoice>('auto')
   const latestReadingsQuery = useLatestReadings()
   const reading = latestReadingsQuery.data?.[sensorId]
-  const { points, isLoading, aggregationStale } = useHistoricalSeries(
+  const series = useHistoricalSeries(
     sensorId,
     range.from,
     range.to,
     granularityChoice,
   )
+  const { isLoading, aggregationStale } = series
+  const window = useMemo<SeriesWindow>(
+    () =>
+      range.rangeMs === undefined
+        ? {
+            kind: 'fixed',
+            fromMs: range.from.getTime(),
+            toMs: range.to.getTime(),
+          }
+        : { kind: 'relative', rangeMs: range.rangeMs },
+    [range],
+  )
+  const { points } = useLiveSeries({
+    sensorId,
+    granularity: series.granularity,
+    basePoints: series.points,
+    isBaseReady: !series.isLoading && series.error === null,
+    window,
+    onBaseStale: series.refetch,
+  })
   const { exportRange, isExporting, error: exportError } = useCsvExport()
   const newestPointPartial = points.at(-1)?.partial ?? false
 

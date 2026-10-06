@@ -142,6 +142,8 @@ interface HistoricalSeriesResult {
   error: Error | null
   queryDurationMs: number | null
   aggregationStale: boolean
+  /** Reloads the series, e.g. when the live layer cannot backfill a gap. */
+  refetch: () => void
 }
 
 /**
@@ -193,5 +195,6 @@ export function useHistoricalSeries(
     error: query.error,
     queryDurationMs: query.data?.queryDurationMs ?? null,
     aggregationStale: query.data?.aggregationStale ?? false,
+    refetch: () => void query.refetch(),
   }
 }
