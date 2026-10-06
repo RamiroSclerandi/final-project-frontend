@@ -234,14 +234,22 @@ export function HistoricalChart({
   const spanMs = Number.isFinite(rawSpanMs) ? rawSpanMs : 0
   const label = unitLabel(unit)
   const chartData = useMemo(
-    () => toChartData(downsampleLTTB(points, CHART_POINT_BUDGET), t),
+    () =>
+      toChartData(
+        // Filter before downsampling so an unparsable timestamp cannot skew LTTB's selection.
+        downsampleLTTB(
+          points.filter((point) => Number.isFinite(Date.parse(point.t))),
+          CHART_POINT_BUDGET,
+        ),
+        t,
+      ),
     [points, t],
   )
 
   if (isLoading) {
     return <ChartMessage>{t('chart.loading')}</ChartMessage>
   }
-  if (points.length === 0) {
+  if (chartData.length === 0) {
     return <ChartMessage>{t('chart.empty')}</ChartMessage>
   }
   const isSparse = chartData.length < SPARSE_SERIES_THRESHOLD

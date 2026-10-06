@@ -32,6 +32,16 @@ describe('HistoricalChart', () => {
     expect(screen.getByText(/loading chart/i)).toBeInTheDocument()
   })
 
+  it('shows the empty-range message when no point has a usable timestamp', () => {
+    renderWithProviders(
+      <HistoricalChart
+        points={[{ t: 'not-a-date', value: 20, quality: 'ok' }]}
+        isLoading={false}
+      />,
+    )
+    expect(screen.getByText(/no data for this range/i)).toBeInTheDocument()
+  })
+
   it('shows an empty-range message when there are no points', () => {
     renderWithProviders(<HistoricalChart points={[]} isLoading={false} />)
     expect(screen.getByText(/no data for this range/i)).toBeInTheDocument()
