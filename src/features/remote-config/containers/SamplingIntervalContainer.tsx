@@ -48,7 +48,10 @@ export function SamplingIntervalContainer({
     : null
 
   return (
-    <div className="flex flex-col gap-2">
+    <section className="flex flex-col gap-3 rounded-md border border-border p-4">
+      <h3 className="text-xs font-medium uppercase tracking-label text-text-muted">
+        {t('config.section.sampling')}
+      </h3>
       <SamplingIntervalControl
         summary={summary}
         onApply={(samplingIntervalMs) =>
@@ -65,6 +68,6 @@ export function SamplingIntervalContainer({
           {t('common.dismiss')}
         </Button>
       )}
-    </div>
+    </section>
   )
 }

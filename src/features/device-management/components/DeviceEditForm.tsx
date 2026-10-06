@@ -1,6 +1,5 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 
-import { Button } from '../../../shared/design-system/atoms/Button'
 import { SelectField } from '../../../shared/design-system/atoms/SelectField'
 import { TextField } from '../../../shared/design-system/atoms/TextField'
 import { useTranslation } from '../../../shared/i18n/useTranslation'
@@ -11,32 +10,48 @@ import type { DeviceUpdate } from '../domain/deviceUpdate'
 
 export interface DeviceEditFormProps {
   device: Device
-  onSave: (update: DeviceUpdate) => void
-  isSaving: boolean
+  onChange: (update: DeviceUpdate) => void
   errorMessage: string | null
 }
 
-/** Inline device rename/locate/reconfigure form (REQ-DM-1/2, REQ-DM-4, REQ-CFG-2). */
+interface DeviceFields {
+  name: string
+  locationRef: string
+  transport: Transport
+  provisioned: boolean
+}
+
+function toDeviceUpdate(fields: DeviceFields): DeviceUpdate {
+  return {
+    name: fields.name,
+    location_ref: fields.locationRef === '' ? null : fields.locationRef,
+    transport: fields.transport,
+    provisioned: fields.provisioned,
+  }
+}
+
+/**
+ * Device rename/locate/reconfigure fields (REQ-DM-1/2, REQ-DM-4, REQ-CFG-2).
+ * Rendered inside the drawer's single config form: every edit reports the
+ * allowlisted update upward, and the footer Save decides whether to send it.
+ */
 export function DeviceEditForm({
   device,
-  onSave,
-  isSaving,
+  onChange,
   errorMessage,
 }: DeviceEditFormProps) {
   const { t } = useTranslation()
-  const [name, setName] = useState(device.name)
-  const [locationRef, setLocationRef] = useState(device.locationRef ?? '')
-  const [transport, setTransport] = useState<Transport>(device.transport)
-  const [provisioned, setProvisioned] = useState(device.provisioned)
+  const [fields, setFields] = useState<DeviceFields>({
+    name: device.name,
+    locationRef: device.locationRef ?? '',
+    transport: device.transport,
+    provisioned: device.provisioned,
+  })
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    onSave({
-      name,
-      location_ref: locationRef === '' ? null : locationRef,
-      transport,
-      provisioned,
-    })
+  function changeFields(next: Partial<DeviceFields>) {
+    const merged = { ...fields, ...next }
+    setFields(merged)
+    onChange(toDeviceUpdate(merged))
   }
 
   const transportOptions = TRANSPORTS.map((option) => ({
@@ -45,34 +60,35 @@ export function DeviceEditForm({
   }))
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <p className="text-xs text-text-muted">{device.macAddress}</p>
+    <div className="flex flex-col gap-3">
       <TextField
         id={`device-name-${device.id}`}
         label={t('config.device.name')}
-        value={name}
-        onChange={setName}
+        value={fields.name}
+        onChange={(name) => changeFields({ name })}
         required
       />
       <TextField
         id={`device-location-${device.id}`}
         label={t('config.device.location')}
-        value={locationRef}
-        onChange={setLocationRef}
+        value={fields.locationRef}
+        onChange={(locationRef) => changeFields({ locationRef })}
       />
       <SelectField
         id={`device-transport-${device.id}`}
         label={t('config.device.transport')}
-        value={transport}
+        value={fields.transport}
         options={transportOptions}
-        onChange={(value) => setTransport(value as Transport)}
+        onChange={(value) => changeFields({ transport: value as Transport })}
       />
-      <label className="flex min-h-11 items-center gap-2 text-sm text-text">
+      <label className="flex min-h-11 items-center gap-2 text-sm text-text md:min-h-9">
         <input
           type="checkbox"
-          checked={provisioned}
-          onChange={(event) => setProvisioned(event.target.checked)}
-          className="h-5 w-5"
+          checked={fields.provisioned}
+          onChange={(event) =>
+            changeFields({ provisioned: event.target.checked })
+          }
+          className="h-5 w-5 accent-accent md:h-4 md:w-4"
         />
         {t('config.device.provisioned')}
       </label>
@@ -81,9 +97,6 @@ export function DeviceEditForm({
           {errorMessage}
         </p>
       )}
-      <Button type="submit" variant="primary" disabled={isSaving}>
-        {t('config.save')}
-      </Button>
-    </form>
+    </div>
   )
 }

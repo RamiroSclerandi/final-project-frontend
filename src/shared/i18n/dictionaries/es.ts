@@ -261,6 +261,13 @@ export const es: Dictionary = {
     rangeError: 'Ingresar un valor entre {min} y {max} segundos.',
     apply: 'Aplicar',
     save: 'Guardar',
+    cancel: 'Cancelar',
+    secondsUnit: 's',
+    section: {
+      sampling: 'Intervalo de muestreo',
+      identification: 'Identificación y transporte',
+      sensors: 'Sensores',
+    },
     error: {
       invalidInterval:
         'Intervalo inválido. Ingresá un valor entre 1 y 300 segundos.',

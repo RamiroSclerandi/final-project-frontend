@@ -87,3 +87,23 @@ export function ArrowRightIcon({ className }: IconProps) {
     </IconFrame>
   )
 }
+
+/** Pending: a clock face. */
+export function ClockIcon({ className }: IconProps) {
+  return (
+    <IconFrame className={className}>
+      <circle cx="8" cy="8" r="6.25" />
+      <path d="M8 4.5V8l2.5 1.5" />
+    </IconFrame>
+  )
+}
+
+/** Unset: a circle with a dash. */
+export function UnsetIcon({ className }: IconProps) {
+  return (
+    <IconFrame className={className}>
+      <circle cx="8" cy="8" r="6.25" />
+      <path d="M5 8h6" />
+    </IconFrame>
+  )
+}

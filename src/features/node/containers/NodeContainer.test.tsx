@@ -225,6 +225,7 @@ describe('NodeContainer', () => {
 
     expect(dialog).toHaveAttribute('open')
     expect(screen.getByText('Device config for device-a')).toBeInTheDocument()
+    expect(screen.getByText('AABBCCDDEEFF')).toBeInTheDocument()
     expect(
       screen.getByText('Sampling interval for device-a'),
     ).toBeInTheDocument()

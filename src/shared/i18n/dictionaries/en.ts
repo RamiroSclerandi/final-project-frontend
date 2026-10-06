@@ -263,6 +263,13 @@ export const en = {
     rangeError: 'Enter a value between {min} and {max} seconds.',
     apply: 'Apply',
     save: 'Save',
+    cancel: 'Cancel',
+    secondsUnit: 's',
+    section: {
+      sampling: 'Sampling interval',
+      identification: 'Identification and transport',
+      sensors: 'Sensors',
+    },
     error: {
       invalidInterval:
         'Invalid interval. Enter a value between 1 and 300 seconds.',

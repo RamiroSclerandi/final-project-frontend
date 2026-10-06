@@ -132,9 +132,13 @@ export function NodeContainer({ deviceId }: NodeContainerProps) {
         open={isConfigOpen}
         onClose={() => setIsConfigOpen(false)}
         title={t('node.config.title', { name: device.name })}
+        subtitle={device.macAddress}
       >
-        <DeviceConfigContainer deviceId={deviceId} />
         <SamplingIntervalContainer deviceId={deviceId} />
+        <DeviceConfigContainer
+          deviceId={deviceId}
+          onCancel={() => setIsConfigOpen(false)}
+        />
       </NodeConfigDrawer>
     </div>
   )
