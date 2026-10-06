@@ -26,7 +26,10 @@ export function TextField({
 
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-sm font-medium text-text">
+      <label
+        htmlFor={id}
+        className="text-xs font-medium uppercase tracking-label text-text-muted"
+      >
         {label}
       </label>
       <input
@@ -39,10 +42,10 @@ export function TextField({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className="min-h-11 rounded-md border border-border bg-surface px-3 text-base text-text focus:border-accent"
+        className="min-h-11 rounded-md border border-border-strong bg-sunken px-3 text-base text-text focus:border-accent md:min-h-9 md:text-sm"
       />
       {error ? (
-        <p id={errorId} role="alert" className="text-sm text-danger">
+        <p id={errorId} role="alert" className="text-xs text-danger">
           {error}
         </p>
       ) : null}

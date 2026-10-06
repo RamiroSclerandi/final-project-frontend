@@ -41,7 +41,7 @@ export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
       type="button"
       aria-pressed={theme === 'light'}
       onClick={onToggle}
-      className="inline-flex h-11 w-11 items-center justify-center rounded-md text-text hover:bg-surface-raised"
+      className="inline-flex h-11 w-11 items-center justify-center rounded-md text-text-muted hover:bg-surface-raised hover:text-text md:h-9 md:w-9"
     >
       <ThemeToggleIcon theme={theme} />
       <VisuallyHidden>{t('shell.theme.toggle')}</VisuallyHidden>

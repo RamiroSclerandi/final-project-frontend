@@ -21,7 +21,7 @@ export function LocaleToggle({ locale, onChange }: LocaleToggleProps) {
         lang="es"
         aria-pressed={locale === 'es'}
         onClick={() => onChange('es')}
-        className="min-h-11 rounded-md px-3 text-sm text-text aria-pressed:bg-surface-raised aria-pressed:font-semibold"
+        className="min-h-11 rounded-md px-2 font-mono text-xs uppercase tracking-label text-text-muted hover:text-text aria-pressed:bg-surface-raised aria-pressed:text-text md:min-h-9"
       >
         {t('shell.locale.es')}
       </button>
@@ -30,7 +30,7 @@ export function LocaleToggle({ locale, onChange }: LocaleToggleProps) {
         lang="en"
         aria-pressed={locale === 'en'}
         onClick={() => onChange('en')}
-        className="min-h-11 rounded-md px-3 text-sm text-text aria-pressed:bg-surface-raised aria-pressed:font-semibold"
+        className="min-h-11 rounded-md px-2 font-mono text-xs uppercase tracking-label text-text-muted hover:text-text aria-pressed:bg-surface-raised aria-pressed:text-text md:min-h-9"
       >
         {t('shell.locale.en')}
       </button>

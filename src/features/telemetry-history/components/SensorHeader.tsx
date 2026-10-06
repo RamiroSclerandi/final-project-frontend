@@ -55,7 +55,7 @@ export function SensorHeader({ deviceId, reading }: SensorHeaderProps) {
         <span className="text-text">{label}</span>
       </nav>
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-semibold text-text">{label}</h1>
+        <h1 className="text-lg font-semibold text-text">{label}</h1>
         {reading && (
           <>
             <Value value={reading.value} unit={reading.unit} />

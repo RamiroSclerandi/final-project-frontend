@@ -32,14 +32,14 @@ export function AppShell({
       >
         {skipLinkLabel}
       </a>
-      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border px-4 py-3">
-        <div className="flex min-w-0 items-center gap-4">
+      <header className="flex min-h-12 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-border bg-surface px-4 py-1 md:py-0">
+        <div className="flex min-w-0 items-center gap-3">
           {brand}
           {tenantSwitcher}
         </div>
-        <div className="flex flex-wrap items-center gap-2">{topBarActions}</div>
+        <div className="flex flex-wrap items-center gap-1">{topBarActions}</div>
       </header>
-      <div className="lg:grid lg:grid-cols-[14rem_1fr]">
+      <div className="lg:grid lg:min-h-[calc(100dvh-3rem)] lg:grid-cols-[14rem_1fr]">
         {nav}
         <main id="main" tabIndex={-1} className="min-w-0 pb-16 lg:pb-0">
           {children}
@@ -52,6 +52,7 @@ export function AppShell({
 export interface AppNavItem {
   to: string
   label: string
+  icon?: ReactNode
 }
 
 export interface AppNavProps {
@@ -60,7 +61,7 @@ export interface AppNavProps {
 }
 
 /**
- * Bottom bar below `lg:`, left rail from `lg:` up -- CSS-only
+ * Bottom bar (icon above label) below `lg:`, left rail (icon beside label) from `lg:` up -- CSS-only
  * responsiveness (REQ-MOBILE-2). `NavLink` sets `aria-current="page"` on the
  * active item natively.
  */
@@ -68,16 +69,17 @@ export function AppNav({ items, ariaLabel }: AppNavProps) {
   return (
     <nav
       aria-label={ariaLabel}
-      className="fixed inset-x-0 bottom-0 z-10 flex items-stretch justify-around border-t border-border bg-surface lg:static lg:z-auto lg:flex-col lg:justify-start lg:border-r lg:border-t-0 lg:bg-transparent lg:p-4"
+      className="fixed inset-x-0 bottom-0 z-10 flex items-stretch justify-around border-t border-border bg-surface lg:static lg:z-auto lg:flex-col lg:justify-start lg:gap-1 lg:border-r lg:border-t-0 lg:p-3"
     >
       {items.map((item) => (
         <NavLink
           key={item.to}
           to={item.to}
           end={item.to === '/'}
-          className="flex min-h-11 flex-1 items-center justify-center px-2 text-sm text-text-muted aria-[current=page]:font-semibold aria-[current=page]:text-accent lg:flex-none lg:justify-start lg:px-3 lg:py-2"
+          className="flex min-h-14 flex-1 flex-col items-center justify-center gap-1 rounded-sm border-transparent px-2 text-2xs font-medium uppercase tracking-label text-text-muted hover:text-text aria-[current=page]:bg-accent-soft aria-[current=page]:text-accent lg:min-h-9 lg:flex-none lg:flex-row lg:justify-start lg:gap-2.5 lg:border-l-2 lg:px-3 lg:text-xs aria-[current=page]:lg:border-accent"
         >
-          {item.label}
+          {item.icon}
+          <span>{item.label}</span>
         </NavLink>
       ))}
     </nav>

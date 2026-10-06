@@ -46,7 +46,7 @@ export function NodeHeader({
     <header className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-text">{name}</h1>
+          <h1 className="text-lg font-semibold text-text">{name}</h1>
           <p className="text-sm text-text-muted">{location ?? notAvailable}</p>
         </div>
         <Button

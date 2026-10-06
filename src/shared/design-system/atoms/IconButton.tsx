@@ -17,7 +17,7 @@ export function IconButton({ label, onClick, children }: IconButtonProps) {
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="inline-flex h-11 w-11 items-center justify-center rounded-md text-text hover:bg-surface-raised"
+      className="inline-flex h-11 w-11 items-center justify-center rounded-md text-text-muted hover:bg-surface-raised hover:text-text md:h-9 md:w-9"
     >
       <span aria-hidden="true">{children}</span>
     </button>

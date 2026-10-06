@@ -27,6 +27,14 @@ const tokenPairs: [string, string, number][] = [
   ['quality-out-of-range', 'surface', 3],
   ['quality-suspect', 'surface', 3],
   ['border', 'surface', 1.5],
+  ['text-muted', 'sunken', 4.5],
+  ['text-muted', 'surface-raised', 4.5],
+  ['border-strong', 'surface', 3],
+  ['status-online', 'status-online-soft', 4.5],
+  ['danger', 'danger-soft', 4.5],
+  ['warning', 'warning-soft', 4.5],
+  ['info', 'info-soft', 4.5],
+  ['accent', 'accent-soft', 4.5],
 ]
 
 describe('contrastRatio', () => {
