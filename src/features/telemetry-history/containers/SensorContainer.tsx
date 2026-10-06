@@ -79,7 +79,7 @@ export function SensorContainer({ deviceId, sensorId }: SensorContainerProps) {
       rangeMs: range.rangeMs,
     })
   }
-  const { points } = useLiveSeries({
+  const { points, updatedAtMs } = useLiveSeries({
     sensorId,
     granularity: series.granularity,
     basePoints: series.points,
@@ -89,13 +89,22 @@ export function SensorContainer({ deviceId, sensorId }: SensorContainerProps) {
   })
   const { exportRange, isExporting, error: exportError } = useCsvExport()
   const newestPointPartial = points.at(-1)?.partial ?? false
+  // A live preset's window slides with each reading; show where it is now.
+  const shownRange =
+    range.rangeMs !== undefined && updatedAtMs !== null
+      ? {
+          from: new Date(updatedAtMs - range.rangeMs),
+          to: new Date(updatedAtMs),
+        }
+      : range
 
   return (
     <section className="flex flex-col gap-4">
       <SensorHeader deviceId={deviceId} reading={reading} />
       <RangePicker
-        from={range.from}
-        to={range.to}
+        from={shownRange.from}
+        to={shownRange.to}
+        activeRangeMs={range.rangeMs}
         onChange={setRange}
         granularity={granularityChoice}
         onGranularityChange={setGranularityChoice}
@@ -105,8 +114,8 @@ export function SensorContainer({ deviceId, sensorId }: SensorContainerProps) {
         onExport={() =>
           exportRange(
             sensorId,
-            range.from.toISOString(),
-            range.to.toISOString(),
+            shownRange.from.toISOString(),
+            shownRange.to.toISOString(),
           )
         }
         isExporting={isExporting}

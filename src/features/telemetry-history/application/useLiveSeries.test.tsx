@@ -110,6 +110,7 @@ describe('useLiveSeries', () => {
 
     expect(latestSubscription().sensorId).toBe(SENSOR_ID)
     expect(result.current.points.map((point) => point.value)).toEqual([20, 22])
+    expect(result.current.updatedAtMs).toBe(NOW)
   })
 
   it('backfills the gap from the last known timestamp after a reconnect', async () => {

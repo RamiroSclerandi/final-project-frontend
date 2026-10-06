@@ -214,6 +214,7 @@ export const en = {
       label: 'Range',
       from: 'From',
       to: 'To',
+      live: 'Now (live)',
       preset: {
         minutes5: '5 min',
         minutes15: '15 min',

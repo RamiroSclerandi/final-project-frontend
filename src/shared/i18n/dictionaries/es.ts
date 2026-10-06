@@ -212,6 +212,7 @@ export const es: Dictionary = {
       label: 'Rango',
       from: 'Desde',
       to: 'Hasta',
+      live: 'Ahora (en vivo)',
       preset: {
         minutes5: '5 min',
         minutes15: '15 min',
