@@ -136,4 +136,55 @@ describe('RangePicker', () => {
 
     expect(onChange).not.toHaveBeenCalled()
   })
+
+  it.each([
+    ['5 min', 5 * 60 * 1000],
+    ['15 min', 15 * 60 * 1000],
+    ['30 min', 30 * 60 * 1000],
+    ['1 hour', 60 * 60 * 1000],
+    ['6 hours', 6 * 60 * 60 * 1000],
+    ['24 hours', 24 * 60 * 60 * 1000],
+    ['15 days', 15 * 24 * 60 * 60 * 1000],
+    ['30 days', 30 * 24 * 60 * 60 * 1000],
+    ['90 days', 90 * 24 * 60 * 60 * 1000],
+    ['180 days', 180 * 24 * 60 * 60 * 1000],
+    ['1 year', 365 * 24 * 60 * 60 * 1000],
+  ])('offers the %s preset, ending now', (label, rangeMs) => {
+    const onChange = vi.fn()
+    renderWithProviders(
+      <RangePicker
+        from={new Date('2026-09-14T12:00:00Z')}
+        to={NOW}
+        onChange={onChange}
+        granularity="auto"
+        onGranularityChange={vi.fn()}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: label }))
+
+    expect(onChange).toHaveBeenCalledWith({
+      from: new Date(NOW.getTime() - rangeMs),
+      to: NOW,
+    })
+  })
+
+  it('offers a per-minute override and labels auto with it on a 24-hour range', () => {
+    renderWithProviders(
+      <RangePicker
+        from={new Date('2026-09-14T12:00:00Z')}
+        to={NOW}
+        onChange={vi.fn()}
+        granularity="auto"
+        onGranularityChange={vi.fn()}
+      />,
+    )
+
+    expect(
+      screen.getByRole('option', { name: 'Auto (Per minute)' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('option', { name: 'Per minute' }),
+    ).toBeInTheDocument()
+  })
 })

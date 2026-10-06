@@ -1,6 +1,6 @@
-import type { Granularity } from './chooseGranularity'
+type MatviewGranularity = 'hourly' | 'daily'
 
-const BUCKET_MS: Record<Exclude<Granularity, 'raw'>, number> = {
+const BUCKET_MS: Record<MatviewGranularity, number> = {
   hourly: 60 * 60 * 1000,
   daily: 24 * 60 * 60 * 1000,
 }
@@ -16,7 +16,7 @@ const STALE_MULTIPLIER = 2
 export function isAggregationStale(
   lastBucketIso: string | null,
   newestRawIso: string | null,
-  granularity: Exclude<Granularity, 'raw'>,
+  granularity: MatviewGranularity,
 ): boolean {
   if (!newestRawIso) {
     return false

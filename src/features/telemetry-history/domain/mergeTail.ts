@@ -1,24 +1,28 @@
 import type { HistoricalPoint } from './historicalPoint'
 
-const HOUR_MS = 60 * 60 * 1000
+const MINUTE_MS = 60 * 1000
+const HOUR_MS = 60 * MINUTE_MS
 
-function hourBucketStart(t: string): number {
-  return Math.floor(new Date(t).getTime() / HOUR_MS) * HOUR_MS
+function bucketStart(t: string, bucketMs: number): number {
+  return Math.floor(new Date(t).getTime() / bucketMs) * bucketMs
 }
 
 /**
  * Same grouping and filter as `mv_measurements_hourly` (avg/min/max/count
- * over `quality = 'ok'` rows, grouped by `date_trunc('hour', timestamp)`),
- * so the view and this client-side recompute cannot diverge unnoticed (D-3).
- * Takes already-mapped raw points (`quality` normalised by `toRawPoint`).
+ * over `quality = 'ok'` rows, grouped by `date_trunc`), so the view and this
+ * client-side recompute cannot diverge unnoticed (D-3). Takes already-mapped
+ * raw points (`quality` normalised by `toRawPoint`).
  */
-function bucketRawByHour(rawPoints: HistoricalPoint[]): HistoricalPoint[] {
+function bucketRawPoints(
+  rawPoints: HistoricalPoint[],
+  bucketMs: number,
+): HistoricalPoint[] {
   const buckets = new Map<number, number[]>()
   for (const point of rawPoints) {
     if ((point.quality ?? 'ok') !== 'ok') {
       continue
     }
-    const start = hourBucketStart(point.t)
+    const start = bucketStart(point.t, bucketMs)
     const values = buckets.get(start) ?? []
     values.push(point.value)
     buckets.set(start, values)
@@ -31,8 +35,26 @@ function bucketRawByHour(rawPoints: HistoricalPoint[]): HistoricalPoint[] {
       min: Math.min(...values),
       max: Math.max(...values),
       sampleCount: values.length,
-      partial: true,
     }))
+}
+
+/**
+ * Per-minute buckets recomputed from raw rows, the minute source until an
+ * on-demand server aggregate exists (F-13). UTC and local minutes coincide,
+ * so the epoch-aligned bucket matches `date_trunc('minute', ...)`.
+ */
+export function bucketRawByMinute(
+  rawPoints: HistoricalPoint[],
+): HistoricalPoint[] {
+  return bucketRawPoints(rawPoints, MINUTE_MS)
+}
+
+/** Hourly buckets recomputed from raw rows; every one is flagged `partial` (D-3). */
+function bucketRawByHour(rawPoints: HistoricalPoint[]): HistoricalPoint[] {
+  return bucketRawPoints(rawPoints, HOUR_MS).map((bucket) => ({
+    ...bucket,
+    partial: true,
+  }))
 }
 
 /**
