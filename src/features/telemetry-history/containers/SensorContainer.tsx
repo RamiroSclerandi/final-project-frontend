@@ -10,11 +10,12 @@ import { RangePicker } from '../components/RangePicker'
 import { SensorHeader } from '../components/SensorHeader'
 import type { GranularityChoice } from '../domain/chooseGranularity'
 
-const DAY_MS = 24 * 60 * 60 * 1000
+// F-12: the last hour is raw data, so a fresh capture draws without waiting on any matview refresh.
+const DEFAULT_RANGE_MS = 60 * 60 * 1000
 
 function defaultRange() {
   const to = new Date()
-  return { from: new Date(to.getTime() - DAY_MS), to }
+  return { from: new Date(to.getTime() - DEFAULT_RANGE_MS), to }
 }
 
 export interface SensorContainerProps {

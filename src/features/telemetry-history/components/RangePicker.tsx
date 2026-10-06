@@ -7,47 +7,76 @@ import type {
   GranularityChoice,
 } from '../domain/chooseGranularity'
 
-const HOUR_MS = 60 * 60 * 1000
+const MINUTE_MS = 60 * 1000
+const HOUR_MS = 60 * MINUTE_MS
 const DAY_MS = 24 * HOUR_MS
 
-type PresetId = 'hour' | 'day' | 'week' | 'month' | 'quarter' | 'year'
+type PresetId =
+  | 'minutes5'
+  | 'minutes15'
+  | 'minutes30'
+  | 'hours1'
+  | 'hours6'
+  | 'hours24'
+  | 'days15'
+  | 'days30'
+  | 'days90'
+  | 'days180'
+  | 'days365'
 
 const PRESET_ORDER: PresetId[] = [
-  'hour',
-  'day',
-  'week',
-  'month',
-  'quarter',
-  'year',
+  'minutes5',
+  'minutes15',
+  'minutes30',
+  'hours1',
+  'hours6',
+  'hours24',
+  'days15',
+  'days30',
+  'days90',
+  'days180',
+  'days365',
 ]
 
 const PRESET_MS: Record<PresetId, number> = {
-  hour: HOUR_MS,
-  day: DAY_MS,
-  week: 7 * DAY_MS,
-  month: 30 * DAY_MS,
-  quarter: 90 * DAY_MS,
-  year: 365 * DAY_MS,
+  minutes5: 5 * MINUTE_MS,
+  minutes15: 15 * MINUTE_MS,
+  minutes30: 30 * MINUTE_MS,
+  hours1: HOUR_MS,
+  hours6: 6 * HOUR_MS,
+  hours24: DAY_MS,
+  days15: 15 * DAY_MS,
+  days30: 30 * DAY_MS,
+  days90: 90 * DAY_MS,
+  days180: 180 * DAY_MS,
+  days365: 365 * DAY_MS,
 }
 
 const PRESET_LABEL_KEYS = {
-  hour: 'sensor.range.preset.hour',
-  day: 'sensor.range.preset.day',
-  week: 'sensor.range.preset.week',
-  month: 'sensor.range.preset.month',
-  quarter: 'sensor.range.preset.quarter',
-  year: 'sensor.range.preset.year',
+  minutes5: 'sensor.range.preset.minutes5',
+  minutes15: 'sensor.range.preset.minutes15',
+  minutes30: 'sensor.range.preset.minutes30',
+  hours1: 'sensor.range.preset.hours1',
+  hours6: 'sensor.range.preset.hours6',
+  hours24: 'sensor.range.preset.hours24',
+  days15: 'sensor.range.preset.days15',
+  days30: 'sensor.range.preset.days30',
+  days90: 'sensor.range.preset.days90',
+  days180: 'sensor.range.preset.days180',
+  days365: 'sensor.range.preset.days365',
 } satisfies Record<PresetId, TranslationKey>
 
 const GRANULARITY_OPTIONS: readonly GranularityChoice[] = [
   'auto',
   'raw',
+  'minute',
   'hourly',
   'daily',
 ]
 
 const GRANULARITY_LABEL_KEYS = {
   raw: 'sensor.granularity.raw',
+  minute: 'sensor.granularity.minute',
   hourly: 'sensor.granularity.hourly',
   daily: 'sensor.granularity.daily',
 } satisfies Record<Granularity, TranslationKey>

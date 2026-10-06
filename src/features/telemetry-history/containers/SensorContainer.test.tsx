@@ -78,6 +78,19 @@ describe('SensorContainer', () => {
     expect(container.querySelector('svg')).not.toBeNull()
   })
 
+  it('opens on the last hour without any interaction', () => {
+    renderWithProviders(
+      <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
+    )
+
+    expect(useHistoricalSeriesMock).toHaveBeenCalledWith(
+      SENSOR_ID,
+      new Date(NOW.getTime() - 60 * 60 * 1000),
+      NOW,
+      'auto',
+    )
+  })
+
   it('shows the stale-aggregation banner from the hook result', () => {
     useHistoricalSeriesMock.mockReturnValue({
       ...baseResult(),
@@ -135,11 +148,11 @@ describe('SensorContainer', () => {
       <SensorContainer deviceId={DEVICE_ID} sensorId={SENSOR_ID} />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /1 hour/i }))
+    fireEvent.click(screen.getByRole('button', { name: '6 hours' }))
 
     expect(useHistoricalSeriesMock).toHaveBeenLastCalledWith(
       SENSOR_ID,
-      new Date(NOW.getTime() - 60 * 60 * 1000),
+      new Date(NOW.getTime() - 6 * 60 * 60 * 1000),
       NOW,
       'auto',
     )
@@ -177,7 +190,7 @@ describe('SensorContainer', () => {
 
     expect(exportRange).toHaveBeenCalledWith(
       SENSOR_ID,
-      new Date(NOW.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+      new Date(NOW.getTime() - 60 * 60 * 1000).toISOString(),
       NOW.toISOString(),
     )
   })
