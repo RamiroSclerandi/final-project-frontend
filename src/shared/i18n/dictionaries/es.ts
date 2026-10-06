@@ -98,7 +98,10 @@ export const es: Dictionary = {
     },
   },
   node: {
+    viewHistory: 'Ver historial',
     header: {
+      firmwareLabel: 'Firmware',
+      transportLabel: 'Transporte',
       configure: 'Configurar',
       firmware: 'Firmware: {version}',
       transport: 'Transporte: {transport}',

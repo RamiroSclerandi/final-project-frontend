@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react'
+
 import { Button } from '../../../shared/design-system/atoms/Button'
-import { Chip } from '../../../shared/design-system/atoms/Chip'
+import { GearIcon } from '../../../shared/design-system/atoms/icons'
 import { RelativeTime } from '../../../shared/design-system/atoms/RelativeTime'
 import { SignalBars } from '../../../shared/design-system/atoms/SignalBars'
 import { StatusChip } from '../../../shared/design-system/molecules/StatusChip'
@@ -43,9 +45,9 @@ export function NodeHeader({
     rssi === null ? t('status.unknown') : t('node.header.rssi', { rssi })
 
   return (
-    <header className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+    <header className="flex flex-col gap-4 rounded-md border border-border bg-surface p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-lg font-semibold text-text">{name}</h1>
           <p className="text-sm text-text-muted">{location ?? notAvailable}</p>
         </div>
@@ -54,28 +56,69 @@ export function NodeHeader({
           disabled={!onOpenConfig}
           onClick={onOpenConfig}
         >
-          {t('node.header.configure')}
+          <span className="inline-flex items-center gap-2">
+            <GearIcon />
+            {t('node.header.configure')}
+          </span>
         </Button>
       </div>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-border pt-3">
         <StatusChip status={status} />
-        <SignalBars bars={bars} label={rssiLabel} />
-        <Chip>
+        <span className={FACT_DIVIDER}>
+          <span className="font-mono text-xs tabular-nums text-text">
+            <SignalBars bars={bars} label={rssiLabel} />
+          </span>
+        </span>
+        <span className={FACT_DIVIDER}>
           {lastSeen ? (
-            <span>
-              {t('node.header.lastSeenLabel')} <RelativeTime iso={lastSeen} />
-            </span>
+            <Fact label={t('node.header.lastSeenLabel')}>
+              <RelativeTime iso={lastSeen} />
+            </Fact>
           ) : (
-            `${t('node.header.lastSeenLabel')} ${notAvailable}`
+            <MissingFact>{`${t('node.header.lastSeenLabel')} ${notAvailable}`}</MissingFact>
           )}
-        </Chip>
-        <Chip>
-          {t('node.header.firmware', {
-            version: firmwareVersion ?? notAvailable,
-          })}
-        </Chip>
-        <Chip>{t('node.header.transport', { transport })}</Chip>
+        </span>
+        <span className={FACT_DIVIDER}>
+          {firmwareVersion ? (
+            <Fact label={t('node.header.firmwareLabel')}>
+              {firmwareVersion}
+            </Fact>
+          ) : (
+            <MissingFact>
+              {t('node.header.firmware', { version: notAvailable })}
+            </MissingFact>
+          )}
+        </span>
+        <span className={FACT_DIVIDER}>
+          <Fact label={t('node.header.transportLabel')}>{transport}</Fact>
+        </span>
       </div>
     </header>
   )
+}
+
+const FACT_DIVIDER = 'md:border-l md:border-border md:pl-4'
+
+interface FactProps {
+  label: string
+  children: ReactNode
+}
+
+/** An uppercase 2xs label followed by its mono value. */
+function Fact({ label, children }: FactProps) {
+  return (
+    <span className="inline-flex items-baseline gap-1.5">
+      <span className="text-2xs font-medium tracking-label text-text-muted uppercase">
+        {label}
+      </span>
+      <span className="font-mono text-xs tabular-nums text-text">
+        {children}
+      </span>
+    </span>
+  )
+}
+
+/** A fact with no data keeps its single labelled "Not available" string. */
+function MissingFact({ children }: { children: ReactNode }) {
+  return <span className="font-mono text-xs text-text-muted">{children}</span>
 }

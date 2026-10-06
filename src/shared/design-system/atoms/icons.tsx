@@ -67,3 +67,23 @@ export function TelemetryIcon({ className }: IconProps) {
     </IconFrame>
   )
 }
+
+/** Settings: a gear. */
+export function GearIcon({ className }: IconProps) {
+  return (
+    <IconFrame className={className}>
+      <circle cx="8" cy="8" r="2" />
+      <path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4" />
+    </IconFrame>
+  )
+}
+
+/** Navigation: an arrow pointing right. */
+export function ArrowRightIcon({ className }: IconProps) {
+  return (
+    <IconFrame className={className}>
+      <path d="M2.5 8h11" />
+      <path d="m9.5 4 4 4-4 4" />
+    </IconFrame>
+  )
+}

@@ -100,7 +100,10 @@ export const en = {
     },
   },
   node: {
+    viewHistory: 'View history',
     header: {
+      firmwareLabel: 'Firmware',
+      transportLabel: 'Transport',
       configure: 'Configure',
       firmware: 'Firmware: {version}',
       transport: 'Transport: {transport}',

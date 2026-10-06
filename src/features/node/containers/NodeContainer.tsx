@@ -122,7 +122,7 @@ export function NodeContainer({ deviceId }: NodeContainerProps) {
       {groups.length === 0 ? (
         <EmptyState title={t('node.empty.title')} body={t('node.empty.body')} />
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
           {groups.map((group) => (
             <SensorGroup key={group.channel} group={group} nodeId={deviceId} />
           ))}

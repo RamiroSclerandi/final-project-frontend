@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-import { Value } from '../../../shared/design-system/atoms/Value'
+import { ArrowRightIcon } from '../../../shared/design-system/atoms/icons'
 import {
   QualityMark,
   type Quality,
@@ -111,46 +111,66 @@ function toQuality(value: string): Quality {
  * magnitude with only one, untagged sensor (REQ-NODE-3).
  */
 export function SensorGroup({ group, nodeId }: SensorGroupProps) {
-  const { t } = useTranslation()
+  const { t, formatNumber } = useTranslation()
+  const unit = unitLabel(group.unit)
 
   return (
-    <table role="table" className="table-stack min-w-0 w-full tabular-nums">
-      <caption className="text-left text-sm text-text-muted">
-        {[channelLabel(group.channel, t), unitLabel(group.unit)]
-          .filter(Boolean)
-          .join(' · ')}
-      </caption>
-      <thead>
-        <tr role="row">
-          {group.phases.map((phase) => (
-            <th key={phase.sensorId} role="columnheader" scope="col">
-              {phaseLabel(phase, t)}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        <tr role="row">
-          {group.phases.map((phase) => (
-            <td
-              key={phase.sensorId}
-              role="cell"
-              data-label={phaseLabel(phase, t)}
-            >
-              <Link
-                to={`/nodes/${nodeId}/sensors/${phase.sensorId}`}
-                className="inline-flex min-h-11 flex-col gap-1 text-accent"
+    <div className="min-w-0 overflow-hidden rounded-md border border-border bg-surface">
+      <table role="table" className="table-stack min-w-0 w-full tabular-nums">
+        <caption className="block border-b border-border bg-sunken px-4 py-2 text-left text-xs font-medium text-text-muted md:table-caption md:[caption-side:top]">
+          {[channelLabel(group.channel, t), unit].filter(Boolean).join(' · ')}
+        </caption>
+        <thead>
+          <tr role="row">
+            {group.phases.map((phase) => (
+              <th
+                key={phase.sensorId}
+                role="columnheader"
+                scope="col"
+                className="px-4 pt-3 text-left text-2xs font-medium tracking-label text-text-muted uppercase"
               >
-                <Value value={phase.value} unit={group.unit} />
-                <QualityMark
-                  quality={toQuality(phase.quality)}
-                  label={t(QUALITY_KEYS[toQuality(phase.quality)])}
-                />
-              </Link>
-            </td>
-          ))}
-        </tr>
-      </tbody>
-    </table>
+                {phaseLabel(phase, t)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr role="row">
+            {group.phases.map((phase) => (
+              <td
+                key={phase.sensorId}
+                role="cell"
+                data-label={phaseLabel(phase, t)}
+                className="px-4 md:py-3 md:align-top"
+              >
+                <Link
+                  to={`/nodes/${nodeId}/sensors/${phase.sensorId}`}
+                  className="group inline-flex min-h-11 flex-col gap-1 text-text md:min-h-0"
+                >
+                  <span className="font-mono text-xl tabular-nums">
+                    {formatNumber(phase.value)}
+                    {unit && (
+                      <span className="ml-1 text-sm text-text-muted">
+                        {unit}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-sm">
+                    <QualityMark
+                      quality={toQuality(phase.quality)}
+                      label={t(QUALITY_KEYS[toQuality(phase.quality)])}
+                    />
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-sm text-accent group-hover:underline">
+                    {t('node.viewHistory')}
+                    <ArrowRightIcon />
+                  </span>
+                </Link>
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
   )
 }
